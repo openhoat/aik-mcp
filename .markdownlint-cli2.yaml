@@ -1,0 +1,30 @@
+# markdownlint-cli2 configuration
+# See: https://github.com/DavidAnson/markdownlint
+
+config:
+  # Default state for all rules
+  default: true
+
+  # MD013/line-length - disabled for AI-oriented content (long lines are fine)
+  MD013: false
+
+  # MD024/no-duplicate-heading - allow duplicate headings in different sections
+  MD024:
+    siblings_only: true
+
+  # MD033/no-inline-html - allow inline HTML (useful for MCP/resource tables)
+  MD033: false
+
+  # MD041/first-line-heading/first-line-h1 - content files may start with frontmatter
+  MD041: false
+
+  # MD046/code-block-style - allow indented code blocks
+  MD046: false
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - "node_modules"
+  - ".git"
+  - "dist"

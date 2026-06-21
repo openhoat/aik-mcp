@@ -1,0 +1,192 @@
+import { existsSync, mkdtempSync } from 'node:fs'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { ContentStore } from './content-store'
+
+function createTempDir(): string {
+  return mkdtempSync(join(tmpdir(), 'aik-test-'))
+}
+
+async function createFile(dir: string, relPath: string, content: string): Promise<void> {
+  const fullPath = join(dir, relPath)
+  await mkdir(fullPath.replace(/\/[^/]+$/, ''), { recursive: true })
+  await writeFile(fullPath, content, 'utf-8')
+}
+
+const config = (dir: string) => ({
+  contentDir: dir,
+  http: false,
+  port: 0,
+  watch: false,
+})
+
+describe('ContentStore', () => {
+  describe('scan and query', () => {
+    it('scans rules directory', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(
+        dir,
+        'rules/test-rule.md',
+        `---
+title: Test Rule
+description: A test
+tags: [test]
+---
+# Content`
+      )
+
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].category).toBe('rules')
+      expect(all[0].title).toBe('Test Rule')
+      expect(all[0].description).toBe('A test')
+      expect(all[0].tags).toEqual(['test'])
+      expect(all[0].content).toContain('# Content')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('scans multiple categories', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await mkdir(join(dir, 'skills'), { recursive: true })
+      await createFile(dir, 'rules/r1.md', '---\ntitle: Rule 1\n---\nR1')
+      await createFile(dir, 'skills/s1.md', '---\ntitle: Skill 1\n---\nS1')
+
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getByCategory('rules').length).toBe(1)
+      expect(store.getByCategory('skills').length).toBe(1)
+      expect(store.getAll().length).toBe(2)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('ignores non-existent directories', async () => {
+      const dir = createTempDir()
+      const store = new ContentStore(config(dir))
+      await store.init()
+      expect(store.getAll()).toEqual([])
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('getByPath', () => {
+    it('finds content by path', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/my-rule.md', '---\ntitle: My Rule\n---\nBody')
+
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      const item = store.getByPath('rules/my-rule')
+      expect(item).toBeDefined()
+      expect(item!.title).toBe('My Rule')
+      expect(item!.content).toBe('Body')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('returns undefined for non-existent path', async () => {
+      const dir = createTempDir()
+      const store = new ContentStore(config(dir))
+      await store.init()
+      expect(store.getByPath('rules/nope')).toBeUndefined()
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('writeContent', () => {
+    it('creates a new content file', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      const item = await store.writeContent(
+        'rules/new-rule',
+        '# New Rule\n\nContent here',
+        { title: 'New Rule', description: 'Brand new' },
+        false
+      )
+
+      expect(item.title).toBe('New Rule')
+      expect(item.content).toContain('New Rule')
+      expect(item.path).toBe('rules/new-rule')
+
+      const filePath = join(dir, 'rules/new-rule.md')
+      expect(existsSync(filePath)).toBe(true)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('throws when overwrite is false and file exists', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/existing.md', '# Existing')
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      await expect(store.writeContent('rules/existing', '# New', {}, false)).rejects.toThrow(
+        /already exists/
+      )
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('overwrites when overwrite is true', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/existing.md', '# Original')
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      const item = await store.writeContent(
+        'rules/existing',
+        '# Updated',
+        { title: 'Updated' },
+        true
+      )
+
+      expect(item.title).toBe('Updated')
+      expect(item.content).toContain('Updated')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('deleteContent', () => {
+    it('deletes an existing content file', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/to-delete.md', '# To Delete')
+      const store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
+
+      const deleted = await store.deleteContent('rules/to-delete')
+      expect(deleted).toBe(true)
+      expect(store.getAll().length).toBe(0)
+      expect(existsSync(join(dir, 'rules/to-delete.md'))).toBe(false)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    it('returns false for non-existent content', async () => {
+      const dir = createTempDir()
+      const store = new ContentStore(config(dir))
+      await store.init()
+      const deleted = await store.deleteContent('rules/nope')
+      expect(deleted).toBe(false)
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+})
