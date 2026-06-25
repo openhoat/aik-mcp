@@ -13,7 +13,7 @@ function openCodeConfigPath(targetDir: string, existingPath: string | null): str
   return resolve(targetDir, '.opencode', 'opencode.jsonc')
 }
 
-function installOpenCode(
+export function installOpenCode(
   configPath: string | null,
   targetDir: string,
   category: string,
@@ -49,7 +49,7 @@ function installOpenCode(
   return { path: outputPath, alreadyInstalled: false }
 }
 
-function installClaudeCode(
+export function installClaudeCode(
   configPath: string | null,
   targetDir: string,
   itemPath: string,
@@ -72,7 +72,7 @@ function installClaudeCode(
   return { path: mdPath, alreadyInstalled: false }
 }
 
-function installCline(
+export function installCline(
   configPath: string | null,
   targetDir: string,
   itemPath: string,
@@ -102,7 +102,7 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
       path: z.string().describe('Path of the content to reinstall (e.g. "rules/typescript")'),
       projectDir: z
         .string()
-        .optional()
+        .default(process.cwd())
         .describe(
           'Project directory (defaults to current working directory). Config files are found by walking up.'
         ),
@@ -110,7 +110,7 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
         .enum(['opencode', 'claude-code', 'cline'])
         .optional()
         .describe(
-          'Target AI agent. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
+          'Target AI. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
         ),
     },
     async ({

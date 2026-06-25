@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { loadConfig } from './config.js'
 import { ContentStore } from './content-store.js'
@@ -11,6 +13,7 @@ import { registerListTool } from './tools/list.js'
 import { registerListInstalledTool } from './tools/list-installed.js'
 import { registerSearchTool } from './tools/search.js'
 import { registerUninstallTool } from './tools/uninstall.js'
+import { registerCheckUpdatesTool, registerUpdateTool } from './tools/update.js'
 import { registerWriteTool } from './tools/write.js'
 import { startHttpTransport } from './transports/http.js'
 import { startStdioTransport } from './transports/stdio.js'
@@ -21,6 +24,14 @@ logger.info(
   { contentDir: config.contentDir, http: config.http, port: config.port, watch: config.watch },
   'starting aik server'
 )
+
+const instructionsPath = join(import.meta.dirname, 'built-in', 'rules', 'aik-knowledge-content.md')
+let instructions: string | undefined
+try {
+  instructions = readFileSync(instructionsPath, 'utf-8')
+} catch {
+  logger.warn({ path: instructionsPath }, 'built-in instructions not found')
+}
 
 const store = new ContentStore(config)
 
@@ -34,12 +45,15 @@ logger.info(
   'content store initialized'
 )
 
-const server = new McpServer({
-  name: 'aik',
-  version: '1.0.0',
-  description:
-    'MCP server for AI knowledge repository — query rules, skills, workflows, agents, commands, and templates',
-})
+const server = new McpServer(
+  {
+    name: 'aik',
+    version: '1.0.0',
+    description:
+      'MCP server for AI knowledge repository — query rules, skills, workflows, agents, commands, and templates',
+  },
+  ...(instructions ? [{ instructions }] : [])
+)
 
 registerListTool(server, store)
 registerGetTool(server, store)
@@ -50,6 +64,8 @@ registerSearchTool(server, store)
 registerUninstallTool(server, store)
 registerWriteTool(server, store)
 registerDeleteTool(server, store)
+registerCheckUpdatesTool(server, store)
+registerUpdateTool(server, store)
 registerResources(server, store)
 
 if (config.http) {

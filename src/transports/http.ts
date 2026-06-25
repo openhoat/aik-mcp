@@ -49,7 +49,7 @@ export async function startHttpTransport(server: McpServer, port: number): Promi
         const body = req.method === 'POST' ? await readBody(req) : undefined
         const parsed = body ? JSON.parse(body) : undefined
 
-        if (!parsed || parsed.method !== 'initialize') {
+        if (parsed?.method !== 'initialize') {
           res.writeHead(400)
           res.end('Bad Request: initialization required')
           return
