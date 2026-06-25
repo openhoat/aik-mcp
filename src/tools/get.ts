@@ -6,11 +6,11 @@ import type { ToolRegistrar } from './shared.js'
 
 export function registerGetTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_get',
+    'get',
     'Retrieve a specific content item by its path (e.g. "rules/coding-standards")',
     { path: z.string().describe('Path to the content item (e.g. "rules/coding-standards")') },
     async ({ path }: { path: string }) => {
-      logger.trace({ path }, 'aik_get called')
+      logger.trace({ path }, 'get called')
       const item = store.getByPath(path)
       if (!item) {
         return { content: [{ type: 'text', text: `Content not found: ${path}` }], isError: true }

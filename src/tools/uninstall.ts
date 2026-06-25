@@ -129,7 +129,7 @@ export function uninstallAllCline(configPath: string): number {
 
 export function registerUninstallTool(server: McpServer, _store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_uninstall',
+    'uninstall',
     'Uninstall a previously installed content item from the current project. Removes the file and the config reference. Supports opencode, Claude Code, and Cline.',
     {
       path: z.string().describe('Path of the content to uninstall (e.g. "rules/typescript")'),
@@ -153,7 +153,7 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
       projectDir?: string
       agent?: Agent
     }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'aik_uninstall called')
+      logger.trace({ path, projectDir, agent: preferredAgent }, 'uninstall called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const agent = detectAgent(targetDir, preferredAgent)
@@ -203,7 +203,7 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
   )
 
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_uninstall_all',
+    'uninstall_all',
     'Uninstall ALL aik-installed content items from the current project. Removes all aik-managed files and config references.',
     {
       projectDir: z
@@ -218,7 +218,7 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         .describe('Target AI agent. Auto-detected from existing config files if not specified.'),
     },
     async ({ projectDir, agent: preferredAgent }: { projectDir?: string; agent?: Agent }) => {
-      logger.trace({ projectDir, agent: preferredAgent }, 'aik_uninstall_all called')
+      logger.trace({ projectDir, agent: preferredAgent }, 'uninstall_all called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const agent = detectAgent(targetDir, preferredAgent)

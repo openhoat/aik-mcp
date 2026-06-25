@@ -6,7 +6,7 @@ import type { ToolRegistrar } from './shared.js'
 
 export function registerDeleteTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_delete',
+    'delete',
     'Delete a content item by its path',
     {
       path: z
@@ -14,7 +14,7 @@ export function registerDeleteTool(server: McpServer, store: ContentStore): void
         .describe('Path to the content item to delete (e.g. "rules/coding-standards")'),
     },
     async ({ path }: { path: string }) => {
-      logger.trace({ path }, 'aik_delete called')
+      logger.trace({ path }, 'delete called')
       try {
         const deleted = await store.deleteContent(path)
         if (!deleted) {

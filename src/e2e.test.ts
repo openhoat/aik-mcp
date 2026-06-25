@@ -155,7 +155,7 @@ test('aik_list returns all items', async () => {
   )
 
   await withServer(tempDir, async req => {
-    const result = (await req('tools/call', { name: 'aik_list', arguments: {} })) as {
+    const result = (await req('tools/call', { name: 'list', arguments: {} })) as {
       content: Array<{ text: string }>
     }
     const text = result.content[0].text
@@ -178,7 +178,7 @@ test('aik_list filters by category', async () => {
 
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
-      name: 'aik_list',
+      name: 'list',
       arguments: { category: 'rules' },
     })) as { content: Array<{ text: string }> }
     const text = result.content[0].text
@@ -192,7 +192,7 @@ test('aik_get retrieves a specific item', async () => {
 
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
-      name: 'aik_get',
+      name: 'get',
       arguments: { path: 'rules/test-rule' },
     })) as { content: Array<{ text: string }> }
     const text = result.content[0].text
@@ -203,7 +203,7 @@ test('aik_get retrieves a specific item', async () => {
 test('aik_get returns error for missing path', async () => {
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
-      name: 'aik_get',
+      name: 'get',
       arguments: { path: 'nonexistent' },
     })) as { content: Array<{ text: string }>; isError?: boolean }
     expect((result as any).isError).toBeTruthy()
@@ -219,7 +219,7 @@ test('aik_search finds items by content', async () => {
 
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
-      name: 'aik_search',
+      name: 'search',
       arguments: { query: 'UniqueSearchPhrase' },
     })) as { content: Array<{ text: string }> }
     const text = result.content[0].text
@@ -230,12 +230,12 @@ test('aik_search finds items by content', async () => {
 test('aik_write creates a new item', async () => {
   await withServer(tempDir, async req => {
     await req('tools/call', {
-      name: 'aik_write',
+      name: 'write',
       arguments: { path: 'rules/new-rule', content: '# Fresh Rule' },
     })
 
     const result = (await req('tools/call', {
-      name: 'aik_get',
+      name: 'get',
       arguments: { path: 'rules/new-rule' },
     })) as { content: Array<{ text: string }> }
     expect(result.content[0].text).toContain('Fresh Rule')
@@ -247,12 +247,12 @@ test('aik_write overwrites existing item', async () => {
 
   await withServer(tempDir, async req => {
     await req('tools/call', {
-      name: 'aik_write',
+      name: 'write',
       arguments: { path: 'rules/existing', content: '# Updated Content', overwrite: true },
     })
 
     const result = (await req('tools/call', {
-      name: 'aik_get',
+      name: 'get',
       arguments: { path: 'rules/existing' },
     })) as { content: Array<{ text: string }> }
     expect(result.content[0].text).toContain('Updated Content')
@@ -264,10 +264,10 @@ test('aik_delete removes an item', async () => {
   await createFile(tempDir, 'rules/to-delete.md', '---\ntitle: To Delete\n---\n# Delete Me')
 
   await withServer(tempDir, async req => {
-    await req('tools/call', { name: 'aik_delete', arguments: { path: 'rules/to-delete' } })
+    await req('tools/call', { name: 'delete', arguments: { path: 'rules/to-delete' } })
 
     const result = (await req('tools/call', {
-      name: 'aik_search',
+      name: 'search',
       arguments: { query: 'Delete' },
     })) as { content: Array<{ text: string }> }
     expect(result.content[0].text).not.toContain('to-delete')
@@ -300,7 +300,7 @@ test('aik_list_installed returns installed items for opencode', async () => {
     )
 
     const result = (await req('tools/call', {
-      name: 'aik_list_installed',
+      name: 'list_installed',
       arguments: { projectDir: tempDir },
     })) as { content: Array<{ text: string }> }
 
@@ -324,7 +324,7 @@ test('aik_list_installed returns empty when nothing installed', async () => {
     )
 
     const result = (await req('tools/call', {
-      name: 'aik_list_installed',
+      name: 'list_installed',
       arguments: { projectDir: tempDir },
     })) as { content: Array<{ text: string }> }
 
@@ -335,7 +335,7 @@ test('aik_list_installed returns empty when nothing installed', async () => {
 test('aik_list_installed returns error when no config found', async () => {
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
-      name: 'aik_list_installed',
+      name: 'list_installed',
       arguments: { projectDir: tempDir },
     })) as { isError?: boolean; content?: Array<{ text: string }> }
 
@@ -368,7 +368,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
     )
 
     const result = (await req('tools/call', {
-      name: 'aik_reinstall',
+      name: 'reinstall',
       arguments: { path: 'rules/test-rule', projectDir: tempDir },
     })) as { content: Array<{ text: string }> }
 
@@ -379,7 +379,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
 
     // verify the config entry still exists after reinstall
     const listResult = (await req('tools/call', {
-      name: 'aik_list_installed',
+      name: 'list_installed',
       arguments: { projectDir: tempDir },
     })) as { content: Array<{ text: string }> }
     const listed = JSON.parse(listResult.content[0].text)
@@ -399,7 +399,7 @@ test('aik_reinstall returns error for missing content', async () => {
     )
 
     const result = (await req('tools/call', {
-      name: 'aik_reinstall',
+      name: 'reinstall',
       arguments: { path: 'rules/nonexistent', projectDir: tempDir },
     })) as { content: Array<{ text: string }> }
 
@@ -414,9 +414,9 @@ test('handles concurrent requests', async () => {
 
   await withServer(tempDir, async req => {
     const results = await Promise.all([
-      req('tools/call', { name: 'aik_get', arguments: { path: 'rules/a' } }),
-      req('tools/call', { name: 'aik_get', arguments: { path: 'rules/b' } }),
-      req('tools/call', { name: 'aik_get', arguments: { path: 'rules/c' } }),
+      req('tools/call', { name: 'get', arguments: { path: 'rules/a' } }),
+      req('tools/call', { name: 'get', arguments: { path: 'rules/b' } }),
+      req('tools/call', { name: 'get', arguments: { path: 'rules/c' } }),
     ])
     for (const r of results) {
       expect(r).toBeDefined()

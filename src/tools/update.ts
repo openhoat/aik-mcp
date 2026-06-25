@@ -135,7 +135,7 @@ interface UpdateInfo {
 
 export function registerCheckUpdatesTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_check_updates',
+    'check_updates',
     'Check for installed content items that have newer versions available in the knowledge base.',
     {
       projectDir: z
@@ -152,7 +152,7 @@ export function registerCheckUpdatesTool(server: McpServer, store: ContentStore)
         ),
     },
     async ({ projectDir, agent: preferredAgent }: { projectDir?: string; agent?: Agent }) => {
-      logger.trace({ projectDir, agent: preferredAgent }, 'aik_check_updates called')
+      logger.trace({ projectDir, agent: preferredAgent }, 'check_updates called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const agent = detectAgent(targetDir, preferredAgent)
@@ -223,7 +223,7 @@ export function registerCheckUpdatesTool(server: McpServer, store: ContentStore)
 
 export function registerUpdateTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_update',
+    'update',
     'Update a previously installed content item if a newer version is available in the knowledge base. Supports opencode, Claude Code, and Cline.',
     {
       path: z.string().describe('Path of the content to update (e.g. "rules/typescript")'),
@@ -249,7 +249,7 @@ export function registerUpdateTool(server: McpServer, store: ContentStore): void
       projectDir?: string
       agent?: Agent
     }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'aik_update called')
+      logger.trace({ path, projectDir, agent: preferredAgent }, 'update called')
 
       const storeItem = store.getByPath(path)
       if (!storeItem) {

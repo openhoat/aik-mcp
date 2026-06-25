@@ -8,7 +8,7 @@ const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents', 'commands', 
 
 export function registerListTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_list',
+    'list',
     'List available content items (rules, skills, workflows, agents, commands, templates)',
     {
       category: z.string().optional().describe('Filter by content category'),
@@ -16,7 +16,7 @@ export function registerListTool(server: McpServer, store: ContentStore): void {
       query: z.string().optional().describe('Filter by text query in title/description'),
     },
     async ({ category, tag, query }: { category?: string; tag?: string; query?: string }) => {
-      logger.trace({ category, tag, query }, 'aik_list called')
+      logger.trace({ category, tag, query }, 'list called')
       let items = store.getAll()
 
       if (category) {

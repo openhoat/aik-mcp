@@ -6,7 +6,7 @@ import type { ToolRegistrar } from './shared.js'
 
 export function registerWriteTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_write',
+    'write',
     'Create or update a content item (rules, skills, workflows, agents, commands, templates)',
     {
       path: z
@@ -44,7 +44,7 @@ export function registerWriteTool(server: McpServer, store: ContentStore): void 
       if (description) frontmatter.description = description
       if (tags) frontmatter.tags = tags
 
-      logger.trace({ path, overwrite }, 'aik_write called')
+      logger.trace({ path, overwrite }, 'write called')
 
       try {
         const item = await store.writeContent(path, content, frontmatter, overwrite ?? false)

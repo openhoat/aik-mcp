@@ -9,7 +9,7 @@ export function registerSearchTool(server: McpServer, store: ContentStore): void
   const engine = new SearchEngine()
 
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_search',
+    'search',
     'Full-text fuzzy search across all content items',
     {
       query: z.string().describe('Search query'),
@@ -22,7 +22,7 @@ export function registerSearchTool(server: McpServer, store: ContentStore): void
       limit: z.number().min(1).max(50).optional().default(20).describe('Maximum results'),
     },
     async ({ query, category, limit }: { query: string; category?: string; limit?: number }) => {
-      logger.trace({ query, category, limit }, 'aik_search called')
+      logger.trace({ query, category, limit }, 'search called')
       engine.buildIndex(store.getAll())
       const results = engine.search({ query, category, limit })
 

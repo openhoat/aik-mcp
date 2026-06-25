@@ -96,7 +96,7 @@ export function installCline(
 
 export function registerReinstallTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_reinstall',
+    'reinstall',
     'Reinstall a previously installed content item. Uninstalls the old entry and installs the latest version from the knowledge base. Supports opencode, Claude Code, and Cline.',
     {
       path: z.string().describe('Path of the content to reinstall (e.g. "rules/typescript")'),
@@ -122,7 +122,7 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
       projectDir?: string
       agent?: Agent
     }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'aik_reinstall called')
+      logger.trace({ path, projectDir, agent: preferredAgent }, 'reinstall called')
 
       const item = store.getByPath(path)
       if (!item) {
@@ -201,7 +201,7 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
 
 export function registerInstallTool(server: McpServer, store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_install',
+    'install',
     'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, and Cline.',
     {
       path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
@@ -227,7 +227,7 @@ export function registerInstallTool(server: McpServer, store: ContentStore): voi
       projectDir?: string
       agent?: Agent
     }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'aik_install called')
+      logger.trace({ path, projectDir, agent: preferredAgent }, 'install called')
       const item = store.getByPath(path)
       if (!item) {
         return {

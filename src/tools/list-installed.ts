@@ -53,7 +53,7 @@ function listInstalledCline(configPath: string): InstalledItem[] {
 
 export function registerListInstalledTool(server: McpServer, _store: ContentStore): void {
   ;(server.tool as unknown as ToolRegistrar)(
-    'aik_list_installed',
+    'list_installed',
     'List all aik-installed content items in the current project config. Supports opencode, Claude Code, and Cline.',
     {
       projectDir: z
@@ -68,7 +68,7 @@ export function registerListInstalledTool(server: McpServer, _store: ContentStor
         .describe('Target AI agent. Auto-detected from existing config files if not specified.'),
     },
     async ({ projectDir, agent: preferredAgent }: { projectDir?: string; agent?: Agent }) => {
-      logger.trace({ projectDir, agent: preferredAgent }, 'aik_list_installed called')
+      logger.trace({ projectDir, agent: preferredAgent }, 'list_installed called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const agent = detectAgent(targetDir, preferredAgent)
