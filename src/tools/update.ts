@@ -10,11 +10,11 @@ import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
 import { detectAgent, findExistingConfig } from './shared.js'
 import { uninstallClaudeCode, uninstallCline, uninstallOpenCode } from './uninstall.js'
 
-function parseSemver(version: string): number[] {
+export function parseSemver(version: string): number[] {
   return version.split('.').map(Number)
 }
 
-function isNewer(storeVersion: string, installedVersion: string): boolean {
+export function isNewer(storeVersion: string, installedVersion: string): boolean {
   const store = parseSemver(storeVersion)
   const installed = parseSemver(installedVersion)
   for (let i = 0; i < Math.max(store.length, installed.length); i++) {

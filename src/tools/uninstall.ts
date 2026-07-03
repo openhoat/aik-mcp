@@ -44,7 +44,7 @@ export function uninstallAllOpenCode(configPath: string, targetDir: string): num
   return aikEntries.length
 }
 
-function removeSections(
+export function removeSections(
   content: string,
   isTarget: (text: string) => boolean
 ): { result: string; count: number } {
@@ -68,7 +68,7 @@ function removeSections(
     if (/^<!-- from /.test(line) && isTarget(line)) {
       count++
       i++
-      while (i < lines.length && !/^<!-- from /.test(lines[i])) {
+      while (i < lines.length && !lines[i].startsWith('## ') && !/^<!-- from /.test(lines[i])) {
         i++
       }
       continue
