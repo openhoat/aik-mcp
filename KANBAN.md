@@ -2,7 +2,7 @@
 
 ## Backlog
 
-- [ ] **[MEDIUM]** [test] — Phase 2: install.ts full test suite
+- [x] **[MEDIUM]** [test] — Phase 2: install.ts full test suite
 - [ ] **[MEDIUM]** [test] — Phase 2: uninstall.ts full test suite
 - [ ] **[MEDIUM]** [test] — Phase 2: update.ts full test suite
 - [ ] **[MEDIUM]** [test] — Phase 2: list-installed.ts unit tests

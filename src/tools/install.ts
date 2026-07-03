@@ -8,7 +8,7 @@ import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
 import { detectAgent, findExistingConfig } from './shared.js'
 import { uninstallClaudeCode, uninstallCline, uninstallOpenCode } from './uninstall.js'
 
-function openCodeConfigPath(targetDir: string, existingPath: string | null): string {
+export function openCodeConfigPath(targetDir: string, existingPath: string | null): string {
   if (existingPath) return existingPath
   return resolve(targetDir, '.opencode', 'opencode.jsonc')
 }
