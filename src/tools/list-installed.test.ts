@@ -1,4 +1,3 @@
-import { resolve } from 'node:path'
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { ContentStore } from '../content-store.js'
@@ -18,9 +17,7 @@ jest.unstable_mockModule('../logger.js', () => ({
 
 jest.unstable_mockModule('./shared.js', () => ({
   detectAgent: jest.fn<(dir: string, preferred?: string) => string>(),
-  findExistingConfig: jest.fn<
-    (dir: string) => { path: string; agent: string } | null
-  >(),
+  findExistingConfig: jest.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -31,10 +28,8 @@ const {
   registerListInstalledTool,
 } = await import('./list-installed.js')
 
-const mockDetectAgent =
-  (await import('./shared.js')).detectAgent as jest.Mock
-const mockFindExistingConfig =
-  (await import('./shared.js')).findExistingConfig as jest.Mock
+const mockDetectAgent = (await import('./shared.js')).detectAgent as jest.Mock
+const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as jest.Mock
 
 beforeEach(() => {
   mockReadFileSync.mockReset()
@@ -45,10 +40,7 @@ beforeEach(() => {
 describe('listInstalledOpenCode', () => {
   test('should return installed items from config instructions', () => {
     const config = {
-      instructions: [
-        '.opencode/rules/typescript.md',
-        '.opencode/skills/test-skill.md',
-      ],
+      instructions: ['.opencode/rules/typescript.md', '.opencode/skills/test-skill.md'],
     }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
 
@@ -61,10 +53,7 @@ describe('listInstalledOpenCode', () => {
 
   test('should skip non-.opencode entries', () => {
     const config = {
-      instructions: [
-        '.opencode/rules/ts.md',
-        'other/file',
-      ],
+      instructions: ['.opencode/rules/ts.md', 'other/file'],
     }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
 
@@ -213,9 +202,7 @@ describe('registerListInstalledTool', () => {
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
     })
-    mockReadFileSync.mockReturnValue(
-      '## TS\n\n<source>rules/ts</source>\n'
-    )
+    mockReadFileSync.mockReturnValue('## TS\n\n<source>rules/ts</source>\n')
 
     registerListInstalledTool(server, store)
     const handler = getHandler()
@@ -262,9 +249,7 @@ describe('registerListInstalledTool', () => {
     const result = (await handler({
       projectDir: '/project',
     })) as ToolContent
-    expect(result.content[0].text).toContain(
-      'No aik-installed items found'
-    )
+    expect(result.content[0].text).toContain('No aik-installed items found')
   })
 
   test('should return error when no config found', async () => {

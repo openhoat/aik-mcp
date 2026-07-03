@@ -23,9 +23,7 @@ jest.unstable_mockModule('../logger.js', () => ({
 
 jest.unstable_mockModule('./shared.js', () => ({
   detectAgent: jest.fn<(dir: string, preferred?: string) => string>(),
-  findExistingConfig: jest.fn<
-    (dir: string) => { path: string; agent: string } | null
-  >(),
+  findExistingConfig: jest.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -40,10 +38,8 @@ const {
   registerUninstallTool,
 } = await import('./uninstall.js')
 
-const mockDetectAgent =
-  (await import('./shared.js')).detectAgent as jest.Mock
-const mockFindExistingConfig =
-  (await import('./shared.js')).findExistingConfig as jest.Mock
+const mockDetectAgent = (await import('./shared.js')).detectAgent as jest.Mock
+const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as jest.Mock
 
 beforeEach(() => {
   mockReadFileSync.mockReset()
@@ -170,11 +166,7 @@ describe('uninstallOpenCode', () => {
 describe('uninstallAllOpenCode', () => {
   test('should remove all .opencode entries and files', () => {
     const config = {
-      instructions: [
-        '.opencode/rules/ts.md',
-        '.opencode/skills/test.md',
-        'other/file.md',
-      ],
+      instructions: ['.opencode/rules/ts.md', '.opencode/skills/test.md', 'other/file.md'],
     }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
     mockExistsSync.mockReturnValue(true)
@@ -345,12 +337,8 @@ describe('uninstallAllCline', () => {
 })
 
 function createMockServer() {
-  let installHandler:
-    | ((args: Record<string, unknown>) => Promise<unknown>)
-    | null = null
-  let uninstallAllHandler:
-    | ((args: Record<string, unknown>) => Promise<unknown>)
-    | null = null
+  let installHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
+  let uninstallAllHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
     tool: (
       name: string,
@@ -404,9 +392,7 @@ describe('registerUninstallTool', () => {
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
     })
-    mockReadFileSync.mockReturnValue(
-      '## TS\n\n<source>rules/ts</source>\n'
-    )
+    mockReadFileSync.mockReturnValue('## TS\n\n<source>rules/ts</source>\n')
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
@@ -518,9 +504,7 @@ describe('registerUninstallTool', () => {
       path: '/project/.clinerules',
       agent: 'cline',
     })
-    mockReadFileSync.mockReturnValue(
-      '<!-- from rules/ts -->\n<!-- from rules/test -->\n'
-    )
+    mockReadFileSync.mockReturnValue('<!-- from rules/ts -->\n<!-- from rules/test -->\n')
 
     registerUninstallTool(server, store)
     const handler = getUninstallAllHandler()
