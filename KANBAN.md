@@ -16,3 +16,6 @@
 - [x] **[MEDIUM]** [test] — Phase 2: uninstall.ts full test suite
 - [x] **[MEDIUM]** [test] — Phase 2: list-installed.ts unit tests
 - [x] **[MEDIUM]** [test] — Phase 2: update.ts full test suite
+- [x] **[MEDIUM]** [test] — Phase 3: resources/index.ts test suite (100% coverage)
+- [x] **[MEDIUM]** [test] — Phase 3: content-store.ts coverage (+15% to 75.7% stmts, 56.5% branches)
+- [x] **[MEDIUM]** [docs] — Fix README opencode config (remove .mcp.json reference, use .opencode/opencode.jsonc) and remove redundant badges
