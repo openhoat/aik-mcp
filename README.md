@@ -15,12 +15,7 @@ Rules, skills, workflows, and templates — as plain Markdown, served over the M
   <a href="https://github.com/openhoat/aik-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openhoat/aik-mcp/ci.yml?branch=main&style=flat-square&logo=github&label=CI" alt="CI"></a>
   <a href="https://github.com/openhoat/aik-mcp/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@headwood/aik-mcp?style=flat-square" alt="license"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@headwood/aik-mcp?style=flat-square" alt="node version"></a>
-  <a href="https://github.com/openhoat/aik-mcp/releases"><img src="https://img.shields.io/github/last-commit/openhoat/aik-mcp?style=flat-square&logo=git" alt="last commit"></a>
   <a href="https://codecov.io/gh/openhoat/aik-mcp"><img src="https://codecov.io/gh/openhoat/aik-mcp/branch/main/graph/badge.svg" alt="codecov"></a>
-  <a href="https://github.com/openhoat/aik-mcp/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs welcome"></a>
-  <a href="https://opencode.ai"><img src="https://img.shields.io/badge/opencode-ready-blue?style=flat-square" alt="opencode"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-ready-blue?style=flat-square" alt="Claude Code"></a>
-  <a href="https://cline.bot"><img src="https://img.shields.io/badge/Cline-ready-blue?style=flat-square" alt="Cline"></a>
 </p>
 
 ---
@@ -96,15 +91,17 @@ Your agent speaks MCP on one side. **aik-mcp** speaks your file system on the ot
 
 ### opencode
 
-Add to `.mcp.json` in your project root:
+Add to `opencode.jsonc` or `.opencode/opencode.jsonc` in your project:
 
-```json
+```jsonc
 {
-  "mcpServers": {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
     "aik": {
-      "command": "npx",
-      "args": ["aik-mcp"],
-      "env": {
+      "type": "local",
+      "command": ["npx", "-y", "aik-mcp"],
+      "enabled": true,
+      "environment": {
         "AIK_CONTENT_DIR": "/path/to/your/knowledge",
         "LOG_LEVEL": "info"
       }

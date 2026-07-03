@@ -64,8 +64,8 @@
     "qa:markdown:fix": "markdownlint-cli2 --fix",
     "start": "node build/index.js",
     "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "test:coverage": "NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test:watch": "NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/.bin/jest --watch",
     "typecheck": "tsc --noEmit",
     "validate": "npm run qa && npm run typecheck && npm run build && npm run build:test && npm run test"
   },

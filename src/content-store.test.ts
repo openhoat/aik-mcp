@@ -194,4 +194,97 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
   })
+
+  describe('nested directories', () => {
+    test('scans nested subdirectories', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules', 'subdir'), { recursive: true })
+      await createFile(
+        dir,
+        'rules/subdir/nested.md',
+        `---
+title: Nested Rule
+description: A rule in a subdirectory
+tags: [nested]
+---
+# Nested Content`
+      )
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].path).toBe('rules/subdir/nested')
+      expect(all[0].title).toBe('Nested Rule')
+      expect(all[0].description).toBe('A rule in a subdirectory')
+      expect(all[0].tags).toEqual(['nested'])
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('re-initialization', () => {
+    test('reloads existing files on re-init', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(
+        dir,
+        'rules/original.md',
+        `---
+title: Original
+description: Original description
+---
+Original content`
+      )
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()[0].title).toBe('Original')
+
+      await store.writeContent(
+        'rules/original',
+        '# Updated\n\nUpdated content',
+        { title: 'Updated', description: 'Updated description' },
+        true
+      )
+
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()[0].title).toBe('Updated')
+      expect(store.getAll()[0].description).toBe('Updated description')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('watch mode', () => {
+    test('initializes with watch mode', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('destroy stops watcher', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+      store.destroy()
+
+      expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
 })
