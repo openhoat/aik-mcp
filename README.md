@@ -1,67 +1,53 @@
 <p align="center">
   <h1 align="center">aik-mcp</h1>
   <p align="center">
-    <em>AI Knowledge Repository — MCP Server</em>
-  </p>
-  <p align="center">
-    <a href="https://www.npmjs.com/package/@headwood/aik-mcp"><img src="https://img.shields.io/npm/v/@headwood/aik-mcp?style=flat-square&logo=npm" alt="npm version"></a>
-    <a href="https://github.com/openhoat/aik-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openhoat/aik-mcp/ci.yml?branch=main&style=flat-square&logo=github&label=CI" alt="CI"></a>
-    <a href="https://github.com/openhoat/aik-mcp/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@headwood/aik-mcp?style=flat-square" alt="license"></a>
-    <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@headwood/aik-mcp?style=flat-square" alt="node version"></a>
-    <a href="https://github.com/openhoat/aik-mcp"><img src="https://img.shields.io/github/last-commit/openhoat/aik-mcp?style=flat-square&logo=git" alt="last commit"></a>
-    <a href="https://github.com/openhoat/aik-mcp/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs welcome"></a>
+    <em>AI Knowledge — MCP Server</em>
   </p>
 </p>
 
-**aik-mcp** is an [MCP](https://modelcontextprotocol.io) server that turns a directory of Markdown files into a queryable knowledge base for any MCP-compatible AI agent — opencode, Claude Code, Cline, and others.
+<p align="center">
+Give your AI agents a memory.<br>
+Rules, skills, workflows, and templates — as plain Markdown, served over the Model Context Protocol.
+</p>
 
-Write rules, skills, workflows, and templates as plain Markdown files with frontmatter. Your AI agent can then discover, read, search, and install them at runtime.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@headwood/aik-mcp"><img src="https://img.shields.io/npm/v/@headwood/aik-mcp?style=flat-square&logo=npm" alt="npm version"></a>
+  <a href="https://github.com/openhoat/aik-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openhoat/aik-mcp/ci.yml?branch=main&style=flat-square&logo=github&label=CI" alt="CI"></a>
+  <a href="https://github.com/openhoat/aik-mcp/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@headwood/aik-mcp?style=flat-square" alt="license"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@headwood/aik-mcp?style=flat-square" alt="node version"></a>
+  <a href="https://github.com/openhoat/aik-mcp/releases"><img src="https://img.shields.io/github/last-commit/openhoat/aik-mcp?style=flat-square&logo=git" alt="last commit"></a>
+  <a href="https://codecov.io/gh/openhoat/aik-mcp"><img src="https://codecov.io/gh/openhoat/aik-mcp/branch/main/graph/badge.svg" alt="codecov"></a>
+  <a href="https://github.com/openhoat/aik-mcp/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs welcome"></a>
+  <a href="https://opencode.ai"><img src="https://img.shields.io/badge/opencode-ready-blue?style=flat-square" alt="opencode"></a>
+  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-ready-blue?style=flat-square" alt="Claude Code"></a>
+  <a href="https://cline.bot"><img src="https://img.shields.io/badge/Cline-ready-blue?style=flat-square" alt="Cline"></a>
+</p>
 
-## Table of Contents
+---
 
-- [Installation](#installation)
-- [Quick start](#quick-start)
-- [Client configuration](#client-configuration)
-  - [opencode](#opencode)
-  - [Claude Code](#claude-code)
-  - [Cline](#cline)
-- [Environment](#environment)
-- [CLI options](#cli-options)
-- [MCP tools](#mcp-tools)
-- [Resources](#resources)
-- [Content structure](#content-structure)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+**aik-mcp** turns a directory of Markdown files into a live, queryable knowledge base for any [MCP](https://modelcontextprotocol.io)-compatible AI agent — [opencode](https://opencode.ai), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Cline](https://cline.bot), and more.
 
-## Installation
+Write your team's conventions, reusable workflows, agent prompts, and project templates as plain `.md` files with YAML frontmatter. **aik-mcp** serves them on demand — your agent can discover, read, search, and install them at runtime, across any project.
 
-```bash
-# Run directly (no install)
-npx aik-mcp
+No database. No API to build. Just Markdown.
 
-# Install globally
-npm install -g aik-mcp
-aik-mcp
+## Features
 
-# From a local build
-git clone https://github.com/openhoat/aik-mcp.git
-cd aik-mcp
-npm install
-npm run build
-```
+| Icon | Feature | Why it matters |
+| --- | --- | --- |
+| 📝 | **Knowledge as Markdown** | Plain `.md` files with frontmatter. Version them with git. Review them in PRs. |
+| ⚡ | **Zero config** | `npx aik-mcp` runs immediately. Point it at a folder of Markdown files. Done. |
+| 🔎 | **Full-text search** | Fuzzy search across every rule, skill, and template — powered by [Fuse.js](https://fusejs.io). |
+| 📦 | **Install on demand** | Push knowledge directly into your agent's runtime config with a single tool call. |
+| 👀 | **Live sync** | A file watcher detects changes instantly. No restart. No downtime. |
+| 🔌 | **Universal MCP** | Works with opencode, Claude Code, Cline, and any MCP-compatible client. |
 
 ## Quick start
 
-### 1. Create a content directory
+### 1. Create a rule
 
 ```bash
-mkdir -p my-knowledge/rules my-knowledge/skills my-knowledge/workflows
-```
-
-### 2. Add a rule
-
-```bash
+mkdir -p my-knowledge/rules
 cat > my-knowledge/rules/typescript.md << 'EOF'
 ---
 title: TypeScript Conventions
@@ -71,7 +57,7 @@ version: "1.0.0"
 compatibility: [opencode, claude-code, cline]
 ---
 
-# TypeScript Conventions
+## TypeScript Conventions
 
 - Use explicit types for public API surfaces
 - Prefer `interface` over `type` for object shapes
@@ -79,25 +65,38 @@ compatibility: [opencode, claude-code, cline]
 EOF
 ```
 
-### 3. Start the server
+### 2. Start the server
 
 ```bash
-AIK_CONTENT_DIR=./my-knowledge aik-mcp
+AIK_CONTENT_DIR=./my-knowledge npx aik-mcp
 ```
 
-### 4. Configure your AI agent
+### 3. Ask your agent
 
-See [Client configuration](#client-configuration) below.
+```text
+"Find and apply the TypeScript conventions rule for this project."
+```
 
-### 5. Ask your agent
+Your agent calls `aik_search`, reads the rule, and applies it — all transparently through MCP.
 
-Once connected, your agent can use tools like `aik_search` and `aik_get` to find and apply your knowledge.
+## How it works
+
+```mermaid
+graph LR
+    Agent[AI Agent<br>opencode / Claude Code / Cline] -->|MCP JSON-RPC| Server(aik-mcp)
+    Server --> Store[Content Store<br>in memory]
+    Store --> Files[Markdown files<br>rules/ skills/ workflows/ ...]
+    Server --> Watcher[File Watcher<br>live sync on change]
+    Server --> Tools[MCP Tools<br>list, get, search, write,<br>install, uninstall]
+```
+
+Your agent speaks MCP on one side. **aik-mcp** speaks your file system on the other. Everything is cached in memory for fast lookups, and a file watcher keeps the cache up to date.
 
 ## Client configuration
 
 ### opencode
 
-Add to your project's `.mcp.json`:
+Add to `.mcp.json` in your project root:
 
 ```json
 {
@@ -106,7 +105,7 @@ Add to your project's `.mcp.json`:
       "command": "npx",
       "args": ["aik-mcp"],
       "env": {
-        "AIK_CONTENT_DIR": "/path/to/your/content",
+        "AIK_CONTENT_DIR": "/path/to/your/knowledge",
         "LOG_LEVEL": "info"
       }
     }
@@ -116,7 +115,7 @@ Add to your project's `.mcp.json`:
 
 ### Claude Code
 
-Add to your project's `.mcp.json` (or `~/.claude/settings.json` for global use):
+Add to `.mcp.json` or `~/.claude/settings.json`:
 
 ```json
 {
@@ -125,7 +124,7 @@ Add to your project's `.mcp.json` (or `~/.claude/settings.json` for global use):
       "command": "npx",
       "args": ["aik-mcp"],
       "env": {
-        "AIK_CONTENT_DIR": "/path/to/your/content",
+        "AIK_CONTENT_DIR": "/path/to/your/knowledge",
         "LOG_LEVEL": "info"
       }
     }
@@ -135,7 +134,7 @@ Add to your project's `.mcp.json` (or `~/.claude/settings.json` for global use):
 
 ### Cline
 
-Add to your `cline.json` or project `.mcp.json`:
+Add to `cline.json` or project `.mcp.json`:
 
 ```json
 {
@@ -144,7 +143,7 @@ Add to your `cline.json` or project `.mcp.json`:
       "command": "npx",
       "args": ["aik-mcp"],
       "env": {
-        "AIK_CONTENT_DIR": "/path/to/your/content",
+        "AIK_CONTENT_DIR": "/path/to/your/knowledge",
         "LOG_LEVEL": "info"
       }
     }
@@ -152,22 +151,36 @@ Add to your `cline.json` or project `.mcp.json`:
 }
 ```
 
-> **Tip:** Set `AIK_CONTENT_DIR` to a shared location (Dropbox, git repo, etc.) to use the same knowledge base across projects and agents.
+> **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS, etc.) to use the same knowledge base across projects and agents.
 
-## Environment
+## Content structure
 
-| Variable | Description |
+Content items are organized by category:
+
+| Directory | Purpose |
 | --- | --- |
-| `AIK_CONTENT_DIR` | Path to the content directory (default: current working directory) |
-| `LOG_LEVEL` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` (default: `info`) |
+| `rules/` | Coding standards, conventions, quality gates |
+| `skills/` | Reusable instruction blocks (prompts, recipes) |
+| `workflows/` | Multi-step process definitions |
+| `agents/` | Specialized agent configurations |
+| `commands/` | Custom CLI command definitions |
+| `templates/` | File and project scaffolding |
 
-## CLI options
+Each file is a Markdown document with YAML frontmatter:
 
-| Flag | Description |
-| --- | --- |
-| `--http` | Start in HTTP mode (default: stdio) |
-| `--port <n>` | HTTP port (default: 3456) |
-| `--no-watch` | Disable file watching |
+```markdown
+---
+title: "My Rule"
+description: "What this rule enforces"
+tags: [tag1, tag2]
+version: "1.0.0"
+compatibility: [opencode, claude-code, cline]
+---
+
+## My Rule
+
+Content here...
+```
 
 ## MCP tools
 
@@ -176,55 +189,35 @@ Add to your `cline.json` or project `.mcp.json`:
 | `aik_list` | List content items, optionally filtered by category or tag |
 | `aik_get` | Retrieve a specific item by path (e.g. `rules/typescript`) |
 | `aik_search` | Full-text fuzzy search across all content |
-| `aik_write` | Create or update a content item |
+| `aik_write` | Create or update a content item from the agent |
 | `aik_delete` | Delete a content item |
 | `aik_install` | Install an item into the project's agent config |
-| `aik_reinstall` | Uninstall + reinstall the latest version of an item |
+| `aik_reinstall` | Reinstall the latest version of an installed item |
 | `aik_uninstall` | Remove an installed item from the project |
 | `aik_uninstall_all` | Remove all aik-installed items from the project |
 | `aik_list_installed` | List items currently installed in the project |
 
-### Resources
+## Resources
 
-- `aik://{category}` — list items in a category (e.g. `aik://rules`)
-- `aik://search?q=...` — search items by keyword
-
-### When working on a task
-
-1. Use `aik_list` or `aik_search` to find relevant content
-2. Use `aik_get` to read specific items
-3. Apply the relevant rules, follow the workflows, and invoke skills as needed
-
-## Content structure
-
-Content items are organized by category:
-
-| Directory | Content |
+| URI | Description |
 | --- | --- |
-| `rules/` | Coding standards, workflows, conventions |
-| `skills/` | Reusable instruction blocks |
-| `workflows/` | Multi-step workflow definitions |
-| `agents/` | Specialized agent definitions |
-| `commands/` | Custom command definitions |
-| `templates/` | Project/component templates |
+| `aik://{category}` | List all items in a category (e.g. `aik://rules`) |
+| `aik://search?q=...` | Search items by keyword |
 
-### Adding content
+## CLI options
 
-Create a `.md` file with frontmatter in the appropriate category directory:
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--http` | — | Start in HTTP/SSE mode instead of stdio |
+| `--port <n>` | `3456` | HTTP server port (only with `--http`) |
+| `--no-watch` | — | Disable file watching |
 
-```yaml
----
-title: "My Rule"
-description: "Description of the rule"
-tags: [tag1, tag2]
-version: "1.0.0"
-compatibility: [opencode, claude-code, cline]
----
+## Environment variables
 
-# My Rule
-
-Content here...
-```
+| Variable | Default | Description |
+| --- | --- | --- |
+| `AIK_CONTENT_DIR` | `.` | Path to the content directory |
+| `LOG_LEVEL` | `info` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
 
 ## Development
 
@@ -235,7 +228,7 @@ npm run test
 npm run qa
 ```
 
-### Commands reference
+### Scripts
 
 | Script | Description |
 | --- | --- |
@@ -243,11 +236,12 @@ npm run qa
 | `npm test` | Run Jest test suite |
 | `npm run qa` | Lint + format check (Biome + markdownlint) |
 | `npm run qa:fix` | Auto-fix lint and formatting issues |
-| `npm run validate` | Run qa + build + test (same as CI) |
+| `npm run typecheck` | TypeScript type checking (`tsc --noEmit`) |
+| `npm run validate` | Full pipeline: qa → typecheck → build → test |
 
 ## Contributing
 
-Contributions are welcome! Please open an [issue](https://github.com/openhoat/aik-mcp/issues) or submit a PR.
+Contributions are welcome! Open an [issue](https://github.com/openhoat/aik-mcp/issues) or submit a PR.
 
 See the [changelog](https://github.com/openhoat/aik-mcp/releases) for release history.
 
