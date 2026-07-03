@@ -2,7 +2,6 @@
 
 ## Backlog
 
-- [ ] **[LOW]** [test] — Phase 3: resources/index.ts + http.ts + content-store branches
 - [ ] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
 
 ## In Progress
