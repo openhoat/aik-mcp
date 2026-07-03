@@ -239,7 +239,7 @@ npm run qa
 
 | Script | Description |
 | --- | --- |
-| `npm run build` | Compile TypeScript to `dist/` |
+| `npm run build` | Compile TypeScript to `build/` |
 | `npm test` | Run Jest test suite |
 | `npm run qa` | Lint + format check (Biome + markdownlint) |
 | `npm run qa:fix` | Auto-fix lint and formatting issues |

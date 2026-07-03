@@ -1,5 +1,5 @@
-import type { ContentItem } from './content-store'
-import { SearchEngine } from './search'
+import type { ContentItem } from './content-store.js'
+import { SearchEngine } from './search.js'
 
 function makeItem(overrides: Partial<ContentItem>): ContentItem {
   return {
@@ -21,13 +21,13 @@ function makeItem(overrides: Partial<ContentItem>): ContentItem {
 }
 
 describe('SearchEngine', () => {
-  it('returns empty for empty index', () => {
+  test('returns empty for empty index', () => {
     const engine = new SearchEngine()
     engine.buildIndex([])
     expect(engine.search({ query: 'test' })).toEqual([])
   })
 
-  it('finds items by title', () => {
+  test('finds items by title', () => {
     const engine = new SearchEngine()
     const items = [
       makeItem({ path: 'rules/ts', title: 'TypeScript Rules', content: 'Some content' }),
@@ -40,7 +40,7 @@ describe('SearchEngine', () => {
     expect(results[0].item.path).toBe('rules/ts')
   })
 
-  it('finds items by description', () => {
+  test('finds items by description', () => {
     const engine = new SearchEngine()
     const items = [
       makeItem({ path: 'rules/err', description: 'How to handle errors in production' }),
@@ -49,10 +49,10 @@ describe('SearchEngine', () => {
     engine.buildIndex(items)
 
     const results = engine.search({ query: 'errors' })
-    expect(results.some(r => r.item.path === 'rules/err')).toBe(true)
+    expect(results.some((r: { item: { path: string } }) => r.item.path === 'rules/err')).toBe(true)
   })
 
-  it('finds items by tags', () => {
+  test('finds items by tags', () => {
     const engine = new SearchEngine()
     const items = [
       makeItem({ path: 'rules/sec', tags: ['security', 'authentication'] }),
@@ -61,10 +61,10 @@ describe('SearchEngine', () => {
     engine.buildIndex(items)
 
     const results = engine.search({ query: 'security' })
-    expect(results.some(r => r.item.path === 'rules/sec')).toBe(true)
+    expect(results.some((r: { item: { path: string } }) => r.item.path === 'rules/sec')).toBe(true)
   })
 
-  it('filters by category', () => {
+  test('filters by category', () => {
     const engine = new SearchEngine()
     const items = [
       makeItem({ path: 'rules/r1', category: 'rules', title: 'test' }),
@@ -77,7 +77,7 @@ describe('SearchEngine', () => {
     expect(results[0].item.category).toBe('skills')
   })
 
-  it('respects limit parameter', () => {
+  test('respects limit parameter', () => {
     const engine = new SearchEngine()
     const items = Array.from({ length: 10 }, (_, i) =>
       makeItem({ path: `rules/r${i}`, title: 'test' })
@@ -88,7 +88,7 @@ describe('SearchEngine', () => {
     expect(results.length).toBe(3)
   })
 
-  it('returns sorted by relevance (best score first)', () => {
+  test('returns sorted by relevance (best score first)', () => {
     const engine = new SearchEngine()
     const items = [
       makeItem({ path: 'rules/exact', title: 'typescript coding standards' }),

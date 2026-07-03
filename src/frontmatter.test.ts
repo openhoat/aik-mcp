@@ -1,7 +1,7 @@
-import { frontmatterSchema, parseFrontmatter, serializeFrontmatter } from './frontmatter'
+import { frontmatterSchema, parseFrontmatter, serializeFrontmatter } from './frontmatter.js'
 
 describe('parseFrontmatter', () => {
-  it('parses full frontmatter with all fields', () => {
+  test('parses full frontmatter with all fields', () => {
     const raw = `---
 title: Test Rule
 description: A test rule description
@@ -30,7 +30,7 @@ Some content here.`
     expect(result.body).toContain('Some content here.')
   })
 
-  it('returns defaults when no frontmatter', () => {
+  test('returns defaults when no frontmatter', () => {
     const raw = '# No Frontmatter\n\nJust content.'
     const result = parseFrontmatter(raw)
     expect(result.frontmatter.title).toBe('')
@@ -39,7 +39,7 @@ Some content here.`
     expect(result.body).toBe('# No Frontmatter\n\nJust content.')
   })
 
-  it('parses partial frontmatter', () => {
+  test('parses partial frontmatter', () => {
     const raw = `---
 title: Partial
 tags: [one]
@@ -55,7 +55,7 @@ Body text`
     expect(result.body).toBe('Body text')
   })
 
-  it('handles malformed YAML gracefully', () => {
+  test('handles malformed YAML gracefully', () => {
     const raw = `---
 title: unclosed string
 invalid: [broken
@@ -67,13 +67,13 @@ Body`
     expect(typeof result.frontmatter.title).toBe('string')
   })
 
-  it('handles empty file', () => {
+  test('handles empty file', () => {
     const result = parseFrontmatter('')
     expect(result.frontmatter.title).toBe('')
     expect(result.body).toBe('')
   })
 
-  it('handles file with only frontmatter', () => {
+  test('handles file with only frontmatter', () => {
     const raw = `---
 title: Just Frontmatter
 ---
@@ -84,7 +84,7 @@ title: Just Frontmatter
     expect(result.body).toBe('')
   })
 
-  it('strips leading whitespace before frontmatter', () => {
+  test('strips leading whitespace before frontmatter', () => {
     const raw = `
 
 
@@ -98,10 +98,21 @@ Body`
     expect(result.frontmatter.title).toBe('Leading Whitespace')
     expect(result.body).toBe('Body')
   })
+
+  test('handles unknown compatibility values gracefully', () => {
+    const raw = `---
+title: Custom Compatibility
+compatibility: [opencode, copilot, unknown-agent]
+---
+Body`
+    const result = parseFrontmatter(raw)
+    expect(result.frontmatter.title).toBe('Custom Compatibility')
+    expect(result.frontmatter.compatibility).toEqual(['opencode', 'copilot', 'unknown-agent'])
+  })
 })
 
 describe('serializeFrontmatter', () => {
-  it('serializes non-empty fields', () => {
+  test('serializes non-empty fields', () => {
     const fm = frontmatterSchema.parse({
       title: 'Test',
       tags: ['a', 'b'],
@@ -114,7 +125,7 @@ describe('serializeFrontmatter', () => {
     expect(result).toContain('- b')
   })
 
-  it('omits empty fields', () => {
+  test('omits empty fields', () => {
     const fm = frontmatterSchema.parse({})
     const result = serializeFrontmatter(fm)
     expect(result).not.toContain('title:')

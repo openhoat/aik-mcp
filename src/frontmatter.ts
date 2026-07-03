@@ -6,9 +6,7 @@ export const frontmatterSchema = z.object({
   description: z.string().default(''),
   tags: z.array(z.string()).default([]),
   version: z.string().default('1.0.0'),
-  compatibility: z
-    .array(z.enum(['opencode', 'claude-code', 'cline']))
-    .default(['opencode', 'claude-code', 'cline']),
+  compatibility: z.array(z.string()).default(['opencode', 'claude-code', 'cline']),
   author: z.string().default(''),
   created: z.string().default(''),
   updated: z.string().default(''),

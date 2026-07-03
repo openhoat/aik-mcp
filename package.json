@@ -32,12 +32,12 @@
     "access": "public"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "bin": {
-    "aik-mcp": "dist/index.js"
+    "aik-mcp": "build/index.js"
   },
   "files": [
-    "dist",
+    "build",
     "LICENSE",
     "README.md"
   ],
@@ -50,22 +50,24 @@
     "npm": "10.9.2"
   },
   "scripts": {
-    "prepublishOnly": "npm run validate",
-    "build": "tsc && cp -r src/built-in dist/built-in",
+    "build": "tsc -p tsconfig.build.json && cp -r src/built-in build/built-in",
+    "build:test": "tsc -p tsconfig.test.json",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.js",
+    "prepare": "husky",
+    "prepublishOnly": "npm run validate",
     "qa": "npm run qa:biome && npm run qa:markdown",
-    "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
     "qa:biome": "biome check .",
     "qa:biome:fix": "biome check --write --unsafe .",
+    "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
     "qa:markdown": "markdownlint-cli2",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
-    "start": "node dist/index.js",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "start": "node build/index.js",
+    "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests",
     "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
-    "validate": "npm run qa && npm run build && npm run test",
-    "prepare": "husky",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run qa && npm run typecheck && npm run build && npm run build:test && npm run test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",

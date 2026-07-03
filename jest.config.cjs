@@ -1,3 +1,5 @@
+process.env.LOG_LEVEL = 'silent'
+
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const config = {
   preset: 'ts-jest/presets/default-esm',

@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { ContentStore } from './content-store'
+import { ContentStore } from './content-store.js'
 
 function createTempDir(): string {
   return mkdtempSync(join(tmpdir(), 'aik-test-'))
@@ -21,9 +21,14 @@ const config = (dir: string) => ({
   watch: false,
 })
 
+let store: ContentStore | undefined
+
 describe('ContentStore', () => {
+  afterEach(() => {
+    store?.destroy()
+  })
   describe('scan and query', () => {
-    it('scans rules directory', async () => {
+    test('scans rules directory', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await createFile(
@@ -37,7 +42,7 @@ tags: [test]
 # Content`
       )
 
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       const all = store.getAll()
@@ -51,14 +56,14 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('scans multiple categories', async () => {
+    test('scans multiple categories', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await mkdir(join(dir, 'skills'), { recursive: true })
       await createFile(dir, 'rules/r1.md', '---\ntitle: Rule 1\n---\nR1')
       await createFile(dir, 'skills/s1.md', '---\ntitle: Skill 1\n---\nS1')
 
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       expect(store.getByCategory('rules').length).toBe(1)
@@ -68,9 +73,9 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('ignores non-existent directories', async () => {
+    test('ignores non-existent directories', async () => {
       const dir = createTempDir()
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
       expect(store.getAll()).toEqual([])
       await rm(dir, { recursive: true, force: true })
@@ -78,12 +83,12 @@ tags: [test]
   })
 
   describe('getByPath', () => {
-    it('finds content by path', async () => {
+    test('finds content by path', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await createFile(dir, 'rules/my-rule.md', '---\ntitle: My Rule\n---\nBody')
 
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       const item = store.getByPath('rules/my-rule')
@@ -94,9 +99,9 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('returns undefined for non-existent path', async () => {
+    test('returns undefined for non-existent path', async () => {
       const dir = createTempDir()
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
       expect(store.getByPath('rules/nope')).toBeUndefined()
       await rm(dir, { recursive: true, force: true })
@@ -104,10 +109,10 @@ tags: [test]
   })
 
   describe('writeContent', () => {
-    it('creates a new content file', async () => {
+    test('creates a new content file', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       const item = await store.writeContent(
@@ -127,11 +132,11 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('throws when overwrite is false and file exists', async () => {
+    test('throws when overwrite is false and file exists', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await createFile(dir, 'rules/existing.md', '# Existing')
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       await expect(store.writeContent('rules/existing', '# New', {}, false)).rejects.toThrow(
@@ -141,11 +146,11 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('overwrites when overwrite is true', async () => {
+    test('overwrites when overwrite is true', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await createFile(dir, 'rules/existing.md', '# Original')
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       const item = await store.writeContent(
@@ -163,11 +168,11 @@ tags: [test]
   })
 
   describe('deleteContent', () => {
-    it('deletes an existing content file', async () => {
+    test('deletes an existing content file', async () => {
       const dir = createTempDir()
       await mkdir(join(dir, 'rules'), { recursive: true })
       await createFile(dir, 'rules/to-delete.md', '# To Delete')
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
 
       expect(store.getAll().length).toBe(1)
@@ -180,9 +185,9 @@ tags: [test]
       await rm(dir, { recursive: true, force: true })
     })
 
-    it('returns false for non-existent content', async () => {
+    test('returns false for non-existent content', async () => {
       const dir = createTempDir()
-      const store = new ContentStore(config(dir))
+      store = new ContentStore(config(dir))
       await store.init()
       const deleted = await store.deleteContent('rules/nope')
       expect(deleted).toBe(false)

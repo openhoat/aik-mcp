@@ -57,13 +57,13 @@ export function installClaudeCode(
   rawContent: string
 ): { path: string; alreadyInstalled: boolean } {
   const mdPath = configPath ?? resolve(targetDir, 'CLAUDE.md')
-  const sectionId = `aik:${itemPath}`
+  const sourceTag = `<source>${itemPath}</source>`
 
-  const section = `\n## ${title}\n\n<source>${itemPath}</source>\n\n${rawContent.trimEnd()}\n`
+  const section = `\n## ${title}\n\n${sourceTag}\n\n${rawContent.trimEnd()}\n`
 
   if (existsSync(mdPath)) {
     const existing = readFileSync(mdPath, 'utf-8')
-    if (existing.includes(sectionId)) {
+    if (existing.includes(sourceTag)) {
       return { path: mdPath, alreadyInstalled: true }
     }
   }
@@ -80,12 +80,12 @@ export function installCline(
 ): { path: string; alreadyInstalled: boolean } {
   const rulesPath = configPath ?? resolve(targetDir, '.clinerules')
 
-  const sectionId = `aik:${itemPath}`
-  const entry = `\n<!-- from ${itemPath} -->\n${rawContent.trimEnd()}\n`
+  const marker = `<!-- from ${itemPath} -->`
+  const entry = `\n${marker}\n${rawContent.trimEnd()}\n`
 
   if (existsSync(rulesPath)) {
     const existing = readFileSync(rulesPath, 'utf-8')
-    if (existing.includes(sectionId)) {
+    if (existing.includes(marker)) {
       return { path: rulesPath, alreadyInstalled: true }
     }
   }

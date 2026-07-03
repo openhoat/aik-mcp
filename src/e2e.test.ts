@@ -6,7 +6,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const distIndex = resolve(__dirname, '../dist/index.js')
+const distIndex = resolve(__dirname, '../build/index.js')
 
 function createTempDir(): string {
   return mkdtempSync(join(tmpdir(), 'aik-e2e-'))
@@ -124,11 +124,8 @@ async function withServer<T>(
     await connect(proc)
     return await fn((method, params) => request(proc, method, params))
   } finally {
-    proc.kill()
-    await new Promise<void>(resolve => {
-      proc.on('exit', () => resolve())
-      setTimeout(() => resolve(), 1000)
-    })
+    proc.kill('SIGKILL')
+    await new Promise<void>(resolve => proc.on('exit', () => resolve()))
   }
 }
 
