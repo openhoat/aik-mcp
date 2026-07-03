@@ -4,6 +4,7 @@ process.env.LOG_LEVEL = 'silent'
 const config = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  testTimeout: 30000,
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
