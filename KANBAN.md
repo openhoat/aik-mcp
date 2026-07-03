@@ -19,3 +19,5 @@
 - [x] **[MEDIUM]** [test] — Phase 3: resources/index.ts test suite (100% coverage)
 - [x] **[MEDIUM]** [test] — Phase 3: content-store.ts coverage (+15% to 75.7% stmts, 56.5% branches)
 - [x] **[MEDIUM]** [docs] — Fix README opencode config (remove .mcp.json reference, use .opencode/opencode.jsonc) and remove redundant badges
+- [x] **[MEDIUM]** [infra] — Set up custom changelog generator script including all commit types (test/chore/docs/refactor/perf/style)
+- [x] **[MEDIUM]** [docs] — Update aik knowledge base: create changelog-script template, update generate-changelog skill, update log_changes rule, update worktree rule (allow main commits)

@@ -52,7 +52,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && cp -r src/built-in build/built-in",
     "build:test": "tsc -p tsconfig.test.json",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "changelog": "node scripts/changelog.mjs",
     "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.js",
     "prepare": "husky",
     "prepublishOnly": "npm run validate",

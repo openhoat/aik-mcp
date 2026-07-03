@@ -41,3 +41,5 @@
 ### Features
 
 * add built-in instructions system and update tools ([9d0c633](https://github.com/openhoat/aik-mcp/commit/9d0c6332ab3912edfacdeff74e566d720731a348))
+
+## 0.0.1 (2026-06-23)
