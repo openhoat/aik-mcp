@@ -26,7 +26,7 @@ export function isNewer(storeVersion: string, installedVersion: string): boolean
   return false
 }
 
-function getInstalledVersionOpenCode(targetDir: string, itemPath: string): string | null {
+export function getInstalledVersionOpenCode(targetDir: string, itemPath: string): string | null {
   const fullPath = resolve(targetDir, '.opencode', `${itemPath}.md`)
   if (!existsSync(fullPath)) return null
   try {
@@ -37,7 +37,7 @@ function getInstalledVersionOpenCode(targetDir: string, itemPath: string): strin
   }
 }
 
-function getInstalledVersionClaudeCode(configPath: string, itemPath: string): string | null {
+export function getInstalledVersionClaudeCode(configPath: string, itemPath: string): string | null {
   try {
     const content = readFileSync(configPath, 'utf-8')
     const sourceTag = `<source>${itemPath}</source>`
@@ -57,7 +57,7 @@ function getInstalledVersionClaudeCode(configPath: string, itemPath: string): st
   }
 }
 
-function getInstalledVersionCline(configPath: string, itemPath: string): string | null {
+export function getInstalledVersionCline(configPath: string, itemPath: string): string | null {
   try {
     const content = readFileSync(configPath, 'utf-8')
     const marker = `<!-- from ${itemPath} -->`
@@ -72,7 +72,7 @@ function getInstalledVersionCline(configPath: string, itemPath: string): string 
   }
 }
 
-function getInstalledVersion(
+export function getInstalledVersion(
   targetDir: string,
   itemPath: string,
   agent: Agent,
@@ -88,7 +88,7 @@ function getInstalledVersion(
   }
 }
 
-function listInstalledOpenCode(configPath: string): string[] {
+export function listInstalledOpenCode(configPath: string): string[] {
   const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
   const instructions = config.instructions ?? []
   const results: string[] = []
@@ -103,7 +103,7 @@ function listInstalledOpenCode(configPath: string): string[] {
   return results
 }
 
-function listInstalledClaudeCode(configPath: string): string[] {
+export function listInstalledClaudeCode(configPath: string): string[] {
   const content = readFileSync(configPath, 'utf-8')
   const results: string[] = []
   const sectionRegex = /^## (.+)$\n(?:.|\n)*?^<source>([\w-]+\/[\w./-]+)<\/source>/gm
@@ -115,7 +115,7 @@ function listInstalledClaudeCode(configPath: string): string[] {
   return results
 }
 
-function listInstalledCline(configPath: string): string[] {
+export function listInstalledCline(configPath: string): string[] {
   const content = readFileSync(configPath, 'utf-8')
   const results: string[] = []
   const markerRegex = /<!-- from ([\w-]+\/[\w./-]+) -->/g
