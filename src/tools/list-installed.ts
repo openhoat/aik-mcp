@@ -12,7 +12,7 @@ interface InstalledItem {
   title: string | null
 }
 
-function listInstalledOpenCode(configPath: string, _targetDir: string): InstalledItem[] {
+export function listInstalledOpenCode(configPath: string, _targetDir: string): InstalledItem[] {
   const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
   const instructions = config.instructions ?? []
   const results: InstalledItem[] = []
@@ -27,7 +27,7 @@ function listInstalledOpenCode(configPath: string, _targetDir: string): Installe
   return results
 }
 
-function listInstalledClaudeCode(configPath: string): InstalledItem[] {
+export function listInstalledClaudeCode(configPath: string): InstalledItem[] {
   const content = readFileSync(configPath, 'utf-8')
   const results: InstalledItem[] = []
   const sectionRegex = /^## (.+)$\n(?:.|\n)*?^<source>([\w-]+\/[\w./-]+)<\/source>/gm
@@ -39,7 +39,7 @@ function listInstalledClaudeCode(configPath: string): InstalledItem[] {
   return results
 }
 
-function listInstalledCline(configPath: string): InstalledItem[] {
+export function listInstalledCline(configPath: string): InstalledItem[] {
   const content = readFileSync(configPath, 'utf-8')
   const results: InstalledItem[] = []
   const markerRegex = /<!-- from ([\w-]+\/[\w./-]+) -->/g
