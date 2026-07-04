@@ -134,6 +134,9 @@
     },
     "test": {
       "command": "vitest run",
+      "dependencies": [
+        "build"
+      ],
       "files": [
         "src/**/*.ts",
         "vitest.config.ts",
@@ -143,6 +146,9 @@
     },
     "test:coverage": {
       "command": "vitest run --coverage",
+      "dependencies": [
+        "build"
+      ],
       "files": [
         "src/**/*.ts",
         "vitest.config.ts",
