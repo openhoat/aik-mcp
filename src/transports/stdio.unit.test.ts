@@ -1,15 +1,15 @@
-import { describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, test } from 'vitest'
 
-jest.mock('../logger.js', () => ({
-  logger: { info: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { info: vi.fn() },
 }))
 
 import { startStdioTransport } from './stdio.js'
 
 describe('startStdioTransport', () => {
   test('should connect server with stdio transport', async () => {
-    const connect = jest.fn<() => Promise<void>>().mockResolvedValue(undefined)
+    const connect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
     const server = { connect } as unknown as McpServer
 
     await startStdioTransport(server)

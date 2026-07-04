@@ -1,5 +1,5 @@
-import { describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 // Tool handlers return { content: [...] } with optional isError.
@@ -7,8 +7,8 @@ import type { ContentStore } from '../content-store.js'
 type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
-jest.mock('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
 import { registerGetTool } from './get.js'
@@ -33,7 +33,7 @@ function createMockContentItem(overrides: Record<string, unknown> = {}) {
 
 function setup(item: ReturnType<typeof createMockContentItem> | null) {
   // Partial mock — only implements methods used by the tool handler
-  const store = { getByPath: jest.fn().mockReturnValue(item) } as unknown as ContentStore
+  const store = { getByPath: vi.fn().mockReturnValue(item) } as unknown as ContentStore
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   // Partial mock — only implements the `tool` registration method

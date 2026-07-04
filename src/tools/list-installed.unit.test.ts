@@ -1,23 +1,23 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { beforeEach, describe, expect, type Mock, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
-const mockReadFileSync = jest.fn<(path: string, encoding?: string) => string>()
+const mockReadFileSync = vi.fn<(path: string, encoding?: string) => string>()
 
-jest.unstable_mockModule('node:fs', () => ({
+vi.mock('node:fs', () => ({
   readFileSync: mockReadFileSync,
 }))
 
-jest.unstable_mockModule('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
-jest.unstable_mockModule('./shared.js', () => ({
-  detectAgent: jest.fn<(dir: string, preferred?: string) => string>(),
-  findExistingConfig: jest.fn<(dir: string) => { path: string; agent: string } | null>(),
+vi.mock('./shared.js', () => ({
+  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
+  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -28,8 +28,8 @@ const {
   registerListInstalledTool,
 } = await import('./list-installed.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as jest.Mock
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as jest.Mock
+const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
+const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 
 beforeEach(() => {
   mockReadFileSync.mockReset()

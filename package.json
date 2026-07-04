@@ -71,7 +71,7 @@
     "test": "wireit",
     "test:coverage": "wireit",
     "test:coverage:open": "open-cli coverage/lcov-report/index.html",
-    "test:watch": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --watch",
+    "test:watch": "vitest",
     "typecheck": "wireit",
     "validate": "wireit",
     "version": "npm run changelog && git add -A"
@@ -133,31 +133,19 @@
       "output": []
     },
     "test": {
-      "command": "node node_modules/.bin/jest --passWithNoTests",
-      "env": {
-        "NODE_OPTIONS": "--no-warnings --experimental-vm-modules"
-      },
-      "dependencies": [
-        "build"
-      ],
+      "command": "vitest run",
       "files": [
         "src/**/*.ts",
-        "jest.config.cjs",
+        "vitest.config.ts",
         "tsconfig.json"
       ],
       "output": []
     },
     "test:coverage": {
-      "command": "node node_modules/.bin/jest --coverage",
-      "env": {
-        "NODE_OPTIONS": "--no-warnings --experimental-vm-modules"
-      },
-      "dependencies": [
-        "build"
-      ],
+      "command": "vitest run --coverage",
       "files": [
         "src/**/*.ts",
-        "jest.config.cjs",
+        "vitest.config.ts",
         "tsconfig.json"
       ],
       "output": [
@@ -185,17 +173,16 @@
     "@biomejs/biome": "2.5.1",
     "@commitlint/cli": "21.1.0",
     "@commitlint/config-conventional": "21.1.0",
-    "@types/jest": "30.0.0",
     "@types/node": "26.0.1",
+    "@vitest/coverage-v8": "4.1.9",
     "conventional-changelog-cli": "5.0.0",
     "husky": "9.1.7",
-    "jest": "30.4.2",
     "markdownlint-cli2": "0.22.1",
     "open-cli": "9.0.0",
     "rimraf": "6.1.3",
-    "ts-jest": "29.4.11",
     "tsx": "4.22.4",
     "typescript": "6.0.3",
+    "vitest": "4.1.9",
     "wireit": "0.14.13"
   }
 }

@@ -1,13 +1,13 @@
-import { describe, expect, jest, test } from '@jest/globals'
+import { describe, expect, type Mock, test } from 'vitest'
 
-jest.mock('../logger.js', () => ({
-  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), trace: vi.fn() },
 }))
 
-const mockListen = jest.fn()
-const mockCreateServer = jest.fn(() => ({ listen: mockListen }))
+const mockListen = vi.fn()
+const mockCreateServer = vi.fn(() => ({ listen: mockListen }))
 
-jest.unstable_mockModule('node:http', () => ({
+vi.mock('node:http', () => ({
   createServer: mockCreateServer,
 }))
 
@@ -15,11 +15,11 @@ const { startHttpTransport } = await import('./http.js')
 
 describe('startHttpTransport', () => {
   let server: import('@modelcontextprotocol/sdk/server/mcp.js').McpServer
-  let connect: jest.Mock<() => Promise<void>>
+  let connect: Mock<() => Promise<void>>
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    connect = jest.fn<() => Promise<void>>().mockResolvedValue(undefined)
+    vi.clearAllMocks()
+    connect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
     server = { connect } as unknown as import('@modelcontextprotocol/sdk/server/mcp.js').McpServer
   })
 
