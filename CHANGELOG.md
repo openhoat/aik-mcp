@@ -1,4 +1,20 @@
-# Unreleased (2026-07-04)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...d941605e7cc7d1d694641c66bb2cd48ea4816cae) (2026-07-04)
+
+### Bug Fixes
+
+* restore wireit build dependency for e2e tests ([d941605](https://github.com/openhoat/aik-mcp/commit/d941605e7cc7d1d694641c66bb2cd48ea4816cae))
+
+### Chores
+
+* add missing file patterns to wireit qa:biome tracking ([7e04785](https://github.com/openhoat/aik-mcp/commit/7e047852efa2422cc0e1475f987e48d7e44fcaac))
+
+### Refactoring
+
+* migrate from jest to vitest ([190f161](https://github.com/openhoat/aik-mcp/commit/190f16131c94e28d445b647fe29616f2462a3661))
+
+### Styling
+
+* fix biome formatting in changelog script ([e7a3ace](https://github.com/openhoat/aik-mcp/commit/e7a3ace56e0c3071adbf28f4e50462fc5d73cc2e))
 
 ## [0.1.3](https://github.com/openhoat/aik-mcp/compare/v0.1.2...v0.1.3) (2026-07-04)
 
@@ -8,7 +24,7 @@
 * add npm lifecycle hooks for release workflow ([eb5e341](https://github.com/openhoat/aik-mcp/commit/eb5e34123cc735a3cacdce1c5d14a9b13cf38fd5))
 * integrate wireit and add cross-platform clean scripts ([514ebc3](https://github.com/openhoat/aik-mcp/commit/514ebc34be5101e869bf6fe9198b92aec865d1d9))
 * optimize package.json scripts, wireit config, and node flags ([9631895](https://github.com/openhoat/aik-mcp/commit/96318952be3689d318c492ff93b55f9358e3ce26))
-* release v0.1.3 ([f192db7](https://github.com/openhoat/aik-mcp/commit/f192db7e88c3a42beec67620af8684598ebf739b))
+* release v0.1.3 ([3586adc](https://github.com/openhoat/aik-mcp/commit/3586adcac495a2e159f15f7122d73b21fcc545b8))
 * update kanban after phase 2 completion ([c8a44a2](https://github.com/openhoat/aik-mcp/commit/c8a44a23e9b1c9930416eda15cba2a1b69386245))
 * update kanban after phase 2 completion ([2760a1b](https://github.com/openhoat/aik-mcp/commit/2760a1bc79f5b943bac3c1fe4e549626170c428b))
 * update kanban after resources/index.ts completion ([adcec38](https://github.com/openhoat/aik-mcp/commit/adcec38ef9e13df86156d12e6b4135d632bbd9ed))

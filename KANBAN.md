@@ -2,11 +2,11 @@
 
 ## Backlog
 
-- [ ] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
-
 ## In Progress
 
 ## Done
+
+- [x] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
 
 - [x] **[HIGH]** [test] — Phase 1: config.ts, logger.ts, shared.ts unit tests (quick wins)
 - [x] **[HIGH]** [test] — Phase 1: removeSections() unit test (uninstall.ts)
