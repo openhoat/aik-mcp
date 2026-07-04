@@ -57,8 +57,10 @@
     "clean:test:coverage": "rimraf coverage",
     "clean:wireit": "rimraf .wireit",
     "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts",
+    "postversion": "git push --follow-tags",
     "prepare": "husky",
     "prepublishOnly": "npm run validate",
+    "preversion": "npm run validate",
     "qa": "wireit",
     "qa:biome": "wireit",
     "qa:biome:fix": "biome check --write --unsafe .",
@@ -71,7 +73,8 @@
     "test:coverage:open": "open-cli coverage/lcov-report/index.html",
     "test:watch": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --watch",
     "typecheck": "wireit",
-    "validate": "wireit"
+    "validate": "wireit",
+    "version": "npm run changelog && git add -A"
   },
   "wireit": {
     "qa": {
