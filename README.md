@@ -12,6 +12,7 @@ Rules, skills, workflows, and templates — as plain Markdown, served over the M
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@headwood/aik-mcp"><img src="https://img.shields.io/npm/v/@headwood/aik-mcp?style=flat-square&logo=npm" alt="npm version"></a>
+  <a href="https://openhoat.github.io/aik-mcp/"><img src="https://img.shields.io/badge/docs-vitepress-6366f1?style=flat-square" alt="docs"></a>
   <a href="https://github.com/openhoat/aik-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openhoat/aik-mcp/ci.yml?branch=main&style=flat-square&logo=github&label=CI" alt="CI"></a>
   <a href="https://github.com/openhoat/aik-mcp/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@headwood/aik-mcp?style=flat-square" alt="license"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@headwood/aik-mcp?style=flat-square" alt="node version"></a>
@@ -73,6 +74,10 @@ AIK_CONTENT_DIR=./my-knowledge npx aik-mcp
 ```
 
 Your agent calls `aik_search`, reads the rule, and applies it — all transparently through MCP.
+
+## Docs
+
+Full documentation is available at **[openhoat.github.io/aik-mcp](https://openhoat.github.io/aik-mcp/)**.
 
 ## How it works
 
@@ -230,7 +235,7 @@ npm run qa
 | Script | Description |
 | --- | --- |
 | `npm run build` | Compile TypeScript to `build/` |
-| `npm test` | Run Jest test suite |
+| `npm test` | Run Vitest test suite |
 | `npm run qa` | Lint + format check (Biome + markdownlint) |
 | `npm run qa:fix` | Auto-fix lint and formatting issues |
 | `npm run typecheck` | TypeScript type checking (`tsc --noEmit`) |
@@ -241,6 +246,8 @@ npm run qa
 Contributions are welcome! Open an [issue](https://github.com/openhoat/aik-mcp/issues) or submit a PR.
 
 See the [changelog](https://github.com/openhoat/aik-mcp/releases) for release history.
+
+Full documentation at **[openhoat.github.io/aik-mcp](https://openhoat.github.io/aik-mcp/)**.
 
 ## License
 
