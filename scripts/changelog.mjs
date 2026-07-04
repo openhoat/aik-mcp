@@ -1,29 +1,32 @@
-import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { Writable } from 'node:stream'
 import conventionalChangelog from 'conventional-changelog'
 
-let newContent = ''
+const TYPE_SECTIONS = {
+  feat: 'Features',
+  fix: 'Bug Fixes',
+  test: 'Tests',
+  docs: 'Documentation',
+  chore: 'Chores',
+  refactor: 'Refactoring',
+  perf: 'Performance',
+  style: 'Styling',
+  ci: 'Continuous Integration',
+  build: 'Build System',
+  revert: 'Reverts',
+}
+
+let output = ''
 
 const writable = new Writable({
   write(chunk, _encoding, callback) {
-    newContent += chunk.toString()
+    output += chunk.toString()
     callback()
   },
   final(callback) {
-    if (existsSync('CHANGELOG.md')) {
-      readFile('CHANGELOG.md', 'utf-8')
-        .then(existingContent => {
-          const updatedContent = newContent + existingContent
-          return writeFile('CHANGELOG.md', updatedContent)
-        })
-        .then(() => callback())
-        .catch(callback)
-    } else {
-      writeFile('CHANGELOG.md', newContent)
-        .then(() => callback())
-        .catch(callback)
-    }
+    writeFile('CHANGELOG.md', output.replace(/\n{3,}/g, '\n\n'))
+      .then(() => callback())
+      .catch(callback)
   },
 })
 
@@ -31,21 +34,28 @@ conventionalChangelog(
   {
     preset: 'angular',
     config: {
-      types: [
-        { type: 'feat', section: 'Features' },
-        { type: 'fix', section: 'Bug Fixes' },
-        { type: 'test', section: 'Tests' },
-        { type: 'docs', section: 'Documentation' },
-        { type: 'chore', section: 'Chores' },
-        { type: 'refactor', section: 'Refactoring' },
-        { type: 'perf', section: 'Performance' },
-        { type: 'style', section: 'Styling' },
-        { type: 'revert', section: 'Reverts' },
-      ],
+      types: Object.entries(TYPE_SECTIONS).map(([type, section]) => ({
+        type,
+        section,
+      })),
     },
     releaseCount: 0,
   },
+  { version: 'Unreleased' },
+  undefined,
+  undefined,
   {
-    version: 'Unreleased',
-  }
+    transform: (commit) => {
+      if (!commit.type || typeof commit.type !== 'string') return commit
+      const type = commit.type.toLowerCase()
+      const section = TYPE_SECTIONS[type]
+      return {
+        ...commit,
+        ...(section ? { type: section } : {}),
+        ...(typeof commit.hash === 'string'
+          ? { shortHash: commit.hash.substring(0, 7) }
+          : {}),
+      }
+    },
+  },
 ).pipe(writable)
