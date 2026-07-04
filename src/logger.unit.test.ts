@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, type Mock, test } from 'vitest'
 
 // Minimal interface matching what logger.ts passes to pino()
 interface PinoOptions {
@@ -7,23 +7,23 @@ interface PinoOptions {
   transport?: { target: string; options?: Record<string, unknown> }
 }
 
-const mockPino = jest.fn<(opts: PinoOptions, dest?: object) => Record<string, jest.Mock>>(() => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  trace: jest.fn(),
+const mockPino = vi.fn<(opts: PinoOptions, dest?: object) => Record<string, Mock>>(() => ({
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn(),
+  trace: vi.fn(),
 }))
-const mockDestination = jest.fn<(fd: number) => object>(() => ({}))
+const mockDestination = vi.fn<(fd: number) => object>(() => ({}))
 
-jest.mock('pino', () => {
+vi.mock('pino', () => {
   const pino = Object.assign(mockPino, { destination: mockDestination })
-  return pino
+  return { default: pino }
 })
 
 describe('logger', () => {
   beforeEach(() => {
-    jest.resetModules()
+    vi.resetModules()
     mockPino.mockClear()
     mockDestination.mockClear()
     delete process.env.LOG_LEVEL

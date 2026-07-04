@@ -1,46 +1,46 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { beforeEach, describe, expect, type Mock, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
-const mockReadFileSync = jest.fn<(path: string, encoding?: string) => string>()
-const mockExistsSync = jest.fn<(path: string) => boolean>()
-const mockWriteFileSync = jest.fn<(path: string, data: string, encoding?: string) => void>()
-const mockUnlinkSync = jest.fn<(path: string) => void>()
+const mockReadFileSync = vi.fn<(path: string, encoding?: string) => string>()
+const mockExistsSync = vi.fn<(path: string) => boolean>()
+const mockWriteFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
+const mockUnlinkSync = vi.fn<(path: string) => void>()
 
-jest.unstable_mockModule('node:fs', () => ({
+vi.mock('node:fs', () => ({
   readFileSync: mockReadFileSync,
   existsSync: mockExistsSync,
   writeFileSync: mockWriteFileSync,
   unlinkSync: mockUnlinkSync,
 }))
 
-jest.unstable_mockModule('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
-jest.unstable_mockModule('./shared.js', () => ({
-  detectAgent: jest.fn<(dir: string, preferred?: string) => string>(),
-  findExistingConfig: jest.fn<(dir: string) => { path: string; agent: string } | null>(),
+vi.mock('./shared.js', () => ({
+  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
+  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
-jest.unstable_mockModule('./install.js', () => ({
-  installOpenCode: jest.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
-  installClaudeCode: jest.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
-  installCline: jest.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
+vi.mock('./install.js', () => ({
+  installOpenCode: vi.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
+  installClaudeCode: vi.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
+  installCline: vi.fn<(path: string | null, dir: string, ...args: unknown[]) => void>(),
 }))
 
-jest.unstable_mockModule('./uninstall.js', () => ({
-  uninstallOpenCode: jest.fn<(path: string, dir: string, item: string) => boolean>(),
-  uninstallClaudeCode: jest.fn<(path: string, item: string) => boolean>(),
-  uninstallCline: jest.fn<(path: string, item: string) => boolean>(),
+vi.mock('./uninstall.js', () => ({
+  uninstallOpenCode: vi.fn<(path: string, dir: string, item: string) => boolean>(),
+  uninstallClaudeCode: vi.fn<(path: string, item: string) => boolean>(),
+  uninstallCline: vi.fn<(path: string, item: string) => boolean>(),
 }))
 
-jest.unstable_mockModule('../frontmatter.js', () => ({
-  parseFrontmatter: jest.fn((_content: string) => ({
+vi.mock('../frontmatter.js', () => ({
+  parseFrontmatter: vi.fn((_content: string) => ({
     frontmatter: { version: '1.0.0' },
   })),
 }))
@@ -59,15 +59,15 @@ const {
   registerUpdateTool,
 } = await import('./update.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as jest.Mock
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as jest.Mock
-const mockInstallOpenCode = (await import('./install.js')).installOpenCode as jest.Mock
-const mockInstallClaudeCode = (await import('./install.js')).installClaudeCode as jest.Mock
-const mockInstallCline = (await import('./install.js')).installCline as jest.Mock
-const mockUninstallOpenCode = (await import('./uninstall.js')).uninstallOpenCode as jest.Mock
-const mockUninstallClaudeCode = (await import('./uninstall.js')).uninstallClaudeCode as jest.Mock
-const mockUninstallCline = (await import('./uninstall.js')).uninstallCline as jest.Mock
-const mockParseFrontmatter = (await import('../frontmatter.js')).parseFrontmatter as jest.Mock
+const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
+const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
+const mockInstallOpenCode = (await import('./install.js')).installOpenCode as Mock
+const mockInstallClaudeCode = (await import('./install.js')).installClaudeCode as Mock
+const mockInstallCline = (await import('./install.js')).installCline as Mock
+const mockUninstallOpenCode = (await import('./uninstall.js')).uninstallOpenCode as Mock
+const mockUninstallClaudeCode = (await import('./uninstall.js')).uninstallClaudeCode as Mock
+const mockUninstallCline = (await import('./uninstall.js')).uninstallCline as Mock
+const mockParseFrontmatter = (await import('../frontmatter.js')).parseFrontmatter as Mock
 
 beforeEach(() => {
   mockReadFileSync.mockReset()
@@ -411,7 +411,7 @@ describe('registerCheckUpdatesTool', () => {
   test('should return updates for opencode', async () => {
     const { server, getCheckHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn((path: string) =>
+      getByPath: vi.fn((path: string) =>
         path === 'rules/ts'
           ? { version: '2.0.0', category: 'rules', name: 'ts', title: 'TS' }
           : null
@@ -442,7 +442,7 @@ describe('registerCheckUpdatesTool', () => {
 
   test('should return error when no config found', async () => {
     const { server, getCheckHandler } = createMockServer()
-    const store = { getByPath: jest.fn() } as unknown as ContentStore
+    const store = { getByPath: vi.fn() } as unknown as ContentStore
     mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
@@ -456,7 +456,7 @@ describe('registerCheckUpdatesTool', () => {
   test('should return empty when no updates available', async () => {
     const { server, getCheckHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn((path: string) =>
+      getByPath: vi.fn((path: string) =>
         path === 'rules/ts'
           ? { version: '1.0.0', category: 'rules', name: 'ts', title: 'TS' }
           : null
@@ -486,7 +486,7 @@ describe('registerUpdateTool', () => {
   test('should update opencode item', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({
+      getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/rules/typescript.md',
         path: 'rules/typescript',
@@ -521,7 +521,7 @@ describe('registerUpdateTool', () => {
   test('should update claude-code item', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({
+      getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/rules/typescript.md',
         path: 'rules/typescript',
@@ -553,7 +553,7 @@ describe('registerUpdateTool', () => {
   test('should update cline item', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({
+      getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/rules/typescript.md',
         path: 'rules/typescript',
@@ -584,7 +584,7 @@ describe('registerUpdateTool', () => {
 
   test('should return error when content not found in store', async () => {
     const { server, getUpdateHandler } = createMockServer()
-    const store = { getByPath: jest.fn(() => null) } as unknown as ContentStore
+    const store = { getByPath: vi.fn(() => null) } as unknown as ContentStore
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
@@ -596,7 +596,7 @@ describe('registerUpdateTool', () => {
   test('should return error when no config found', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({ version: '2.0.0', fullPath: '/store/item.md' })),
+      getByPath: vi.fn(() => ({ version: '2.0.0', fullPath: '/store/item.md' })),
     } as unknown as ContentStore
     mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
@@ -611,7 +611,7 @@ describe('registerUpdateTool', () => {
   test('should return already-up-to-date when versions match', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({
+      getByPath: vi.fn(() => ({
         version: '1.0.0',
         fullPath: '/store/item.md',
       })),
@@ -635,7 +635,7 @@ describe('registerUpdateTool', () => {
   test('should update when installed version is unknown', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
-      getByPath: jest.fn(() => ({
+      getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/item.md',
         path: 'rules/typescript',

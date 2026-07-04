@@ -1,9 +1,9 @@
-import { describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
-jest.unstable_mockModule('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
 const { registerResources } = await import('./index.js')
@@ -31,8 +31,8 @@ function createMockStore(
   }> = []
 ) {
   return {
-    getByCategory: jest.fn((cat: string) => items.filter(i => i.category === cat)),
-    getAll: jest.fn(() => items),
+    getByCategory: vi.fn((cat: string) => items.filter(i => i.category === cat)),
+    getAll: vi.fn(() => items),
   } as unknown as ContentStore
 }
 

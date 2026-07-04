@@ -1,9 +1,9 @@
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { beforeEach, describe, expect, test } from 'vitest'
 
-const mockExistsSync = jest.fn<(path: string) => boolean>()
+const mockExistsSync = vi.fn<(path: string) => boolean>()
 
-await jest.unstable_mockModule('node:fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: mockExistsSync,
 }))
 

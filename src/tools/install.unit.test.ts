@@ -1,18 +1,18 @@
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { beforeEach, describe, expect, type Mock, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
-const mockExistsSync = jest.fn<(path: string) => boolean>()
-const mockReadFileSync = jest.fn<(path: string, encoding?: string) => string>()
-const mockWriteFileSync = jest.fn<(path: string, data: string, encoding?: string) => void>()
-const mockMkdirSync = jest.fn<(path: string, opts?: { recursive?: boolean }) => void>()
-const mockAppendFileSync = jest.fn<(path: string, data: string, encoding?: string) => void>()
+const mockExistsSync = vi.fn<(path: string) => boolean>()
+const mockReadFileSync = vi.fn<(path: string, encoding?: string) => string>()
+const mockWriteFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
+const mockMkdirSync = vi.fn<(path: string, opts?: { recursive?: boolean }) => void>()
+const mockAppendFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
 
-jest.unstable_mockModule('node:fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: mockExistsSync,
   readFileSync: mockReadFileSync,
   writeFileSync: mockWriteFileSync,
@@ -20,21 +20,20 @@ jest.unstable_mockModule('node:fs', () => ({
   appendFileSync: mockAppendFileSync,
 }))
 
-jest.unstable_mockModule('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
-jest.unstable_mockModule('./shared.js', () => ({
-  detectAgent: jest.fn<(dir: string, preferred?: string) => string>(),
-  findExistingConfig: jest.fn<(dir: string) => { path: string; agent: string } | null>(),
+vi.mock('./shared.js', () => ({
+  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
+  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
-jest.unstable_mockModule('./uninstall.js', () => ({
-  uninstallOpenCode:
-    jest.fn<(configPath: string, targetDir: string, itemPath: string) => boolean>(),
-  uninstallClaudeCode: jest.fn<(configPath: string, itemPath: string) => boolean>(),
-  uninstallCline: jest.fn<(configPath: string, itemPath: string) => boolean>(),
+vi.mock('./uninstall.js', () => ({
+  uninstallOpenCode: vi.fn<(configPath: string, targetDir: string, itemPath: string) => boolean>(),
+  uninstallClaudeCode: vi.fn<(configPath: string, itemPath: string) => boolean>(),
+  uninstallCline: vi.fn<(configPath: string, itemPath: string) => boolean>(),
 }))
 
 const {
@@ -46,11 +45,11 @@ const {
   registerReinstallTool,
 } = await import('./install.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as jest.Mock
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as jest.Mock
-const mockUninstallOpenCode = (await import('./uninstall.js')).uninstallOpenCode as jest.Mock
-const mockUninstallClaudeCode = (await import('./uninstall.js')).uninstallClaudeCode as jest.Mock
-const mockUninstallCline = (await import('./uninstall.js')).uninstallCline as jest.Mock
+const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
+const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
+const mockUninstallOpenCode = (await import('./uninstall.js')).uninstallOpenCode as Mock
+const mockUninstallClaudeCode = (await import('./uninstall.js')).uninstallClaudeCode as Mock
+const mockUninstallCline = (await import('./uninstall.js')).uninstallCline as Mock
 
 beforeEach(() => {
   mockExistsSync.mockReset()
@@ -236,7 +235,7 @@ function createMockStore(): ContentStore {
     fullPath: '/store/rules/test-rule.md',
   }
   return {
-    getByPath: jest.fn<() => typeof item | null>().mockReturnValue(item),
+    getByPath: vi.fn<() => typeof item | null>().mockReturnValue(item),
   } as unknown as ContentStore
 }
 
@@ -259,7 +258,7 @@ function createMockServer() {
 describe('registerInstallTool', () => {
   test('should return error when content not found', async () => {
     const store = {
-      getByPath: jest.fn<() => null>().mockReturnValue(null),
+      getByPath: vi.fn<() => null>().mockReturnValue(null),
     } as unknown as ContentStore
     const { server, getHandler } = createMockServer()
     registerInstallTool(server, store)
@@ -353,7 +352,7 @@ describe('registerInstallTool', () => {
 describe('registerReinstallTool', () => {
   test('should return error when content not found', async () => {
     const store = {
-      getByPath: jest.fn<() => null>().mockReturnValue(null),
+      getByPath: vi.fn<() => null>().mockReturnValue(null),
     } as unknown as ContentStore
     const { server, getHandler } = createMockServer()
     registerReinstallTool(server, store)

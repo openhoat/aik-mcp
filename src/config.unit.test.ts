@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { loadConfig } from './config.js'
 
 describe('config', () => {

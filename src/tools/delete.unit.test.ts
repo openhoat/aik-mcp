@@ -1,5 +1,5 @@
-import { describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 // Tool handlers return { content: [...] } with optional isError.
@@ -7,8 +7,8 @@ import type { ContentStore } from '../content-store.js'
 type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
-jest.mock('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
 import { registerDeleteTool } from './delete.js'
@@ -16,7 +16,7 @@ import { registerDeleteTool } from './delete.js'
 function setup(deleted: boolean) {
   // Partial mock — only implements methods used by the tool handler
   const store = {
-    deleteContent: jest.fn<(path: string) => Promise<boolean>>().mockResolvedValue(deleted),
+    deleteContent: vi.fn<(path: string) => Promise<boolean>>().mockResolvedValue(deleted),
   } as unknown as ContentStore
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
@@ -50,7 +50,7 @@ describe('registerDeleteTool', () => {
 
   test('should handle store error', async () => {
     const store = {
-      deleteContent: jest
+      deleteContent: vi
         .fn<(path: string) => Promise<boolean>>()
         .mockRejectedValue(new Error('Delete failed')),
     } as unknown as ContentStore

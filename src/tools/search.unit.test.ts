@@ -1,11 +1,11 @@
-import { describe, expect, jest, test } from '@jest/globals'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, test } from 'vitest'
 import type { ContentItem, ContentStore } from '../content-store.js'
 
 type ToolContent = { content: Array<{ type: string; text: string }> }
 
-jest.mock('../logger.js', () => ({
-  logger: { trace: jest.fn() },
+vi.mock('../logger.js', () => ({
+  logger: { trace: vi.fn() },
 }))
 
 import { registerSearchTool } from './search.js'
@@ -31,7 +31,7 @@ function createItem(overrides: Partial<ContentItem> = {}): ContentItem {
 
 function setup(items: ContentItem[]) {
   const store = {
-    getAll: jest.fn<() => ContentItem[]>().mockReturnValue(items),
+    getAll: vi.fn<() => ContentItem[]>().mockReturnValue(items),
   } as unknown as ContentStore
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
