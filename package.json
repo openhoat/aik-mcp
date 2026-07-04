@@ -87,6 +87,8 @@
       "command": "biome check .",
       "files": [
         "src/**/*.ts",
+        "scripts/**/*.mjs",
+        "*.{cjs,json}",
         "biome.json"
       ],
       "output": []
