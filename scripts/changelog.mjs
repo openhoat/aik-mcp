@@ -45,17 +45,15 @@ conventionalChangelog(
   undefined,
   undefined,
   {
-    transform: (commit) => {
+    transform: commit => {
       if (!commit.type || typeof commit.type !== 'string') return commit
       const type = commit.type.toLowerCase()
       const section = TYPE_SECTIONS[type]
       return {
         ...commit,
         ...(section ? { type: section } : {}),
-        ...(typeof commit.hash === 'string'
-          ? { shortHash: commit.hash.substring(0, 7) }
-          : {}),
+        ...(typeof commit.hash === 'string' ? { shortHash: commit.hash.substring(0, 7) } : {}),
       }
     },
-  },
+  }
 ).pipe(writable)
