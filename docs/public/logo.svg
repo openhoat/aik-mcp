@@ -1,18 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120" role="img" aria-label="aik-mcp logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="aik-mcp logo">
   <title>aik-mcp</title>
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
-    </linearGradient>
-  </defs>
-  <circle cx="80" cy="60" r="6" fill="url(#g)"/>
-  <line x1="80" y1="60" x2="140" y2="30" stroke="#6366f1" stroke-width="1.5" opacity=".4"/>
-  <line x1="80" y1="60" x2="140" y2="90" stroke="#6366f1" stroke-width="1.5" opacity=".4"/>
-  <line x1="80" y1="60" x2="200" y2="60" stroke="#6366f1" stroke-width="1.5" opacity=".4"/>
-  <circle cx="140" cy="30" r="3.5" fill="#8b5cf6" opacity=".6"/>
-  <circle cx="140" cy="90" r="3.5" fill="#8b5cf6" opacity=".6"/>
-  <circle cx="200" cy="60" r="3.5" fill="#8b5cf6" opacity=".6"/>
-  <text x="230" y="76" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#1e1e2e" letter-spacing="2">aik</text>
-  <text x="232" y="102" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280" letter-spacing="1.5" font-weight="500">MCP SERVER</text>
+  <line x1="120" y1="60" x2="120" y2="140" stroke="#6366f1" stroke-width="2.5"/>
+  <line x1="60" y1="100" x2="180" y2="100" stroke="#6366f1" stroke-width="2.5"/>
+  <line x1="120" y1="100" x2="60" y2="60" stroke="#6366f1" stroke-width="2.5"/>
+  <line x1="120" y1="100" x2="180" y2="60" stroke="#6366f1" stroke-width="2.5"/>
+  <line x1="120" y1="100" x2="60" y2="140" stroke="#6366f1" stroke-width="2.5"/>
+  <line x1="120" y1="100" x2="180" y2="140" stroke="#6366f1" stroke-width="2.5"/>
+  <circle cx="120" cy="100" r="8" fill="#6366f1"/>
+  <circle cx="120" cy="60" r="5" fill="#8b5cf6"/>
+  <circle cx="60" cy="100" r="5" fill="#8b5cf6"/>
+  <circle cx="180" cy="100" r="5" fill="#8b5cf6"/>
+  <circle cx="120" cy="140" r="5" fill="#8b5cf6"/>
+  <text x="120" y="190" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="700" fill="#1e1e2e" letter-spacing="2" text-anchor="middle">aik</text>
+  <text x="120" y="215" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#4b5563" letter-spacing="1.5" font-weight="500" text-anchor="middle">MCP SERVER</text>
 </svg>
