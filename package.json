@@ -2,7 +2,7 @@
   "name": "@headwood/aik-mcp",
   "version": "0.1.2",
   "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents, commands, templates)",
-  "author": "openhoat",
+  "author": "Olivier Penhoat",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -53,9 +53,9 @@
     "build": "wireit",
     "build:test": "wireit",
     "changelog": "node scripts/changelog.mjs",
-    "clean": "rimraf build coverage .wireit",
+    "clean": "rimraf build coverage dist .wireit",
     "clean:wireit": "rimraf .wireit",
-    "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.js",
+    "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts",
     "prepare": "husky",
     "prepublishOnly": "npm run validate",
     "qa": "wireit",
@@ -108,7 +108,9 @@
       "files": [
         "src/**/*.ts",
         "!src/**/*.test.ts",
-        "tsconfig.build.json"
+        "src/built-in/**/*",
+        "tsconfig.build.json",
+        "tsconfig.json"
       ],
       "output": [
         "build/**"
@@ -118,27 +120,38 @@
       "command": "tsc -p tsconfig.test.json",
       "files": [
         "src/**/*.ts",
-        "tsconfig.test.json"
+        "tsconfig.test.json",
+        "tsconfig.json"
       ],
       "output": []
     },
     "test": {
-      "command": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --passWithNoTests",
+      "command": "node node_modules/.bin/jest --passWithNoTests",
+      "env": {
+        "NODE_OPTIONS": "--no-warnings --experimental-vm-modules"
+      },
       "dependencies": [
         "build"
       ],
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "jest.config.cjs",
+        "tsconfig.json"
       ],
       "output": []
     },
     "test:coverage": {
-      "command": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --coverage",
+      "command": "node node_modules/.bin/jest --coverage",
+      "env": {
+        "NODE_OPTIONS": "--no-warnings --experimental-vm-modules"
+      },
       "dependencies": [
         "build"
       ],
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "jest.config.cjs",
+        "tsconfig.json"
       ],
       "output": [
         "coverage/**"
@@ -147,9 +160,7 @@
     "validate": {
       "dependencies": [
         "qa",
-        "typecheck",
         "build",
-        "build:test",
         "test"
       ]
     }
