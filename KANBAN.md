@@ -3,10 +3,8 @@
 ## Backlog
 
 - [ ] **[CONFIG]** Add docs page "Content Authoring" — guide for writing good rules and skills (P1, impact: high, effort: low)
-- [ ] **[TEST]** Test `index.ts` — server entry point has zero coverage (P2, impact: medium, effort: low)
-- [ ] **[TEST]** Test `http.ts` — HTTP transport is at 5% coverage (P2, impact: medium, effort: medium)
 - [ ] **[UX]** Support `.aikrc.json` config file via `--config` flag (P2, impact: medium, effort: medium)
-- [ ] **[CONFIG]** Add docs page "Architecture" — detailed MCP flow diagram (P2, impact: medium, effort: low)
+- [ ] **[CONFIG]** Add docs page "Deployment" — Docker, PM2, systemd, HTTPS reverse proxy (P2, impact: medium, effort: medium)
 - [ ] **[CONFIG]** Add docs page "Deployment" — Docker, PM2, systemd, HTTPS reverse proxy (P2, impact: medium, effort: medium)
 - [ ] **[CONFIG]** Add docs page "API Reference" — complete MCP tool schemas (P2, impact: medium, effort: low)
 - [ ] **[ARCHITECTURE]** Create `scaffold-mcp-tool` skill — template for creating a new MCP tool (P2, impact: high, effort: medium)
@@ -37,6 +35,9 @@
 - [x] **[HIGH]** [archi] — Enrich built-in MCP server instructions with discovery, consumption, and lifecycle flows
 - [x] **[MEDIUM]** [ux] — Add `aik validate` CLI to validate content consistency
 - [x] **[MEDIUM]** [archi] — Add Zod schema to validate content file frontmatter
+- [x] **[MEDIUM]** [test] — Test `index.ts` with e2e tests for --validate mode
+- [x] **[MEDIUM]** [test] — Test `http.ts` HTTP request handler with unit tests
+- [x] **[MEDIUM]** [docs] — Add "Architecture" docs page with Mermaid diagrams
 - [x] **[MEDIUM]** [infra] — Add Codecov upload to CI
 
 - [x] **[HIGH]** [test] — Phase 1: config.ts, logger.ts, shared.ts unit tests (quick wins)

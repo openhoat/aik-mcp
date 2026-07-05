@@ -1,12 +1,38 @@
-# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...d941605e7cc7d1d694641c66bb2cd48ea4816cae) (2026-07-04)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...ebb82cd424d6e35e8f6ac53c03a2ac22c978242d) (2026-07-05)
 
 ### Bug Fixes
 
+* narrow validatefrontmatter test types and add typecheck to validate ([c1ad7b9](https://github.com/openhoat/aik-mcp/commit/c1ad7b98da670e878bfdb436571e7cce2f789a57))
 * restore wireit build dependency for e2e tests ([d941605](https://github.com/openhoat/aik-mcp/commit/d941605e7cc7d1d694641c66bb2cd48ea4816cae))
+* use npx to run vitest in ci pipeline ([fa20177](https://github.com/openhoat/aik-mcp/commit/fa20177f7f3c3fb615e17b5197595ea4fa34592b))
 
 ### Chores
 
 * add missing file patterns to wireit qa:biome tracking ([7e04785](https://github.com/openhoat/aik-mcp/commit/7e047852efa2422cc0e1475f987e48d7e44fcaac))
+* ignore vitepress cache ([4c6eb7d](https://github.com/openhoat/aik-mcp/commit/4c6eb7ddd65ae8e5d806bbfe71ecd06b5a9f1f68))
+* move aik validate to done in kanban ([0e654e3](https://github.com/openhoat/aik-mcp/commit/0e654e3f9ec552ffdad18082b9928a2b1beb75a4))
+* silence pino logger during tests ([dc7b291](https://github.com/openhoat/aik-mcp/commit/dc7b291e965beef32841746c3a379ca7e7beddce))
+* update kanban after task completion ([5d964da](https://github.com/openhoat/aik-mcp/commit/5d964da6cff6b0a34febb041610d4b67cca7d0d9))
+* update kanban and changelog after migrate-vitest merge ([b7215ec](https://github.com/openhoat/aik-mcp/commit/b7215ecc17ebbc5eb22c608ef408062a1933fd41))
+
+### Continuous Integration
+
+* decompose pipeline into separate steps and use build:test ([756a508](https://github.com/openhoat/aik-mcp/commit/756a508404f6a4df6c5f76f8850ddd5537271343))
+* upload coverage report to codecov ([90c3686](https://github.com/openhoat/aik-mcp/commit/90c368628ca412270f3e2116635ebf24aff82150))
+
+### Documentation
+
+* add vitepress documentation site with github pages deployment ([2cc893f](https://github.com/openhoat/aik-mcp/commit/2cc893fa46579e70038aa30420c31550425859d4))
+* lighten logo colors for better visibility ([ede5708](https://github.com/openhoat/aik-mcp/commit/ede57087126387fe92009f95b73d7921b4f60282))
+* redesign logo as square with better contrast ([660ec62](https://github.com/openhoat/aik-mcp/commit/660ec6236c0c2638d83716d0544c4fd64d467a0e))
+* translate kanban backlog to english ([bb08ec1](https://github.com/openhoat/aik-mcp/commit/bb08ec1401b112967f1a07de51614dde7509e91f))
+
+### Features
+
+* add aik validate cli with --validate and --json flags ([c599b04](https://github.com/openhoat/aik-mcp/commit/c599b04ab0f768af2e29d44d668c83ff0b6fc287))
+* add architecture docs, http handler tests, and validate e2e tests ([ebb82cd](https://github.com/openhoat/aik-mcp/commit/ebb82cd424d6e35e8f6ac53c03a2ac22c978242d))
+* add strict frontmatter validation on aik_write and fix codecov upload ([990eecb](https://github.com/openhoat/aik-mcp/commit/990eecb5818a63a4395d1d293331f04a3c1d3e15))
+* enrich built-in server instructions with full content flows ([a8e9515](https://github.com/openhoat/aik-mcp/commit/a8e95157eaa0cac173a067c479a695402dde248c))
 
 ### Refactoring
 
