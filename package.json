@@ -164,6 +164,7 @@
     "validate": {
       "dependencies": [
         "qa",
+        "typecheck",
         "build",
         "test"
       ]

@@ -158,51 +158,42 @@ describe('validateFrontmatter', () => {
     expect(result.valid).toBe(true)
   })
 
+  function assertInvalid(
+    result: ReturnType<typeof validateFrontmatter>
+  ): asserts result is { valid: false; errors: string[] } {
+    if (result.valid) {
+      throw new Error('Expected invalid frontmatter')
+    }
+  }
+
   test('rejects missing title', () => {
-    const result = validateFrontmatter({
-      description: 'Desc',
-      tags: ['t'],
-    })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('title'))).toBe(true)
+    const result = validateFrontmatter({ description: 'Desc', tags: ['t'] })
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('title'))).toBe(true)
   })
 
   test('rejects empty title', () => {
-    const result = validateFrontmatter({
-      title: '',
-      description: 'Desc',
-      tags: ['t'],
-    })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('title'))).toBe(true)
+    const result = validateFrontmatter({ title: '', description: 'Desc', tags: ['t'] })
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('title'))).toBe(true)
   })
 
   test('rejects missing description', () => {
-    const result = validateFrontmatter({
-      title: 'T',
-      tags: ['t'],
-    })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('description'))).toBe(true)
+    const result = validateFrontmatter({ title: 'T', tags: ['t'] })
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('description'))).toBe(true)
   })
 
   test('rejects missing tags', () => {
-    const result = validateFrontmatter({
-      title: 'T',
-      description: 'D',
-    })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('tags'))).toBe(true)
+    const result = validateFrontmatter({ title: 'T', description: 'D' })
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('tags'))).toBe(true)
   })
 
   test('rejects empty tags array', () => {
-    const result = validateFrontmatter({
-      title: 'T',
-      description: 'D',
-      tags: [],
-    })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('tags'))).toBe(true)
+    const result = validateFrontmatter({ title: 'T', description: 'D', tags: [] })
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('tags'))).toBe(true)
   })
 
   test('rejects invalid version', () => {
@@ -212,7 +203,7 @@ describe('validateFrontmatter', () => {
       tags: ['t'],
       version: 'abc',
     })
-    expect(result.valid).toBe(false)
-    expect(result.errors!.some(e => e.includes('version'))).toBe(true)
+    assertInvalid(result)
+    expect(result.errors.some(e => e.includes('version'))).toBe(true)
   })
 })

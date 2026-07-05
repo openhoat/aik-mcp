@@ -11,8 +11,10 @@ jobs:
       - run: npm ci
       - name: QA
         run: npm run qa
-      - name: Build & Typecheck
-        run: npm run build:test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
       - name: Tests with coverage
         run: vitest run --coverage
       - uses: codecov/codecov-action@v4
