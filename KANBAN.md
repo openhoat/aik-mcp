@@ -5,7 +5,6 @@
 - [ ] **[CONFIG]** Add docs page "Content Authoring" — guide for writing good rules and skills (P1, impact: high, effort: low)
 - [ ] **[TEST]** Test `index.ts` — server entry point has zero coverage (P2, impact: medium, effort: low)
 - [ ] **[TEST]** Test `http.ts` — HTTP transport is at 5% coverage (P2, impact: medium, effort: medium)
-- [ ] **[UX]** Add `aik validate` CLI to validate content consistency (P2, impact: high, effort: medium)
 - [ ] **[UX]** Support `.aikrc.json` config file via `--config` flag (P2, impact: medium, effort: medium)
 - [ ] **[CONFIG]** Add docs page "Architecture" — detailed MCP flow diagram (P2, impact: medium, effort: low)
 - [ ] **[CONFIG]** Add docs page "Deployment" — Docker, PM2, systemd, HTTPS reverse proxy (P2, impact: medium, effort: medium)
@@ -36,6 +35,7 @@
 
 - [x] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
 - [x] **[HIGH]** [archi] — Enrich built-in MCP server instructions with discovery, consumption, and lifecycle flows
+- [x] **[MEDIUM]** [ux] — Add `aik validate` CLI to validate content consistency
 - [x] **[MEDIUM]** [archi] — Add Zod schema to validate content file frontmatter
 - [x] **[MEDIUM]** [infra] — Add Codecov upload to CI
 
