@@ -15,6 +15,7 @@ export default withMermaid(
       nav: [
         { text: 'Get Started', link: '/guide/getting-started' },
         { text: 'Tools', link: '/guide/tools' },
+        { text: 'Architecture', link: '/guide/architecture' },
         { text: 'Configuration', link: '/guide/configuration' },
       ],
 
@@ -23,6 +24,7 @@ export default withMermaid(
           text: 'Guide',
           items: [
             { text: 'Getting Started', link: '/guide/getting-started' },
+            { text: 'Architecture', link: '/guide/architecture' },
             { text: 'MCP Tools', link: '/guide/tools' },
             { text: 'Configuration', link: '/guide/configuration' },
           ],

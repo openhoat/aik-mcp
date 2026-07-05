@@ -421,6 +421,80 @@ test('aik_reinstall returns error for missing content', async () => {
   })
 })
 
+async function runValidate(
+  contentDir: string,
+  extraArgs: string[] = []
+): Promise<{ stdout: string; exitCode: number | null }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, [distIndex, '--no-watch', '--validate', ...extraArgs], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, AIK_CONTENT_DIR: contentDir, LOG_LEVEL: 'silent' },
+    })
+
+    const chunks: Buffer[] = []
+    proc.stdout!.on('data', (chunk: Buffer) => chunks.push(chunk))
+    proc.on('error', reject)
+
+    proc.on('exit', exitCode => {
+      resolve({ stdout: Buffer.concat(chunks).toString('utf-8'), exitCode })
+    })
+
+    setTimeout(() => {
+      proc.kill()
+      reject(new Error('validate timeout'))
+    }, 10000)
+  })
+}
+
+test('--validate passes for valid content', async () => {
+  await createFile(
+    tempDir,
+    'rules/test-rule.md',
+    '---\ntitle: Test Rule\ndescription: A test\ntags: [test]\n---\n# Hello World'
+  )
+
+  const { stdout, exitCode } = await runValidate(tempDir)
+
+  expect(exitCode).toBe(0)
+  expect(stdout).toContain('✓')
+  expect(stdout).toContain('1 valid, 0 invalid')
+})
+
+test('--validate fails for invalid content', async () => {
+  await createFile(tempDir, 'rules/bad-rule.md', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
+
+  const { stdout, exitCode } = await runValidate(tempDir)
+
+  expect(exitCode).toBe(1)
+  expect(stdout).toContain('✗')
+})
+
+test('--validate --json outputs JSON', async () => {
+  await createFile(
+    tempDir,
+    'rules/test-rule.md',
+    '---\ntitle: Test Rule\ndescription: A test\ntags: [test]\n---\n# Hello World'
+  )
+
+  const { stdout, exitCode } = await runValidate(tempDir, ['--json'])
+
+  expect(exitCode).toBe(0)
+  const parsed = JSON.parse(stdout)
+  expect(parsed).toMatchObject({ total: 1, valid: 1, invalid: 0 })
+})
+
+test('--validate --json outputs JSON with errors', async () => {
+  await createFile(tempDir, 'rules/bad-rule.md', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
+
+  const { stdout, exitCode } = await runValidate(tempDir, ['--json'])
+
+  expect(exitCode).toBe(1)
+  const parsed = JSON.parse(stdout)
+  expect(parsed.total).toBe(1)
+  expect(parsed.invalid).toBe(1)
+  expect(parsed.issues[0].errors.length).toBeGreaterThan(0)
+})
+
 test('handles concurrent requests', async () => {
   await createFile(tempDir, 'rules/a.md', '---\ntitle: A\n---\n# A')
   await createFile(tempDir, 'rules/b.md', '---\ntitle: B\n---\n# B')
