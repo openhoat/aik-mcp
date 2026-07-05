@@ -32,7 +32,6 @@ vi.mock('../logger.js', () => ({
 }))
 
 vi.mock('./shared.js', () => ({
-  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
@@ -48,7 +47,6 @@ const { parseSemver, isNewer, registerCheckUpdatesTool, registerUpdateTool } = a
   './update.js'
 )
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 const mockParseFrontmatter = (await import('../frontmatter.js')).parseFrontmatter as Mock
 
@@ -62,7 +60,6 @@ beforeEach(() => {
   mockRmSync.mockReset()
   mockStatSync.mockReset()
   mockReaddirSync.mockReset()
-  mockDetectAgent.mockReset()
   mockFindExistingConfig.mockReset()
   mockParseFrontmatter.mockReset()
   mockParseFrontmatter.mockReturnValue({ frontmatter: { version: '1.0.0' } })
@@ -138,12 +135,11 @@ describe('registerCheckUpdatesTool', () => {
   test('should return error when no config found', async () => {
     const { server, getCheckHandler } = createMockServer()
     const store = { getByPath: vi.fn(), getByCategory: vi.fn(() => []) } as unknown as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerCheckUpdatesTool(server, store)
     const handler = getCheckHandler()
-    const result = (await handler({})) as ToolResult
+    const result = (await handler({ agent: 'opencode' })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
   })
@@ -151,7 +147,6 @@ describe('registerCheckUpdatesTool', () => {
   test('should return empty when no items installed', async () => {
     const { server, getCheckHandler } = createMockServer()
     const store = { getByCategory: vi.fn(() => []) } as unknown as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -160,7 +155,7 @@ describe('registerCheckUpdatesTool', () => {
 
     registerCheckUpdatesTool(server, store)
     const handler = getCheckHandler()
-    const result = (await handler({})) as ToolContent
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.updateCount).toBe(0)
   })
@@ -173,7 +168,7 @@ describe('registerUpdateTool', () => {
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
-    const result = (await handler({ path: 'rules/typescript' })) as ToolResult
+    const result = (await handler({ path: 'rules/typescript', agent: 'opencode' })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('Content not found')
   })
@@ -183,12 +178,11 @@ describe('registerUpdateTool', () => {
     const store = {
       getByPath: vi.fn(() => ({ version: '2.0.0', fullPath: '/store/item.md' })),
     } as unknown as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
-    const result = (await handler({ path: 'rules/typescript' })) as ToolResult
+    const result = (await handler({ path: 'rules/typescript', agent: 'opencode' })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
   })
@@ -205,7 +199,6 @@ describe('registerUpdateTool', () => {
         title: 'TypeScript',
       })),
     } as unknown as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -216,7 +209,7 @@ describe('registerUpdateTool', () => {
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
-    const result = (await handler({ path: 'rules/typescript' })) as ToolContent
+    const result = (await handler({ path: 'rules/typescript', agent: 'opencode' })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.status).toBe('already-up-to-date')
   })
@@ -233,7 +226,6 @@ describe('registerUpdateTool', () => {
         title: 'TypeScript',
       })),
     } as unknown as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -247,7 +239,7 @@ describe('registerUpdateTool', () => {
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
-    const result = (await handler({ path: 'rules/typescript' })) as ToolContent
+    const result = (await handler({ path: 'rules/typescript', agent: 'opencode' })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.updated).toBe('rules/typescript')
     expect(parsed.previousVersion).toBe('1.0.0')

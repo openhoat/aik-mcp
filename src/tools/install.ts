@@ -7,7 +7,7 @@ import { parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import { getInstallSpec } from './agent-specs.js'
 import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
-import { detectAgent, findExistingConfig } from './shared.js'
+import { findExistingConfig } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
 export function openCodeConfigPath(targetDir: string, existingPath: string | null): string {
@@ -112,21 +112,10 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe(
-          'Target AI. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
-        ),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({
-      path,
-      projectDir,
-      agent: preferredAgent,
-    }: {
-      path: string
-      projectDir?: string
-      agent?: Agent
-    }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'reinstall called')
+    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
+      logger.trace({ path, projectDir, agent }, 'reinstall called')
 
       const item = store.getByPath(path)
       if (!item) {
@@ -137,7 +126,6 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {
@@ -204,21 +192,10 @@ export function registerInstallTool(server: McpServer, store: ContentStore): voi
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe(
-          'Target AI agent. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
-        ),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({
-      path,
-      projectDir,
-      agent: preferredAgent,
-    }: {
-      path: string
-      projectDir?: string
-      agent?: Agent
-    }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'install called')
+    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
+      logger.trace({ path, projectDir, agent }, 'install called')
       const item = store.getByPath(path)
       if (!item) {
         return {
@@ -228,7 +205,6 @@ export function registerInstallTool(server: McpServer, store: ContentStore): voi
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
       const configPath = existing?.agent === agent ? existing.path : null
 

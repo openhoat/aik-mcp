@@ -14,7 +14,7 @@ import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { getInstallSpec } from './agent-specs.js'
 import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
-import { detectAgent, findExistingConfig } from './shared.js'
+import { findExistingConfig } from './shared.js'
 
 export function removeSections(
   content: string,
@@ -186,22 +186,12 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe('Target AI agent. Auto-detected from existing config files if not specified.'),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({
-      path,
-      projectDir,
-      agent: preferredAgent,
-    }: {
-      path: string
-      projectDir?: string
-      agent?: Agent
-    }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'uninstall called')
+    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
+      logger.trace({ path, projectDir, agent }, 'uninstall called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {
@@ -255,14 +245,12 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe('Target AI agent. Auto-detected from existing config files if not specified.'),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({ projectDir, agent: preferredAgent }: { projectDir?: string; agent?: Agent }) => {
-      logger.trace({ projectDir, agent: preferredAgent }, 'uninstall_all called')
+    async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
+      logger.trace({ projectDir, agent }, 'uninstall_all called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {

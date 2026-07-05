@@ -25,7 +25,6 @@ vi.mock('../logger.js', () => ({
 }))
 
 vi.mock('./shared.js', () => ({
-  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
@@ -37,7 +36,6 @@ vi.mock('./uninstall.js', () => ({
 const { openCodeConfigPath, installContent, registerInstallTool, registerReinstallTool } =
   await import('./install.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 const mockUninstallContent = (await import('./uninstall.js')).uninstallContent as Mock
 
@@ -47,7 +45,6 @@ beforeEach(() => {
   mockWriteFileSync.mockReset()
   mockMkdirSync.mockReset()
   mockAppendFileSync.mockReset()
-  mockDetectAgent.mockReset()
   mockFindExistingConfig.mockReset()
   mockUninstallContent.mockReset()
 })
@@ -378,7 +375,6 @@ describe('registerInstallTool', () => {
   test('should install with opencode agent', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -393,6 +389,7 @@ describe('registerInstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.installed).toBe('rules/test-rule')
@@ -402,7 +399,6 @@ describe('registerInstallTool', () => {
   test('should install with claude-code agent', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('claude-code')
     mockFindExistingConfig.mockReturnValue({ path: '/project/CLAUDE.md', agent: 'claude-code' })
     mockReadFileSync.mockReturnValue('# My Rule\ncontent')
     mockExistsSync.mockReturnValue(false)
@@ -412,6 +408,7 @@ describe('registerInstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'claude-code',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.installed).toBe('rules/test-rule')
@@ -421,7 +418,6 @@ describe('registerInstallTool', () => {
   test('should install with cline agent when no existing config', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('cline')
     mockFindExistingConfig.mockReturnValue(null)
     mockReadFileSync.mockReturnValue('# My Rule\ncontent')
     mockExistsSync.mockReturnValue(false)
@@ -431,6 +427,7 @@ describe('registerInstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'cline',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.installed).toBe('rules/test-rule')
@@ -440,7 +437,6 @@ describe('registerInstallTool', () => {
   test('should return already-installed message', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -457,6 +453,7 @@ describe('registerInstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     expect(result.content[0].text).toContain('Already installed')
   })
@@ -471,7 +468,7 @@ describe('registerReinstallTool', () => {
     registerReinstallTool(server, store)
     const handler = getHandler()
 
-    const result = (await handler({ path: 'rules/nonexistent' })) as ToolResult
+    const result = (await handler({ path: 'rules/nonexistent', agent: 'opencode' })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('Content not found')
   })
@@ -479,7 +476,6 @@ describe('registerReinstallTool', () => {
   test('should reinstall with opencode agent', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -495,6 +491,7 @@ describe('registerReinstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.reinstalled).toBe('rules/test-rule')
@@ -506,7 +503,6 @@ describe('registerReinstallTool', () => {
   test('should return error when no config found', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerReinstallTool(server, store)
@@ -514,6 +510,7 @@ describe('registerReinstallTool', () => {
     const result = (await handler({
       path: 'rules/test-rule',
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')

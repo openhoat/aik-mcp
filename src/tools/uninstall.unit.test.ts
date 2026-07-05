@@ -34,14 +34,12 @@ vi.mock('../logger.js', () => ({
 }))
 
 vi.mock('./shared.js', () => ({
-  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
 const { removeSections, uninstallContent, registerUninstallTool } = await import('./uninstall.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 
 beforeEach(() => {
@@ -52,7 +50,6 @@ beforeEach(() => {
   mockRmSync.mockReset()
   mockStatSync.mockReset()
   mockReaddirSync.mockReset()
-  mockDetectAgent.mockReset()
   mockFindExistingConfig.mockReset()
   mockStatSync.mockReturnValue({ isDirectory: () => false })
 })
@@ -308,7 +305,6 @@ describe('registerUninstallTool', () => {
   test('should uninstall opencode item', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -322,6 +318,7 @@ describe('registerUninstallTool', () => {
     const result = (await handler({
       path: 'rules/ts',
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.uninstalled).toBe('rules/ts')
@@ -331,7 +328,6 @@ describe('registerUninstallTool', () => {
   test('should uninstall claude-code item', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('claude-code')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
@@ -343,6 +339,8 @@ describe('registerUninstallTool', () => {
     const handler = getInstallHandler()
     const result = (await handler({
       path: 'rules/ts',
+      projectDir: '/project',
+      agent: 'claude-code',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.uninstalled).toBe('rules/ts')
@@ -351,7 +349,6 @@ describe('registerUninstallTool', () => {
   test('should uninstall cline item', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('cline')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.clinerules',
       agent: 'cline',
@@ -362,6 +359,8 @@ describe('registerUninstallTool', () => {
     const handler = getInstallHandler()
     const result = (await handler({
       path: 'rules/ts',
+      projectDir: '/project',
+      agent: 'cline',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.uninstalled).toBe('rules/ts')
@@ -370,7 +369,6 @@ describe('registerUninstallTool', () => {
   test('should return not found message when item not installed', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -382,6 +380,8 @@ describe('registerUninstallTool', () => {
     const handler = getInstallHandler()
     const result = (await handler({
       path: 'rules/ts',
+      projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     expect(result.content[0].text).toContain('Not found')
   })
@@ -389,13 +389,14 @@ describe('registerUninstallTool', () => {
   test('should return error when no config found', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
     const result = (await handler({
       path: 'rules/ts',
+      projectDir: '/project',
+      agent: 'opencode',
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
@@ -404,12 +405,11 @@ describe('registerUninstallTool', () => {
   test('should return error for uninstall_all when no config', async () => {
     const { server, getUninstallAllHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUninstallTool(server, store)
     const handler = getUninstallAllHandler()
-    const result = (await handler({})) as ToolResult
+    const result = (await handler({ agent: 'opencode' })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
   })

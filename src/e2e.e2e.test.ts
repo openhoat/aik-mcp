@@ -324,7 +324,7 @@ test('aik_list_installed returns installed items for opencode', async () => {
 
     const result = (await req('tools/call', {
       name: 'list_installed',
-      arguments: { projectDir: tempDir },
+      arguments: { projectDir: tempDir, agent: 'opencode' },
     })) as { content: Array<{ text: string }> }
 
     const parsed = JSON.parse(result.content[0].text)
@@ -351,7 +351,7 @@ test('aik_list_installed returns empty when nothing installed', async () => {
 
     const result = (await req('tools/call', {
       name: 'list_installed',
-      arguments: { projectDir: tempDir },
+      arguments: { projectDir: tempDir, agent: 'opencode' },
     })) as { content: Array<{ text: string }> }
 
     expect(result.content[0].text).toContain('No aik-installed items found')
@@ -362,7 +362,7 @@ test('aik_list_installed returns error when no config found', async () => {
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
       name: 'list_installed',
-      arguments: { projectDir: tempDir },
+      arguments: { projectDir: tempDir, agent: 'opencode' },
     })) as { isError?: boolean; content?: Array<{ text: string }> }
 
     if (result.content) {
@@ -395,7 +395,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
 
     const result = (await req('tools/call', {
       name: 'reinstall',
-      arguments: { path: 'rules/test-rule', projectDir: tempDir },
+      arguments: { path: 'rules/test-rule', projectDir: tempDir, agent: 'opencode' },
     })) as { content: Array<{ text: string }> }
 
     const parsed = JSON.parse(result.content[0].text)
@@ -406,7 +406,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
     // verify the config entry still exists after reinstall
     const listResult = (await req('tools/call', {
       name: 'list_installed',
-      arguments: { projectDir: tempDir },
+      arguments: { projectDir: tempDir, agent: 'opencode' },
     })) as { content: Array<{ text: string }> }
     const listed = JSON.parse(listResult.content[0].text)
     expect(listed.count).toBe(1)
@@ -426,7 +426,7 @@ test('aik_reinstall returns error for missing content', async () => {
 
     const result = (await req('tools/call', {
       name: 'reinstall',
-      arguments: { path: 'rules/nonexistent', projectDir: tempDir },
+      arguments: { path: 'rules/nonexistent', projectDir: tempDir, agent: 'opencode' },
     })) as { content: Array<{ text: string }> }
 
     expect(result.content[0].text).toContain('Content not found')

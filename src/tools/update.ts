@@ -8,7 +8,7 @@ import { logger } from '../logger.js'
 import { getInstallSpec } from './agent-specs.js'
 import { installContent } from './install.js'
 import type { Agent, ToolRegistrar } from './shared.js'
-import { detectAgent, findExistingConfig } from './shared.js'
+import { findExistingConfig } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
 export function parseSemver(version: string): number[] {
@@ -68,16 +68,12 @@ export function registerCheckUpdatesTool(server: McpServer, store: ContentStore)
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe(
-          'Target AI agent. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
-        ),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({ projectDir, agent: preferredAgent }: { projectDir?: string; agent?: Agent }) => {
-      logger.trace({ projectDir, agent: preferredAgent }, 'check_updates called')
+    async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
+      logger.trace({ projectDir, agent }, 'check_updates called')
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {
@@ -161,21 +157,10 @@ export function registerUpdateTool(server: McpServer, store: ContentStore): void
         ),
       agent: z
         .enum(['opencode', 'claude-code', 'cline'])
-        .optional()
-        .describe(
-          'Target AI agent. Auto-detected from existing config files if not specified (opencode, claude-code, cline).'
-        ),
+        .describe('Target AI agent (opencode, claude-code, or cline).'),
     },
-    async ({
-      path,
-      projectDir,
-      agent: preferredAgent,
-    }: {
-      path: string
-      projectDir?: string
-      agent?: Agent
-    }) => {
-      logger.trace({ path, projectDir, agent: preferredAgent }, 'update called')
+    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
+      logger.trace({ path, projectDir, agent }, 'update called')
 
       const storeItem = store.getByPath(path)
       if (!storeItem) {
@@ -186,7 +171,6 @@ export function registerUpdateTool(server: McpServer, store: ContentStore): void
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {

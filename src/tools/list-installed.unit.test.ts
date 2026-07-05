@@ -28,14 +28,12 @@ vi.mock('../logger.js', () => ({
 }))
 
 vi.mock('./shared.js', () => ({
-  detectAgent: vi.fn<(dir: string, preferred?: string) => string>(),
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
 const { registerListInstalledTool } = await import('./list-installed.js')
 
-const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 
 beforeEach(() => {
@@ -43,7 +41,6 @@ beforeEach(() => {
   mockExistsSync.mockReset()
   mockStatSync.mockReset()
   mockReaddirSync.mockReset()
-  mockDetectAgent.mockReset()
   mockFindExistingConfig.mockReset()
   mockStatSync.mockReturnValue({ isDirectory: () => false })
   mockExistsSync.mockReturnValue(false)
@@ -69,7 +66,6 @@ describe('registerListInstalledTool', () => {
   test('should return items for opencode agent by scanning directories', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -96,6 +92,7 @@ describe('registerListInstalledTool', () => {
     const handler = getHandler()
     const result = (await handler({
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.agent).toBe('opencode')
@@ -105,7 +102,6 @@ describe('registerListInstalledTool', () => {
   test('should return items for claude-code agent by scanning sections', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('claude-code')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
@@ -117,6 +113,7 @@ describe('registerListInstalledTool', () => {
     const handler = getHandler()
     const result = (await handler({
       projectDir: '/project',
+      agent: 'claude-code',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.agent).toBe('claude-code')
@@ -126,7 +123,6 @@ describe('registerListInstalledTool', () => {
   test('should return empty message when no items', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -138,6 +134,7 @@ describe('registerListInstalledTool', () => {
     const handler = getHandler()
     const result = (await handler({
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolContent
     expect(result.content[0].text).toContain('No aik-installed items found')
   })
@@ -145,13 +142,13 @@ describe('registerListInstalledTool', () => {
   test('should return error when no config found', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue(null)
 
     registerListInstalledTool(server, store)
     const handler = getHandler()
     const result = (await handler({
       projectDir: '/project',
+      agent: 'opencode',
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
