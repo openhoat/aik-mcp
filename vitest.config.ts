@@ -6,6 +6,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     testTimeout: 30000,
+    env: {
+      LOG_LEVEL: 'silent',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['lcov', 'text', 'text-summary'],
