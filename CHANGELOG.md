@@ -1,4 +1,14 @@
-# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...bab364daf21d6ec84b819d798976e405fb91a897) (2026-07-05)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.2.0...17f8c9b02fc65734f80c327dde75522cb48a170b) (2026-07-05)
+
+### Bug Fixes
+
+* add --access public to npm publish for scoped package ([e5c34c0](https://github.com/openhoat/aik-mcp/commit/e5c34c0e897cd85133ba9a1ed22ccf32b75b4970))
+
+### Features
+
+* make agent parameter required on agent-specific tools ([17f8c9b](https://github.com/openhoat/aik-mcp/commit/17f8c9b02fc65734f80c327dde75522cb48a170b))
+
+# [0.2.0](https://github.com/openhoat/aik-mcp/compare/v0.1.3...v0.2.0) (2026-07-05)
 
 * feat!: migrate to native agent formats for content installation ([](https://github.com/openhoat/aik-mcp/commit/bab364daf21d6ec84b819d798976e405fb91a897))
 
@@ -13,6 +23,7 @@
 * add missing file patterns to wireit qa:biome tracking ([7e04785](https://github.com/openhoat/aik-mcp/commit/7e047852efa2422cc0e1475f987e48d7e44fcaac))
 * ignore vitepress cache ([4c6eb7d](https://github.com/openhoat/aik-mcp/commit/4c6eb7ddd65ae8e5d806bbfe71ecd06b5a9f1f68))
 * move aik validate to done in kanban ([0e654e3](https://github.com/openhoat/aik-mcp/commit/0e654e3f9ec552ffdad18082b9928a2b1beb75a4))
+* **release:** v0.2.0 ([4bdc396](https://github.com/openhoat/aik-mcp/commit/4bdc3960940722036bb3f6066531d9d3bedaacb2))
 * silence pino logger during tests ([dc7b291](https://github.com/openhoat/aik-mcp/commit/dc7b291e965beef32841746c3a379ca7e7beddce))
 * update kanban after task completion ([5d964da](https://github.com/openhoat/aik-mcp/commit/5d964da6cff6b0a34febb041610d4b67cca7d0d9))
 * update kanban and changelog after architecture-and-tests merge ([c86647f](https://github.com/openhoat/aik-mcp/commit/c86647f6594761a67a5d9bb1f43be4cbfe7120f5))
