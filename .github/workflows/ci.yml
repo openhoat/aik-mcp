@@ -10,3 +10,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - run: npm run validate
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
