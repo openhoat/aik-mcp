@@ -1,4 +1,6 @@
-# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...ebb82cd424d6e35e8f6ac53c03a2ac22c978242d) (2026-07-05)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.1.3...bab364daf21d6ec84b819d798976e405fb91a897) (2026-07-05)
+
+* feat!: migrate to native agent formats for content installation ([](https://github.com/openhoat/aik-mcp/commit/bab364daf21d6ec84b819d798976e405fb91a897))
 
 ### Bug Fixes
 
@@ -13,6 +15,7 @@
 * move aik validate to done in kanban ([0e654e3](https://github.com/openhoat/aik-mcp/commit/0e654e3f9ec552ffdad18082b9928a2b1beb75a4))
 * silence pino logger during tests ([dc7b291](https://github.com/openhoat/aik-mcp/commit/dc7b291e965beef32841746c3a379ca7e7beddce))
 * update kanban after task completion ([5d964da](https://github.com/openhoat/aik-mcp/commit/5d964da6cff6b0a34febb041610d4b67cca7d0d9))
+* update kanban and changelog after architecture-and-tests merge ([c86647f](https://github.com/openhoat/aik-mcp/commit/c86647f6594761a67a5d9bb1f43be4cbfe7120f5))
 * update kanban and changelog after migrate-vitest merge ([b7215ec](https://github.com/openhoat/aik-mcp/commit/b7215ecc17ebbc5eb22c608ef408062a1933fd41))
 
 ### Continuous Integration
