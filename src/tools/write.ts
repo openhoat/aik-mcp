@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
+import { frontmatterSchema, validateFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import type { ToolRegistrar } from './shared.js'
 
@@ -43,6 +44,15 @@ export function registerWriteTool(server: McpServer, store: ContentStore): void 
       if (title) frontmatter.title = title
       if (description) frontmatter.description = description
       if (tags) frontmatter.tags = tags
+
+      const merged = frontmatterSchema.parse(frontmatter)
+      const validation = validateFrontmatter(merged)
+      if (!validation.valid) {
+        return {
+          content: [{ type: 'text', text: validation.errors.join('\n') }],
+          isError: true,
+        }
+      }
 
       logger.trace({ path, overwrite }, 'write called')
 

@@ -228,7 +228,13 @@ test('aik_write creates a new item', async () => {
   await withServer(tempDir, async req => {
     await req('tools/call', {
       name: 'write',
-      arguments: { path: 'rules/new-rule', content: '# Fresh Rule' },
+      arguments: {
+        path: 'rules/new-rule',
+        content: '# Fresh Rule',
+        title: 'Fresh Rule',
+        description: 'A freshly created rule',
+        tags: ['test'],
+      },
     })
 
     const result = (await req('tools/call', {
@@ -240,12 +246,23 @@ test('aik_write creates a new item', async () => {
 })
 
 test('aik_write overwrites existing item', async () => {
-  await createFile(tempDir, 'rules/existing.md', '---\ntitle: Old\n---\n# Old Content')
+  await createFile(
+    tempDir,
+    'rules/existing.md',
+    '---\ntitle: Old\ndescription: Old desc\ntags: [test]\n---\n# Old Content'
+  )
 
   await withServer(tempDir, async req => {
     await req('tools/call', {
       name: 'write',
-      arguments: { path: 'rules/existing', content: '# Updated Content', overwrite: true },
+      arguments: {
+        path: 'rules/existing',
+        content: '# Updated Content',
+        title: 'Updated',
+        description: 'Updated desc',
+        tags: ['test'],
+        overwrite: true,
+      },
     })
 
     const result = (await req('tools/call', {

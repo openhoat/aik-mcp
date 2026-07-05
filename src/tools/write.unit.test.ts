@@ -77,18 +77,62 @@ describe('registerWriteTool', () => {
     )
   })
 
-  test('should create item without optional fields', async () => {
+  test('should reject when required fields are missing', async () => {
     const item = createMockContentItem({ title: 'untitled', description: '', tags: [] })
     const { handler, store } = setup(item)
-    await handler({ path: 'rules/test-rule', content: '# Test' })
-    expect(store.writeContent).toHaveBeenCalledWith('rules/test-rule', '# Test', {}, false)
+    const result = (await handler({ path: 'rules/test-rule', content: '# Test' })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('title')
+    expect(store.writeContent).not.toHaveBeenCalled()
+  })
+
+  test('should reject when required fields are empty', async () => {
+    const item = createMockContentItem()
+    const { handler, store } = setup(item)
+    const result = (await handler({
+      path: 'rules/test-rule',
+      content: '# Test',
+      title: '',
+      description: 'A description',
+      tags: ['test'],
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('title')
+    expect(store.writeContent).not.toHaveBeenCalled()
+  })
+
+  test('should reject when tags are empty', async () => {
+    const item = createMockContentItem()
+    const { handler, store } = setup(item)
+    const result = (await handler({
+      path: 'rules/test-rule',
+      content: '# Test',
+      title: 'Test Rule',
+      description: 'A description',
+      tags: [],
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('tags')
+    expect(store.writeContent).not.toHaveBeenCalled()
   })
 
   test('should pass overwrite flag', async () => {
     const item = createMockContentItem()
     const { handler, store } = setup(item)
-    await handler({ path: 'rules/test-rule', content: '# Test', overwrite: true })
-    expect(store.writeContent).toHaveBeenCalledWith('rules/test-rule', '# Test', {}, true)
+    await handler({
+      path: 'rules/test-rule',
+      content: '# Test',
+      title: 'Test Rule',
+      description: 'A description',
+      tags: ['test'],
+      overwrite: true,
+    })
+    expect(store.writeContent).toHaveBeenCalledWith(
+      'rules/test-rule',
+      '# Test',
+      { title: 'Test Rule', description: 'A description', tags: ['test'] },
+      true
+    )
   })
 
   test('should handle store error', async () => {
@@ -123,6 +167,9 @@ describe('registerWriteTool', () => {
     const result = (await handler!({
       path: 'rules/test-rule',
       content: '# Test',
+      title: 'Test Rule',
+      description: 'A description',
+      tags: ['test'],
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toBe('Write failed')

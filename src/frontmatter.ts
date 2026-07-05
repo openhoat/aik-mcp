@@ -44,6 +44,27 @@ export function parseFrontmatter(raw: string): ParsedDoc {
   return { frontmatter, body }
 }
 
+export const frontmatterStrictSchema = z.object({
+  title: z.string().min(1, 'title is required'),
+  description: z.string().min(1, 'description is required'),
+  tags: z.array(z.string()).min(1, 'at least one tag is required'),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/, 'version must be in semver format (e.g. 1.0.0)')
+    .optional(),
+})
+
+export function validateFrontmatter(
+  data: Record<string, unknown>
+): { valid: true } | { valid: false; errors: string[] } {
+  const result = frontmatterStrictSchema.safeParse(data)
+  if (result.success) return { valid: true }
+  return {
+    valid: false,
+    errors: result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
+  }
+}
+
 export function serializeFrontmatter(frontmatter: Frontmatter): string {
   const obj: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(frontmatter)) {
