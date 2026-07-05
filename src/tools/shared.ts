@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { z } from 'zod'
@@ -19,6 +19,14 @@ export interface OpenCodeConfig {
   [key: string]: unknown
 }
 
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
+
 export function findExistingConfig(dir: string): { path: string; agent: Agent } | null {
   let current = resolve(dir)
   for (let i = 0; i < 10; i++) {
@@ -30,10 +38,14 @@ export function findExistingConfig(dir: string): { path: string; agent: Agent } 
       return { path: resolve(current, 'opencode.json'), agent: 'opencode' }
     if (existsSync(resolve(current, 'opencode.jsonc')))
       return { path: resolve(current, 'opencode.jsonc'), agent: 'opencode' }
-    if (existsSync(resolve(current, 'CLAUDE.md')))
-      return { path: resolve(current, 'CLAUDE.md'), agent: 'claude-code' }
-    if (existsSync(resolve(current, '.clinerules')))
-      return { path: resolve(current, '.clinerules'), agent: 'cline' }
+    const claudeMd = resolve(current, 'CLAUDE.md')
+    if (existsSync(claudeMd)) return { path: claudeMd, agent: 'claude-code' }
+    const claudeDir = resolve(current, '.claude')
+    if (isDirectory(claudeDir)) return { path: claudeDir, agent: 'claude-code' }
+    const climd = resolve(current, '.clinerules')
+    if (existsSync(climd)) return { path: climd, agent: 'cline' }
+    const cliDir = resolve(current, '.cline')
+    if (isDirectory(cliDir)) return { path: cliDir, agent: 'cline' }
     const parent = resolve(current, '..')
     if (parent === current) break
     current = parent

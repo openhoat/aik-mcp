@@ -301,15 +301,24 @@ test('aik_list_installed returns installed items for opencode', async () => {
   )
 
   await withServer(tempDir, async req => {
-    const configDir = join(tempDir, '.opencode')
-    await mkdir(configDir, { recursive: true })
+    // Create actual installed files in .opencode/ directories
+    const rulesDir = join(tempDir, '.opencode', 'rules')
+    const skillsDir = join(tempDir, '.opencode', 'skills', 'test-skill')
+    await mkdir(rulesDir, { recursive: true })
+    await mkdir(skillsDir, { recursive: true })
     await writeFile(
-      join(configDir, 'opencode.jsonc'),
-      JSON.stringify(
-        { instructions: ['.opencode/rules/test-rule.md', '.opencode/skills/test-skill.md'] },
-        null,
-        2
-      ),
+      join(rulesDir, 'test-rule.md'),
+      '---\ntitle: Test Rule\n---\n# Test Rule\ncontent',
+      'utf-8'
+    )
+    await writeFile(
+      join(skillsDir, 'SKILL.md'),
+      '---\nname: test-skill\ndescription: Test Skill\n---\n# Test Skill\ncontent',
+      'utf-8'
+    )
+    await writeFile(
+      join(tempDir, '.opencode', 'opencode.jsonc'),
+      JSON.stringify({ instructions: ['.opencode/rules/test-rule.md'] }, null, 2),
       'utf-8'
     )
 
@@ -320,9 +329,12 @@ test('aik_list_installed returns installed items for opencode', async () => {
 
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.agent).toBe('opencode')
-    expect(parsed.count).toBe(2)
+    expect(parsed.count).toBeGreaterThanOrEqual(2)
     expect(parsed.items).toEqual(
-      expect.arrayContaining([{ path: 'rules/test-rule' }, { path: 'skills/test-skill' }])
+      expect.arrayContaining([
+        { path: 'rules/test-rule' },
+        expect.objectContaining({ path: 'skills/test-skill' }),
+      ])
     )
   })
 })

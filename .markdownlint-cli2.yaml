@@ -21,11 +21,16 @@ config:
   # MD046/code-block-style - allow indented code blocks
   MD046: false
 
+  # MD060/table-column-style - allow flexible table formatting
+  MD060: false
+
 globs:
   - "**/*.md"
 
 ignores:
   - "node_modules"
   - ".git"
+  - ".opencode"
   - "dist"
   - "CHANGELOG.md"
+  - "rag"

@@ -16,6 +16,7 @@ export default withMermaid(
         { text: 'Get Started', link: '/guide/getting-started' },
         { text: 'Tools', link: '/guide/tools' },
         { text: 'Architecture', link: '/guide/architecture' },
+        { text: 'Agent Docs RAG', link: '/guide/agent-docs' },
         { text: 'Configuration', link: '/guide/configuration' },
       ],
 
@@ -25,6 +26,7 @@ export default withMermaid(
           items: [
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Architecture', link: '/guide/architecture' },
+            { text: 'Agent Docs RAG', link: '/guide/agent-docs' },
             { text: 'MCP Tools', link: '/guide/tools' },
             { text: 'Configuration', link: '/guide/configuration' },
           ],

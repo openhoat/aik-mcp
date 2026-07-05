@@ -1,48 +1,20 @@
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { ContentStore } from '../content-store.js'
+import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
+import { getInstallSpec } from './agent-specs.js'
 import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
 import { detectAgent, findExistingConfig } from './shared.js'
-
-export function uninstallOpenCode(
-  configPath: string,
-  targetDir: string,
-  itemPath: string
-): boolean {
-  const instructionsEntry = `.opencode/${itemPath}.md`
-  const fullPath = resolve(targetDir, instructionsEntry)
-
-  const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
-  const instructions = (config.instructions ?? []).filter(e => e !== instructionsEntry)
-
-  if (instructions.length === (config.instructions ?? []).length) return false
-
-  config.instructions = instructions
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
-
-  if (existsSync(fullPath)) unlinkSync(fullPath)
-  return true
-}
-
-export function uninstallAllOpenCode(configPath: string, targetDir: string): number {
-  const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
-  const instructions = config.instructions ?? []
-
-  const aikEntries = instructions.filter(e => e.startsWith('.opencode/'))
-  if (aikEntries.length === 0) return 0
-
-  for (const entry of aikEntries) {
-    const fullPath = resolve(targetDir, entry)
-    if (existsSync(fullPath)) unlinkSync(fullPath)
-  }
-
-  config.instructions = instructions.filter(e => !e.startsWith('.opencode/'))
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
-  return aikEntries.length
-}
 
 export function removeSections(
   content: string,
@@ -81,49 +53,122 @@ export function removeSections(
   return { result: kept.join('\n'), count }
 }
 
-export function uninstallClaudeCode(configPath: string, itemPath: string): boolean {
-  const content = readFileSync(configPath, 'utf-8')
-  const sourceTag = `<source>${itemPath}</source>`
-  if (!content.includes(sourceTag)) return false
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
 
-  const { result, count } = removeSections(content, text => text.includes(sourceTag))
-  if (count === 0) return false
-  writeFileSync(configPath, result, 'utf-8')
+function removeFromOpencodeInstructions(configPath: string, entry: string): boolean {
+  const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
+  const instructions = (config.instructions ?? []).filter(e => e !== entry)
+
+  if (instructions.length === (config.instructions ?? []).length) return false
+
+  config.instructions = instructions
+  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
   return true
 }
 
-export function uninstallAllClaudeCode(configPath: string): number {
-  const content = readFileSync(configPath, 'utf-8')
-  if (!/<source>[\w-]+\/[\w./-]+<\/source>/.test(content)) return 0
+export function uninstallContent(
+  agent: Agent,
+  category: Category,
+  name: string,
+  itemPath: string,
+  projectDir: string,
+  configPath: string | null
+): boolean {
+  const spec = getInstallSpec(agent, category)
+  const targetFile = spec.contentPath(projectDir, category, name)
 
-  const { result, count } = removeSections(content, text =>
-    /<source>[\w-]+\/[\w./-]+<\/source>/.test(text)
-  )
-  if (count === 0) return 0
-  writeFileSync(configPath, result, 'utf-8')
-  return count
+  switch (spec.format) {
+    case 'file': {
+      let removed = false
+
+      if (spec.configUpdate === 'opencode-instructions') {
+        const opencodeConfig = configPath ?? resolve(projectDir, '.opencode', 'opencode.jsonc')
+        const entry = `.opencode/${category}/${name}.md`
+        removed = removeFromOpencodeInstructions(opencodeConfig, entry)
+      }
+
+      if (existsSync(targetFile)) {
+        unlinkSync(targetFile)
+        removed = true
+      }
+      return removed
+    }
+
+    case 'directory-skill': {
+      const skillDir = resolve(targetFile, '..')
+      if (existsSync(skillDir)) {
+        rmSync(skillDir, { recursive: true, force: true })
+        return true
+      }
+      return false
+    }
+
+    case 'section': {
+      const mdPath = configPath ?? targetFile
+      if (!existsSync(mdPath)) return false
+
+      const content = readFileSync(mdPath, 'utf-8')
+      const sourceTag = `<source>${itemPath}</source>`
+      if (!content.includes(sourceTag)) return false
+
+      const { result, count } = removeSections(content, text => text.includes(sourceTag))
+      if (count === 0) return false
+      writeFileSync(mdPath, result, 'utf-8')
+      return true
+    }
+  }
 }
 
-export function uninstallCline(configPath: string, itemPath: string): boolean {
-  const content = readFileSync(configPath, 'utf-8')
-  const marker = `<!-- from ${itemPath} -->`
-  if (!content.includes(marker)) return false
+function uninstallAllForAgent(agent: Agent, projectDir: string, configPath: string | null): number {
+  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+  let count = 0
 
-  const { result, count } = removeSections(content, text => text.includes(marker))
-  if (count === 0) return false
-  writeFileSync(configPath, result, 'utf-8')
-  return true
-}
+  for (const category of categories) {
+    const spec = getInstallSpec(agent, category)
+    const baseDir = spec
+      .contentPath(projectDir, category, '')
+      .replace(/\/SKILL\.md$/, '')
+      .replace(/\/[^/]+\.md$/, '')
 
-export function uninstallAllCline(configPath: string): number {
-  const content = readFileSync(configPath, 'utf-8')
-  if (!/<!-- from [\w-]+\/[\w./-]+ -->/.test(content)) return 0
+    if (!isDirectory(baseDir)) continue
 
-  const { result, count } = removeSections(content, text =>
-    /<!-- from [\w-]+\/[\w./-]+ -->/.test(text)
-  )
-  if (count === 0) return 0
-  writeFileSync(configPath, result, 'utf-8')
+    // For directory-skill, baseDir is the parent (e.g. .opencode/skills)
+    // For file format, baseDir is the category dir (e.g. .opencode/rules)
+    const scanDir = spec.format === 'directory-skill' ? baseDir : baseDir
+
+    if (!isDirectory(scanDir)) continue
+
+    const entries = readdirSync(scanDir, { withFileTypes: true })
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        // Could be a skill directory
+        const skillFile = resolve(scanDir, entry.name, 'SKILL.md')
+        if (existsSync(skillFile)) {
+          rmSync(resolve(scanDir, entry.name), { recursive: true, force: true })
+          count++
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        const itemPath = `${category}/${entry.name.replace(/\.md$/, '')}`
+        const removed = uninstallContent(
+          agent,
+          category,
+          entry.name.replace(/\.md$/, ''),
+          itemPath,
+          projectDir,
+          configPath
+        )
+        if (removed) count++
+      }
+    }
+  }
+
   return count
 }
 
@@ -166,22 +211,18 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         }
       }
 
-      let removed = false
+      const [category, ...rest] = path.split('/')
+      const name = rest.join('/')
+      const configPath = existing.agent === agent ? existing.path : null
 
-      switch (agent) {
-        case 'opencode': {
-          removed = uninstallOpenCode(existing.path, targetDir, path)
-          break
-        }
-        case 'claude-code': {
-          removed = uninstallClaudeCode(existing.path, path)
-          break
-        }
-        case 'cline': {
-          removed = uninstallCline(existing.path, path)
-          break
-        }
-      }
+      const removed = uninstallContent(
+        agent,
+        category as Category,
+        name,
+        path,
+        targetDir,
+        configPath
+      )
 
       if (!removed) {
         return {
@@ -231,22 +272,8 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         }
       }
 
-      let removed = 0
-
-      switch (agent) {
-        case 'opencode': {
-          removed = uninstallAllOpenCode(existing.path, targetDir)
-          break
-        }
-        case 'claude-code': {
-          removed = uninstallAllClaudeCode(existing.path)
-          break
-        }
-        case 'cline': {
-          removed = uninstallAllCline(existing.path)
-          break
-        }
-      }
+      const configPath = existing.agent === agent ? existing.path : null
+      const removed = uninstallAllForAgent(agent, targetDir, configPath)
 
       if (removed === 0) {
         return {

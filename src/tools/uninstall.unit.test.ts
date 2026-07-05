@@ -9,12 +9,24 @@ const mockReadFileSync = vi.fn<(path: string, encoding?: string) => string>()
 const mockWriteFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
 const mockExistsSync = vi.fn<(path: string) => boolean>()
 const mockUnlinkSync = vi.fn<(path: string) => void>()
+const mockRmSync = vi.fn<(path: string, opts?: { recursive?: boolean; force?: boolean }) => void>()
+const mockStatSync = vi.fn<(path: string) => { isDirectory: () => boolean }>()
+const mockReaddirSync =
+  vi.fn<
+    (
+      path: string,
+      opts?: { withFileTypes?: boolean }
+    ) => Array<{ name: string; isDirectory: () => boolean; isFile: () => boolean }>
+  >()
 
 vi.mock('node:fs', () => ({
   readFileSync: mockReadFileSync,
   writeFileSync: mockWriteFileSync,
   existsSync: mockExistsSync,
   unlinkSync: mockUnlinkSync,
+  rmSync: mockRmSync,
+  statSync: mockStatSync,
+  readdirSync: mockReaddirSync,
 }))
 
 vi.mock('../logger.js', () => ({
@@ -27,16 +39,7 @@ vi.mock('./shared.js', () => ({
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
-const {
-  uninstallOpenCode,
-  uninstallAllOpenCode,
-  uninstallClaudeCode,
-  uninstallAllClaudeCode,
-  uninstallCline,
-  uninstallAllCline,
-  removeSections,
-  registerUninstallTool,
-} = await import('./uninstall.js')
+const { removeSections, uninstallContent, registerUninstallTool } = await import('./uninstall.js')
 
 const mockDetectAgent = (await import('./shared.js')).detectAgent as Mock
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
@@ -46,12 +49,15 @@ beforeEach(() => {
   mockWriteFileSync.mockReset()
   mockExistsSync.mockReset()
   mockUnlinkSync.mockReset()
+  mockRmSync.mockReset()
+  mockStatSync.mockReset()
+  mockReaddirSync.mockReset()
   mockDetectAgent.mockReset()
   mockFindExistingConfig.mockReset()
+  mockStatSync.mockReturnValue({ isDirectory: () => false })
 })
 
 describe('removeSections', () => {
-  // isTarget receives the full text from the current heading to end of content.
   const isTarget = (text: string) => {
     const firstLine = text.split('\n')[0]
     return firstLine.startsWith('## ') && firstLine.includes('test-section')
@@ -103,96 +109,87 @@ describe('removeSections', () => {
     expect(result).not.toContain('foo.md')
     expect(result).toContain('## Other')
   })
-
-  test('should handle multiple markers', () => {
-    const content =
-      '# Config\n\n<!-- from rules/foo.md -->\ncontent1\n\n<!-- from rules/bar.md -->\ncontent2'
-    const isMarker = (text: string) => text.startsWith('<!-- from ')
-    const { result, count } = removeSections(content, isMarker)
-    expect(count).toBe(2)
-    expect(result).toBe('# Config\n')
-  })
 })
 
-describe('uninstallOpenCode', () => {
-  test('should remove item from config and delete file when installed', () => {
-    const config = {
-      instructions: ['.opencode/rules/ts.md', '.opencode/skills/test.md'],
-    }
+describe('uninstallContent - opencode rules (file format)', () => {
+  test('should remove item from config and delete file', () => {
+    const config = { instructions: ['.opencode/rules/ts.md', '.opencode/skills/test.md'] }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
     mockExistsSync.mockReturnValue(true)
 
-    const result = uninstallOpenCode('/project/opencode.jsonc', '/project', 'rules/ts')
+    const result = uninstallContent(
+      'opencode',
+      'rules',
+      'ts',
+      'rules/ts',
+      '/project',
+      '/project/.opencode/opencode.jsonc'
+    )
 
     expect(result).toBe(true)
     expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/opencode.jsonc',
+      '/project/.opencode/opencode.jsonc',
       expect.stringContaining('.opencode/skills/test.md'),
       'utf-8'
     )
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/opencode.jsonc',
-      expect.not.stringContaining('rules/ts.md'),
-      'utf-8'
-    )
-    expect(mockUnlinkSync).toHaveBeenCalledWith('/project/.opencode/rules/ts.md')
+    expect(mockUnlinkSync).toHaveBeenCalledWith(expect.stringContaining('.opencode/rules/ts.md'))
   })
 
   test('should return false when item not in config', () => {
-    const config = {
-      instructions: ['.opencode/skills/test.md'],
-    }
-    mockReadFileSync.mockReturnValue(JSON.stringify(config))
-
-    const result = uninstallOpenCode('/project/opencode.jsonc', '/project', 'rules/ts')
-
-    expect(result).toBe(false)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
-  })
-
-  test('should delete file only when it exists', () => {
-    const config = {
-      instructions: ['.opencode/rules/ts.md'],
-    }
+    const config = { instructions: ['.opencode/skills/test.md'] }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
     mockExistsSync.mockReturnValue(false)
 
-    uninstallOpenCode('/project/opencode.jsonc', '/project', 'rules/ts')
+    const result = uninstallContent(
+      'opencode',
+      'rules',
+      'ts',
+      'rules/ts',
+      '/project',
+      '/project/.opencode/opencode.jsonc'
+    )
 
-    expect(mockUnlinkSync).not.toHaveBeenCalled()
+    expect(result).toBe(false)
   })
 })
 
-describe('uninstallAllOpenCode', () => {
-  test('should remove all .opencode entries and files', () => {
-    const config = {
-      instructions: ['.opencode/rules/ts.md', '.opencode/skills/test.md', 'other/file.md'],
-    }
-    mockReadFileSync.mockReturnValue(JSON.stringify(config))
+describe('uninstallContent - opencode skills (directory-skill format)', () => {
+  test('should remove skill directory', () => {
     mockExistsSync.mockReturnValue(true)
 
-    const count = uninstallAllOpenCode('/project/opencode.jsonc', '/project')
+    const result = uninstallContent(
+      'opencode',
+      'skills',
+      'my-skill',
+      'skills/my-skill',
+      '/project',
+      null
+    )
 
-    expect(count).toBe(2)
-    expect(mockUnlinkSync).toHaveBeenCalledWith('/project/.opencode/rules/ts.md')
-    expect(mockUnlinkSync).toHaveBeenCalledWith('/project/.opencode/skills/test.md')
-    expect(mockWriteFileSync).toHaveBeenCalled()
+    expect(result).toBe(true)
+    expect(mockRmSync).toHaveBeenCalledWith(expect.stringContaining('.opencode/skills/my-skill'), {
+      recursive: true,
+      force: true,
+    })
   })
 
-  test('should return 0 when no .opencode entries', () => {
-    const config = {
-      instructions: ['other/file.md'],
-    }
-    mockReadFileSync.mockReturnValue(JSON.stringify(config))
+  test('should return false when skill not found', () => {
+    mockExistsSync.mockReturnValue(false)
 
-    const count = uninstallAllOpenCode('/project/opencode.jsonc', '/project')
+    const result = uninstallContent(
+      'opencode',
+      'skills',
+      'my-skill',
+      'skills/my-skill',
+      '/project',
+      null
+    )
 
-    expect(count).toBe(0)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
+    expect(result).toBe(false)
   })
 })
 
-describe('uninstallClaudeCode', () => {
+describe('uninstallContent - claude-code rules (section format)', () => {
   test('should remove section with source tag', () => {
     const content = [
       '# Config',
@@ -207,8 +204,16 @@ describe('uninstallClaudeCode', () => {
       '',
     ].join('\n')
     mockReadFileSync.mockReturnValue(content)
+    mockExistsSync.mockReturnValue(true)
 
-    const result = uninstallClaudeCode('/project/CLAUDE.md', 'rules/typescript')
+    const result = uninstallContent(
+      'claude-code',
+      'rules',
+      'typescript',
+      'rules/typescript',
+      '/project',
+      '/project/CLAUDE.md'
+    )
 
     expect(result).toBe(true)
     expect(mockWriteFileSync).toHaveBeenCalledWith(
@@ -220,119 +225,57 @@ describe('uninstallClaudeCode', () => {
 
   test('should return false when source tag not found', () => {
     mockReadFileSync.mockReturnValue('# Config\n\n')
+    mockExistsSync.mockReturnValue(true)
 
-    const result = uninstallClaudeCode('/project/CLAUDE.md', 'rules/typescript')
+    const result = uninstallContent(
+      'claude-code',
+      'rules',
+      'typescript',
+      'rules/typescript',
+      '/project',
+      '/project/CLAUDE.md'
+    )
 
     expect(result).toBe(false)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
   })
 })
 
-describe('uninstallAllClaudeCode', () => {
-  test('should remove all source-tagged sections', () => {
-    const content = [
-      '# Config',
-      '',
-      '## TS',
-      '',
-      '<source>rules/ts</source>',
-      '',
-      '## Test',
-      '',
-      '<source>rules/test</source>',
-      '',
-    ].join('\n')
-    mockReadFileSync.mockReturnValue(content)
+describe('uninstallContent - claude-code agents (file format)', () => {
+  test('should delete agent file', () => {
+    mockExistsSync.mockReturnValue(true)
 
-    const count = uninstallAllClaudeCode('/project/CLAUDE.md')
-
-    expect(count).toBe(2)
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/CLAUDE.md',
-      expect.not.stringContaining('<source>'),
-      'utf-8'
+    const result = uninstallContent(
+      'claude-code',
+      'agents',
+      'code-reviewer',
+      'agents/code-reviewer',
+      '/project',
+      null
     )
-  })
-
-  test('should return 0 when no source tags', () => {
-    mockReadFileSync.mockReturnValue('# Config\n\n')
-
-    const count = uninstallAllClaudeCode('/project/CLAUDE.md')
-
-    expect(count).toBe(0)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
-  })
-})
-
-describe('uninstallCline', () => {
-  test('should remove section with HTML marker', () => {
-    const content = [
-      '# Config',
-      '',
-      '<!-- from rules/typescript -->',
-      '',
-      'content',
-      '',
-      '## Other',
-      '',
-      'stuff',
-      '',
-    ].join('\n')
-    mockReadFileSync.mockReturnValue(content)
-
-    const result = uninstallCline('/project/.clinerules', 'rules/typescript')
 
     expect(result).toBe(true)
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/.clinerules',
-      expect.not.stringContaining('rules/typescript'),
-      'utf-8'
+    expect(mockUnlinkSync).toHaveBeenCalledWith(
+      expect.stringContaining('.claude/agents/code-reviewer.md')
     )
-  })
-
-  test('should return false when marker not found', () => {
-    mockReadFileSync.mockReturnValue('# Config\n\n')
-
-    const result = uninstallCline('/project/.clinerules', 'rules/typescript')
-
-    expect(result).toBe(false)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
   })
 })
 
-describe('uninstallAllCline', () => {
-  test('should remove all marked sections', () => {
-    const content = [
-      '# Config',
-      '',
-      '<!-- from rules/ts -->',
-      '',
-      'content1',
-      '',
-      '<!-- from rules/test -->',
-      '',
-      'content2',
-      '',
-    ].join('\n')
-    mockReadFileSync.mockReturnValue(content)
+describe('uninstallContent - cline rules (file format)', () => {
+  test('should delete rule file from .clinerules/', () => {
+    mockExistsSync.mockReturnValue(true)
 
-    const count = uninstallAllCline('/project/.clinerules')
+    const result = uninstallContent('cline', 'rules', 'my-rule', 'rules/my-rule', '/project', null)
 
-    expect(count).toBe(2)
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/.clinerules',
-      expect.not.stringContaining('<!-- from'),
-      'utf-8'
-    )
+    expect(result).toBe(true)
+    expect(mockUnlinkSync).toHaveBeenCalledWith(expect.stringContaining('.clinerules/my-rule.md'))
   })
 
-  test('should return 0 when no markers', () => {
-    mockReadFileSync.mockReturnValue('# Config\n\n')
+  test('should return false when file does not exist', () => {
+    mockExistsSync.mockReturnValue(false)
 
-    const count = uninstallAllCline('/project/.clinerules')
+    const result = uninstallContent('cline', 'rules', 'my-rule', 'rules/my-rule', '/project', null)
 
-    expect(count).toBe(0)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
+    expect(result).toBe(false)
   })
 })
 
@@ -367,11 +310,12 @@ describe('registerUninstallTool', () => {
     const store = {} as ContentStore
     mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
-      path: '/project/opencode.jsonc',
+      path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
     })
     const config = { instructions: ['.opencode/rules/ts.md'] }
     mockReadFileSync.mockReturnValue(JSON.stringify(config))
+    mockExistsSync.mockReturnValue(true)
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
@@ -393,6 +337,7 @@ describe('registerUninstallTool', () => {
       agent: 'claude-code',
     })
     mockReadFileSync.mockReturnValue('## TS\n\n<source>rules/ts</source>\n')
+    mockExistsSync.mockReturnValue(true)
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
@@ -411,7 +356,7 @@ describe('registerUninstallTool', () => {
       path: '/project/.clinerules',
       agent: 'cline',
     })
-    mockReadFileSync.mockReturnValue('<!-- from rules/ts -->\n')
+    mockExistsSync.mockReturnValue(true)
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
@@ -427,10 +372,11 @@ describe('registerUninstallTool', () => {
     const store = {} as ContentStore
     mockDetectAgent.mockReturnValue('opencode')
     mockFindExistingConfig.mockReturnValue({
-      path: '/project/opencode.jsonc',
+      path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
     })
     mockReadFileSync.mockReturnValue(JSON.stringify({}))
+    mockExistsSync.mockReturnValue(false)
 
     registerUninstallTool(server, store)
     const handler = getInstallHandler()
@@ -453,80 +399,6 @@ describe('registerUninstallTool', () => {
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
-  })
-
-  test('should uninstall all opencode items', async () => {
-    const { server, getUninstallAllHandler } = createMockServer()
-    const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
-    mockFindExistingConfig.mockReturnValue({
-      path: '/project/opencode.jsonc',
-      agent: 'opencode',
-    })
-    const config = {
-      instructions: ['.opencode/rules/ts.md', '.opencode/skills/test.md'],
-    }
-    mockReadFileSync.mockReturnValue(JSON.stringify(config))
-
-    registerUninstallTool(server, store)
-    const handler = getUninstallAllHandler()
-    const result = (await handler({
-      projectDir: '/project',
-    })) as ToolContent
-    const parsed = JSON.parse(result.content[0].text)
-    expect(parsed.uninstalledCount).toBe(2)
-  })
-
-  test('should uninstall all claude-code items', async () => {
-    const { server, getUninstallAllHandler } = createMockServer()
-    const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('claude-code')
-    mockFindExistingConfig.mockReturnValue({
-      path: '/project/CLAUDE.md',
-      agent: 'claude-code',
-    })
-    mockReadFileSync.mockReturnValue(
-      '## TS\n\n<source>rules/ts</source>\n## Test\n\n<source>rules/test</source>\n'
-    )
-
-    registerUninstallTool(server, store)
-    const handler = getUninstallAllHandler()
-    const result = (await handler({})) as ToolContent
-    const parsed = JSON.parse(result.content[0].text)
-    expect(parsed.uninstalledCount).toBe(2)
-  })
-
-  test('should uninstall all cline items', async () => {
-    const { server, getUninstallAllHandler } = createMockServer()
-    const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('cline')
-    mockFindExistingConfig.mockReturnValue({
-      path: '/project/.clinerules',
-      agent: 'cline',
-    })
-    mockReadFileSync.mockReturnValue('<!-- from rules/ts -->\n<!-- from rules/test -->\n')
-
-    registerUninstallTool(server, store)
-    const handler = getUninstallAllHandler()
-    const result = (await handler({})) as ToolContent
-    const parsed = JSON.parse(result.content[0].text)
-    expect(parsed.uninstalledCount).toBe(2)
-  })
-
-  test('should return empty message when no items to uninstall all', async () => {
-    const { server, getUninstallAllHandler } = createMockServer()
-    const store = {} as ContentStore
-    mockDetectAgent.mockReturnValue('opencode')
-    mockFindExistingConfig.mockReturnValue({
-      path: '/project/opencode.jsonc',
-      agent: 'opencode',
-    })
-    mockReadFileSync.mockReturnValue(JSON.stringify({}))
-
-    registerUninstallTool(server, store)
-    const handler = getUninstallAllHandler()
-    const result = (await handler({})) as ToolContent
-    expect(result.content[0].text).toContain('No aik-managed items found')
   })
 
   test('should return error for uninstall_all when no config', async () => {

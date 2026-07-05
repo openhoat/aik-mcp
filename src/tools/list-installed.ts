@@ -1,10 +1,11 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { ContentStore } from '../content-store.js'
+import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
+import { getInstallSpec } from './agent-specs.js'
+import type { Agent, ToolRegistrar } from './shared.js'
 import { detectAgent, findExistingConfig } from './shared.js'
 
 interface InstalledItem {
@@ -12,40 +13,92 @@ interface InstalledItem {
   title: string | null
 }
 
-export function listInstalledOpenCode(configPath: string, _targetDir: string): InstalledItem[] {
-  const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
-  const instructions = config.instructions ?? []
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
+
+function listFromFileDir(baseDir: string, category: Category): InstalledItem[] {
+  if (!isDirectory(baseDir)) return []
   const results: InstalledItem[] = []
 
-  for (const entry of instructions) {
-    if (!entry.startsWith('.opencode/')) continue
-    const noPrefix = entry.slice('.opencode/'.length)
-    const noExt = noPrefix.endsWith('.md') ? noPrefix.slice(0, -3) : noPrefix
-    results.push({ path: noExt, title: null })
+  for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.md')) continue
+    const name = entry.name.replace(/\.md$/, '')
+    results.push({ path: `${category}/${name}`, title: null })
   }
-
   return results
 }
 
-export function listInstalledClaudeCode(configPath: string): InstalledItem[] {
-  const content = readFileSync(configPath, 'utf-8')
+function listFromSkillDir(baseDir: string, category: Category): InstalledItem[] {
+  if (!isDirectory(baseDir)) return []
+  const results: InstalledItem[] = []
+
+  for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const skillFile = resolve(baseDir, entry.name, 'SKILL.md')
+    if (!existsSync(skillFile)) continue
+    let title: string | null = null
+    try {
+      const content = readFileSync(skillFile, 'utf-8')
+      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/)
+      if (fmMatch) {
+        const nameMatch = fmMatch[1].match(/^name:\s*(.+)$/m)
+        const descMatch = fmMatch[1].match(/^description:\s*(.+)$/m)
+        title = nameMatch?.[1]?.trim() || descMatch?.[1]?.trim() || null
+      }
+    } catch {
+      // ignore read errors
+    }
+    results.push({ path: `${category}/${entry.name}`, title })
+  }
+  return results
+}
+
+function listFromSections(mdPath: string): InstalledItem[] {
+  if (!existsSync(mdPath)) return []
+  const content = readFileSync(mdPath, 'utf-8')
   const results: InstalledItem[] = []
   const sectionRegex = /^## (.+)$\n(?:.|\n)*?^<source>([\w-]+\/[\w./-]+)<\/source>/gm
 
   for (const match of content.matchAll(sectionRegex)) {
     results.push({ path: match[2], title: match[1].trim() })
   }
-
   return results
 }
 
-export function listInstalledCline(configPath: string): InstalledItem[] {
-  const content = readFileSync(configPath, 'utf-8')
+function listInstalledForAgent(
+  agent: Agent,
+  projectDir: string,
+  configPath: string | null
+): InstalledItem[] {
+  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
   const results: InstalledItem[] = []
-  const markerRegex = /<!-- from ([\w-]+\/[\w./-]+) -->/g
 
-  for (const match of content.matchAll(markerRegex)) {
-    results.push({ path: match[1], title: null })
+  for (const category of categories) {
+    const spec = getInstallSpec(agent, category)
+
+    switch (spec.format) {
+      case 'file': {
+        const baseDir = dirname(spec.contentPath(projectDir, category, 'placeholder'))
+        results.push(...listFromFileDir(baseDir, category))
+        break
+      }
+      case 'directory-skill': {
+        const skillFile = spec.contentPath(projectDir, category, 'placeholder')
+        const baseDir = dirname(dirname(skillFile))
+        results.push(...listFromSkillDir(baseDir, category))
+        break
+      }
+      case 'section': {
+        const mdPath = configPath ?? spec.contentPath(projectDir, category, 'placeholder')
+        results.push(...listFromSections(mdPath))
+        break
+      }
+    }
   }
 
   return results
@@ -81,19 +134,8 @@ export function registerListInstalledTool(server: McpServer, _store: ContentStor
         }
       }
 
-      let items: InstalledItem[]
-
-      switch (agent) {
-        case 'opencode':
-          items = listInstalledOpenCode(existing.path, targetDir)
-          break
-        case 'claude-code':
-          items = listInstalledClaudeCode(existing.path)
-          break
-        case 'cline':
-          items = listInstalledCline(existing.path)
-          break
-      }
+      const configPath = existing.agent === agent ? existing.path : null
+      const items = listInstalledForAgent(agent, targetDir, configPath)
 
       if (items.length === 0) {
         return {

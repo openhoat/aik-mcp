@@ -1,97 +1,101 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { ContentStore } from '../content-store.js'
+import type { Category, ContentStore } from '../content-store.js'
+import { parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
+import { getInstallSpec } from './agent-specs.js'
 import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
 import { detectAgent, findExistingConfig } from './shared.js'
-import { uninstallClaudeCode, uninstallCline, uninstallOpenCode } from './uninstall.js'
+import { uninstallContent } from './uninstall.js'
 
 export function openCodeConfigPath(targetDir: string, existingPath: string | null): string {
   if (existingPath) return existingPath
   return resolve(targetDir, '.opencode', 'opencode.jsonc')
 }
 
-export function installOpenCode(
-  configPath: string | null,
-  targetDir: string,
-  category: string,
-  name: string,
-  rawContent: string
-): { path: string; alreadyInstalled: boolean } {
-  const openCodeDir = resolve(targetDir, '.opencode', category)
-  const targetFile = resolve(openCodeDir, `${name}.md`)
-  const instructionsEntry = `.opencode/${category}/${name}.md`
+function buildSkillContent(rawContent: string, name: string): string {
+  const { frontmatter, body } = parseFrontmatter(rawContent)
+  const skillFrontmatter = {
+    name,
+    description: frontmatter.description || frontmatter.title,
+  }
+  const fm = serializeFrontmatter(skillFrontmatter as never)
+  return `---\n${fm}\n---\n\n${body}`
+}
 
-  mkdirSync(openCodeDir, { recursive: true })
-  writeFileSync(targetFile, rawContent, 'utf-8')
-
-  const outputPath = openCodeConfigPath(targetDir, configPath)
-
+function updateOpencodeInstructions(configPath: string, instructionsEntry: string): boolean {
   let config: OpenCodeConfig
-  if (configPath) {
+  if (existsSync(configPath)) {
     config = JSON.parse(readFileSync(configPath, 'utf-8'))
   } else {
     config = {}
   }
 
   const instructions = config.instructions ?? []
-
-  if (instructions.includes(instructionsEntry)) {
-    return { path: outputPath, alreadyInstalled: true }
-  }
+  if (instructions.includes(instructionsEntry)) return false
 
   instructions.push(instructionsEntry)
   config.instructions = instructions
-  mkdirSync(resolve(outputPath, '..'), { recursive: true })
-  writeFileSync(outputPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
-  return { path: outputPath, alreadyInstalled: false }
+  mkdirSync(dirname(configPath), { recursive: true })
+  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
+  return true
 }
 
-export function installClaudeCode(
-  configPath: string | null,
-  targetDir: string,
+export function installContent(
+  agent: Agent,
+  category: Category,
+  name: string,
   itemPath: string,
   title: string,
-  rawContent: string
+  rawContent: string,
+  projectDir: string,
+  configPath: string | null
 ): { path: string; alreadyInstalled: boolean } {
-  const mdPath = configPath ?? resolve(targetDir, 'CLAUDE.md')
-  const sourceTag = `<source>${itemPath}</source>`
+  const spec = getInstallSpec(agent, category)
+  const targetFile = spec.contentPath(projectDir, category, name)
 
-  const section = `\n## ${title}\n\n${sourceTag}\n\n${rawContent.trimEnd()}\n`
+  switch (spec.format) {
+    case 'file': {
+      mkdirSync(dirname(targetFile), { recursive: true })
+      writeFileSync(targetFile, rawContent, 'utf-8')
 
-  if (existsSync(mdPath)) {
-    const existing = readFileSync(mdPath, 'utf-8')
-    if (existing.includes(sourceTag)) {
-      return { path: mdPath, alreadyInstalled: true }
+      if (spec.configUpdate === 'opencode-instructions') {
+        const opencodeConfig = openCodeConfigPath(projectDir, configPath)
+        const entry = `.opencode/${category}/${name}.md`
+        const wasAdded = updateOpencodeInstructions(opencodeConfig, entry)
+        return { path: opencodeConfig, alreadyInstalled: !wasAdded }
+      }
+      return { path: targetFile, alreadyInstalled: false }
+    }
+
+    case 'directory-skill': {
+      const skillContent = buildSkillContent(rawContent, name)
+      mkdirSync(dirname(targetFile), { recursive: true })
+      if (existsSync(targetFile)) {
+        return { path: targetFile, alreadyInstalled: true }
+      }
+      writeFileSync(targetFile, skillContent, 'utf-8')
+      return { path: targetFile, alreadyInstalled: false }
+    }
+
+    case 'section': {
+      const mdPath = configPath ?? targetFile
+      const sourceTag = `<source>${itemPath}</source>`
+      const section = `\n## ${title}\n\n${sourceTag}\n\n${rawContent.trimEnd()}\n`
+
+      if (existsSync(mdPath)) {
+        const existing = readFileSync(mdPath, 'utf-8')
+        if (existing.includes(sourceTag)) {
+          return { path: mdPath, alreadyInstalled: true }
+        }
+      }
+
+      appendFileSync(mdPath, section, 'utf-8')
+      return { path: mdPath, alreadyInstalled: false }
     }
   }
-
-  appendFileSync(mdPath, section, 'utf-8')
-  return { path: mdPath, alreadyInstalled: false }
-}
-
-export function installCline(
-  configPath: string | null,
-  targetDir: string,
-  itemPath: string,
-  rawContent: string
-): { path: string; alreadyInstalled: boolean } {
-  const rulesPath = configPath ?? resolve(targetDir, '.clinerules')
-
-  const marker = `<!-- from ${itemPath} -->`
-  const entry = `\n${marker}\n${rawContent.trimEnd()}\n`
-
-  if (existsSync(rulesPath)) {
-    const existing = readFileSync(rulesPath, 'utf-8')
-    if (existing.includes(marker)) {
-      return { path: rulesPath, alreadyInstalled: true }
-    }
-  }
-
-  appendFileSync(rulesPath, entry, 'utf-8')
-  return { path: rulesPath, alreadyInstalled: false }
 }
 
 export function registerReinstallTool(server: McpServer, store: ContentStore): void {
@@ -143,40 +147,27 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
         }
       }
 
-      let uninstalled = false
-
-      switch (agent) {
-        case 'opencode':
-          uninstalled = uninstallOpenCode(existing.path, targetDir, path)
-          break
-        case 'claude-code':
-          uninstalled = uninstallClaudeCode(existing.path, path)
-          break
-        case 'cline':
-          uninstalled = uninstallCline(existing.path, path)
-          break
-      }
+      const configPath = existing.agent === agent ? existing.path : null
+      const uninstalled = uninstallContent(
+        agent,
+        item.category,
+        item.name,
+        path,
+        targetDir,
+        configPath
+      )
 
       const rawContent = readFileSync(item.fullPath, 'utf-8')
-      let result: { path: string; alreadyInstalled: boolean }
-
-      switch (agent) {
-        case 'opencode': {
-          const configPath = existing.agent === 'opencode' ? existing.path : null
-          result = installOpenCode(configPath, targetDir, item.category, item.name, rawContent)
-          break
-        }
-        case 'claude-code': {
-          const configPath = existing.agent === 'claude-code' ? existing.path : null
-          result = installClaudeCode(configPath, targetDir, item.path, item.title, rawContent)
-          break
-        }
-        case 'cline': {
-          const configPath = existing.agent === 'cline' ? existing.path : null
-          result = installCline(configPath, targetDir, item.path, rawContent)
-          break
-        }
-      }
+      const result = installContent(
+        agent,
+        item.category,
+        item.name,
+        item.path,
+        item.title,
+        rawContent,
+        targetDir,
+        configPath
+      )
 
       return {
         content: [
@@ -239,29 +230,19 @@ export function registerInstallTool(server: McpServer, store: ContentStore): voi
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const agent = detectAgent(targetDir, preferredAgent)
       const existing = findExistingConfig(targetDir)
+      const configPath = existing?.agent === agent ? existing.path : null
 
-      let result: { path: string; alreadyInstalled: boolean }
-
-      switch (agent) {
-        case 'opencode': {
-          const configPath = existing?.agent === 'opencode' ? existing.path : null
-          const rawContent = readFileSync(item.fullPath, 'utf-8')
-          result = installOpenCode(configPath, targetDir, item.category, item.name, rawContent)
-          break
-        }
-        case 'claude-code': {
-          const configPath = existing?.agent === 'claude-code' ? existing.path : null
-          const rawContent = readFileSync(item.fullPath, 'utf-8')
-          result = installClaudeCode(configPath, targetDir, item.path, item.title, rawContent)
-          break
-        }
-        case 'cline': {
-          const configPath = existing?.agent === 'cline' ? existing.path : null
-          const rawContent = readFileSync(item.fullPath, 'utf-8')
-          result = installCline(configPath, targetDir, item.path, rawContent)
-          break
-        }
-      }
+      const rawContent = readFileSync(item.fullPath, 'utf-8')
+      const result = installContent(
+        agent,
+        item.category,
+        item.name,
+        item.path,
+        item.title,
+        rawContent,
+        targetDir,
+        configPath
+      )
 
       if (result.alreadyInstalled) {
         return {
