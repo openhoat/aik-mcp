@@ -3,6 +3,8 @@ export interface AikConfig {
   http: boolean
   port: number
   watch: boolean
+  validate: boolean
+  json: boolean
 }
 
 export function loadConfig(args: string[]): AikConfig {
@@ -12,5 +14,7 @@ export function loadConfig(args: string[]): AikConfig {
   const port =
     portIndex >= 0 && args[portIndex + 1] !== undefined ? Number(args[portIndex + 1]) : 3456
   const watch = !args.includes('--no-watch')
-  return { contentDir, http, port, watch }
+  const validate = args.includes('--validate')
+  const json = args.includes('--json')
+  return { contentDir, http, port, watch, validate, json }
 }

@@ -17,6 +17,7 @@ import { registerCheckUpdatesTool, registerUpdateTool } from './tools/update.js'
 import { registerWriteTool } from './tools/write.js'
 import { startHttpTransport } from './transports/http.js'
 import { startStdioTransport } from './transports/stdio.js'
+import { formatResult, validateContent } from './validate.js'
 
 const config = loadConfig(process.argv.slice(2))
 
@@ -44,6 +45,15 @@ logger.info(
   },
   'content store initialized'
 )
+
+if (config.validate) {
+  const result = validateContent(store)
+  const paths = store.getAll().map(i => i.path)
+
+  // biome-ignore lint/suspicious/noConsole: CLI entry point for stdout output
+  console.log(formatResult(result, paths, config.json))
+  process.exit(result.invalid > 0 ? 1 : 0)
+}
 
 const server = new McpServer(
   {

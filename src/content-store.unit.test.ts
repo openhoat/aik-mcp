@@ -19,6 +19,8 @@ const config = (dir: string) => ({
   http: false,
   port: 0,
   watch: false,
+  validate: false,
+  json: false,
 })
 
 let store: ContentStore | undefined

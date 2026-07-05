@@ -50,4 +50,20 @@ describe('config', () => {
     expect(config.port).toBe(9090)
     expect(config.watch).toBe(false)
   })
+
+  test('should detect --validate flag', () => {
+    expect(loadConfig(['--validate']).validate).toBe(true)
+  })
+
+  test('should default validate to false', () => {
+    expect(loadConfig([]).validate).toBe(false)
+  })
+
+  test('should detect --json flag', () => {
+    expect(loadConfig(['--json']).json).toBe(true)
+  })
+
+  test('should default json to false', () => {
+    expect(loadConfig([]).json).toBe(false)
+  })
 })
