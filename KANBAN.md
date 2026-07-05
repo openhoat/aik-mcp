@@ -2,11 +2,9 @@
 
 ## Backlog
 
-- [ ] **[ARCHITECTURE]** Enrich built-in MCP server instructions with discovery, consumption, and lifecycle flows (P1, impact: high, effort: medium)
 - [ ] **[CONFIG]** Add docs page "Content Authoring" — guide for writing good rules and skills (P1, impact: high, effort: low)
 - [ ] **[TEST]** Test `index.ts` — server entry point has zero coverage (P2, impact: medium, effort: low)
 - [ ] **[TEST]** Test `http.ts` — HTTP transport is at 5% coverage (P2, impact: medium, effort: medium)
-- [ ] **[ARCHITECTURE]** Add Zod schema to validate content file frontmatter (P2, impact: medium, effort: medium)
 - [ ] **[UX]** Add `aik validate` CLI to validate content consistency (P2, impact: high, effort: medium)
 - [ ] **[UX]** Support `.aikrc.json` config file via `--config` flag (P2, impact: medium, effort: medium)
 - [ ] **[CONFIG]** Add docs page "Architecture" — detailed MCP flow diagram (P2, impact: medium, effort: low)
@@ -17,7 +15,6 @@
 - [ ] **[ARCHITECTURE]** Create `content-curator` agent — validates aik content quality (P2, impact: medium, effort: medium)
 - [ ] **[DEVOPS]** Docker image — Dockerfile + docker-compose.yml for HTTP deployment (P2, impact: high, effort: low)
 - [ ] **[DEVOPS]** Automated release — GitHub Actions workflow to publish to npm on merge (P2, impact: high, effort: medium)
-- [ ] **[DEVOPS]** Codecov upload — add codecov-action to CI (P2, impact: medium, effort: low)
 - [ ] **[DEVOPS]** Renovate/Dependabot config for automated dependency PRs (P2, impact: medium, effort: low)
 - [ ] **[TEST]** Cover remaining untested branches in `content-store.ts` (lines 128-156) (P3, impact: low, effort: low)
 - [ ] **[ARCHITECTURE]** Replace generic `Error` with typed errors (`ContentNotFoundError`, etc.) (P3, impact: low, effort: low)
@@ -38,6 +35,9 @@
 ## Done
 
 - [x] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
+- [x] **[HIGH]** [archi] — Enrich built-in MCP server instructions with discovery, consumption, and lifecycle flows
+- [x] **[MEDIUM]** [archi] — Add Zod schema to validate content file frontmatter
+- [x] **[MEDIUM]** [infra] — Add Codecov upload to CI
 
 - [x] **[HIGH]** [test] — Phase 1: config.ts, logger.ts, shared.ts unit tests (quick wins)
 - [x] **[HIGH]** [test] — Phase 1: removeSections() unit test (uninstall.ts)
