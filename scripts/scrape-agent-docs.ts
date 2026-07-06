@@ -415,21 +415,23 @@ function cleanMarkdown(md: string): string {
 }
 
 function cleanHtml(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
-    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-    .replace(/<header[\s\S]*?<\/header>/gi, '')
-    // Convert custom card/group tags to standard HTML for turndown
-    .replace(/<\/?CardGroup[^>]*>/gi, '')
-    .replace(/<Card[^>]*>/gi, '<div>')
-    .replace(/<\/Card>/gi, '</div>')
-    // Convert inline HTML icons/attributes to plain text
-    .replace(/ icon="[^"]*"/gi, '')
-    .replace(/ href="[^"]*"/gi, '')
-    .replace(/ title="[^"]*"/gi, '')
-    .replace(/ cols={?\d+}?/gi, '')
+  return (
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      // Convert custom card/group tags to standard HTML for turndown
+      .replace(/<\/?CardGroup[^>]*>/gi, '')
+      .replace(/<Card[^>]*>/gi, '<div>')
+      .replace(/<\/Card>/gi, '</div>')
+      // Convert inline HTML icons/attributes to plain text
+      .replace(/ icon="[^"]*"/gi, '')
+      .replace(/ href="[^"]*"/gi, '')
+      .replace(/ title="[^"]*"/gi, '')
+      .replace(/ cols={?\d+}?/gi, '')
+  )
 }
 
 async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
@@ -456,7 +458,7 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
         .replace(/\s*theme="[^"]*"/g, '')
       // Detect raw markdown: no lowercase HTML tags, or content starts with markdown syntax
       const hasHtmlTags = /<\/?[a-z][\s\S]*?>/i.test(stripped)
-      const looksLikeMarkdown = /^[#>*`\-|\[\n]/.test(stripped.trim())
+      const looksLikeMarkdown = /^[#>*`-|[\n]/.test(stripped.trim())
       const isRawMarkdown = !hasHtmlTags || looksLikeMarkdown
       const markdown = isRawMarkdown
         ? cleanMarkdown(stripped)
