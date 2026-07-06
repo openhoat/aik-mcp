@@ -180,6 +180,154 @@ const AGENTS: Record<string, AgentConfig> = {
     ],
     contentSelector: 'main, article, .content',
   },
+  'gemini-cli': {
+    name: 'gemini-cli',
+    pages: [
+      {
+        id: 'overview',
+        title: 'Gemini CLI Overview',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/',
+      },
+      {
+        id: 'getting-started',
+        title: 'Gemini CLI Getting Started',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/get-started/',
+      },
+      {
+        id: 'configuration',
+        title: 'Gemini CLI Configuration',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html',
+      },
+      {
+        id: 'mcp-server',
+        title: 'Gemini CLI MCP Server',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html',
+      },
+      {
+        id: 'extensions',
+        title: 'Gemini CLI Extensions',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/extensions/',
+      },
+      {
+        id: 'custom-commands',
+        title: 'Gemini CLI Custom Commands',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/cli/custom-commands.html',
+      },
+      {
+        id: 'gemini-md',
+        title: 'Gemini CLI Context Files (GEMINI.md)',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html',
+      },
+      {
+        id: 'commands',
+        title: 'Gemini CLI Commands Reference',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/cli/commands.html',
+      },
+      {
+        id: 'tools',
+        title: 'Gemini CLI Tools Overview',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/tools/',
+      },
+      {
+        id: 'file-system',
+        title: 'Gemini CLI File System Tools',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/tools/file-system.html',
+      },
+      {
+        id: 'shell',
+        title: 'Gemini CLI Shell Tool',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/tools/shell.html',
+      },
+      {
+        id: 'web-fetch',
+        title: 'Gemini CLI Web Fetch Tool',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/tools/web-fetch.html',
+      },
+      {
+        id: 'ide-integration',
+        title: 'Gemini CLI IDE Integration',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/ide-integration/',
+      },
+      {
+        id: 'architecture',
+        title: 'Gemini CLI Architecture',
+        url: 'https://google-gemini.github.io/gemini-cli/docs/architecture.html',
+      },
+    ],
+    contentSelector: 'main, article, .content, .doc-content, .markdown',
+  },
+  aider: {
+    name: 'aider',
+    pages: [
+      {
+        id: 'overview',
+        title: 'Aider Overview',
+        url: 'https://aider.chat/docs/usage.html',
+      },
+      {
+        id: 'commands',
+        title: 'Aider In-chat Commands',
+        url: 'https://aider.chat/docs/usage/commands.html',
+      },
+      {
+        id: 'conventions',
+        title: 'Aider Coding Conventions',
+        url: 'https://aider.chat/docs/usage/conventions.html',
+      },
+      {
+        id: 'config',
+        title: 'Aider Configuration',
+        url: 'https://aider.chat/docs/config.html',
+      },
+      {
+        id: 'options',
+        title: 'Aider Options Reference',
+        url: 'https://aider.chat/docs/config/options.html',
+      },
+      {
+        id: 'yaml-config',
+        title: 'Aider YAML Config File',
+        url: 'https://aider.chat/docs/config/aider_conf.html',
+      },
+      {
+        id: 'git',
+        title: 'Aider Git Integration',
+        url: 'https://aider.chat/docs/git.html',
+      },
+      {
+        id: 'modes',
+        title: 'Aider Chat Modes',
+        url: 'https://aider.chat/docs/usage/modes.html',
+      },
+      {
+        id: 'scripting',
+        title: 'Aider Scripting',
+        url: 'https://aider.chat/docs/scripting.html',
+      },
+    ],
+    contentSelector: 'main, article, .content, .doc-content',
+  },
+  copilot: {
+    name: 'copilot',
+    pages: [
+      {
+        id: 'custom-instructions',
+        title: 'GitHub Copilot Custom Instructions',
+        url: 'https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot',
+      },
+      {
+        id: 'repository-instructions',
+        title: 'GitHub Copilot Repository Instructions',
+        url: 'https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot',
+      },
+      {
+        id: 'agent-instructions',
+        title: 'GitHub Copilot Agent Instructions (AGENTS.md)',
+        url: 'https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot?tool=webui',
+      },
+    ],
+    contentSelector: 'main, article, .content, .markdown-body',
+  },
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -210,6 +358,37 @@ function extractContent(html: string, selectors: string): string {
   return bodyMatch ? bodyMatch[1] : html
 }
 
+function cleanMarkdown(md: string): string {
+  return (
+    md
+      // Remove navigation breadcrumb lines like "# [gemini-cli](...)"
+      .replace(/^# \[.+\]\(.+\)\n/gm, '')
+      // Remove bare URLs that are navigation links
+      .replace(/^https?:\/\/[^\s]+\n/gm, '')
+      // Remove image references
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      // Remove horizontal rules
+      .replace(/^\*{3,}\s*\n/gm, '')
+      // Remove "This site is open source. Improve this page" footer blocks
+      .replace(/This site is open source\. \[Improve this page\].+/g, '')
+      // Remove "Edit this page" links
+      .replace(/\[Edit this page\].+/g, '')
+      // Remove "Last updated" lines
+      .replace(/Last updated:?.*/gi, '')
+      // Remove "On this page" navigation sections
+      .replace(/\* {2}\[On this page\].*\n(\* {4}\[.*\]\(.*\)\n)*/g, '')
+      // Clean escaped backticks (\` → `)
+      .replace(/\\`/g, '`')
+      // Collapse 3+ consecutive blank lines into 1
+      .replace(/\n{3,}/g, '\n\n')
+      // Trim trailing whitespace on each line
+      .split('\n')
+      .map(l => l.trimEnd())
+      .join('\n')
+      .trim()
+  )
+}
+
 function cleanHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -234,7 +413,7 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
       const html = await fetchPage(page.url)
       const contentHtml = extractContent(html, agent.contentSelector)
       const cleaned = cleanHtml(contentHtml)
-      const markdown = turndown.turndown(cleaned)
+      const markdown = cleanMarkdown(turndown.turndown(cleaned))
 
       const frontmatter = [
         '---',

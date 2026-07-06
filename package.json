@@ -71,6 +71,7 @@
     "scrape:agent-docs": "tsx scripts/scrape-agent-docs.ts",
     "qa:markdown": "wireit",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
+    "qa:markdown:rag": "markdownlint-cli2 --config rag/.markdownlint-cli2.yaml \"rag/**/*.md\"",
     "start": "node build/index.js",
     "test": "wireit",
     "test:coverage": "wireit",
