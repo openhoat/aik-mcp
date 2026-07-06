@@ -61,6 +61,25 @@ Add to `cline.json` or `.mcp.json`:
 }
 ```
 
+### Codex
+
+Add to `~/.codex/config.toml` or project `.codex/config.toml`:
+
+```toml
+[mcp]
+"aik" = { command = ["npx", "@headwood/aik-mcp"], env = { AIK_CONTENT_DIR = "/path/to/your/knowledge", LOG_LEVEL = "info" } }
+```
+
+### GitHub Copilot
+
+Configure the MCP server in your IDE settings (VS Code, JetBrains, etc.) and add project instructions to `.github/copilot-instructions.md`:
+
+```markdown
+## MCP servers
+
+aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and templates.
+```
+
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS) to use the same knowledge base across projects and agents.
 
 ## CLI options

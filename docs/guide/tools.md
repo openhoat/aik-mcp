@@ -24,7 +24,7 @@
 
 ```mermaid
 graph LR
-    Agent[AI Agent<br>opencode / Claude Code / Cline] -->|MCP JSON-RPC| Server(aik-mcp)
+    Agent[AI Agent<br>opencode / Claude Code / Cline / Codex / Copilot] -->|MCP JSON-RPC| Server(aik-mcp)
     Server --> Store[Content Store<br>in memory]
     Store --> Files[Markdown files<br>rules/ skills/ workflows/ ...]
     Server --> Watcher[File Watcher<br>live sync on change]

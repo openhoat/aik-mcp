@@ -20,7 +20,7 @@ Rules, skills, workflows, and templates — as plain Markdown, served over the M
 
 ---
 
-**aik-mcp** turns a directory of Markdown files into a live, queryable knowledge base for any [MCP](https://modelcontextprotocol.io)-compatible AI agent — [opencode](https://opencode.ai), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Cline](https://cline.bot), and more.
+**aik-mcp** turns a directory of Markdown files into a live, queryable knowledge base for any [MCP](https://modelcontextprotocol.io)-compatible AI agent — [opencode](https://opencode.ai), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Cline](https://cline.bot), [Codex](https://developers.openai.com/codex), [GitHub Copilot](https://github.com/features/copilot), and more.
 
 Write your team's conventions, reusable workflows, agent prompts, and project templates as plain `.md` files with YAML frontmatter. **aik-mcp** serves them on demand — your agent can discover, read, search, and install them at runtime, across any project.
 
@@ -35,7 +35,7 @@ No database. No API to build. Just Markdown.
 | 🔎   | **Full-text search**      | Fuzzy search across every rule, skill, and template — powered by [Fuse.js](https://fusejs.io). |
 | 📦   | **Install on demand**     | Push knowledge directly into your agent's runtime config with a single tool call.              |
 | 👀   | **Live sync**             | A file watcher detects changes instantly. No restart. No downtime.                             |
-| 🔌   | **Universal MCP**         | Works with opencode, Claude Code, Cline, and any MCP-compatible client.                        |
+| 🔌   | **Universal MCP**         | Works with opencode, Claude Code, Cline, Codex, Copilot, and any MCP-compatible client. |
 
 ## Quick start
 
@@ -49,7 +49,7 @@ title: TypeScript Conventions
 description: Coding standards for TypeScript projects
 tags: [typescript, conventions]
 version: "1.0.0"
-compatibility: [opencode, claude-code, cline]
+compatibility: [opencode, claude-code, cline, codex, copilot]
 ---
 
 ## TypeScript Conventions
@@ -82,7 +82,7 @@ Full documentation is available at **[openhoat.github.io/aik-mcp](https://openho
 
 ```mermaid
 graph LR
-    Agent[AI Agent<br>opencode / Claude Code / Cline] -->|MCP JSON-RPC| Server(aik-mcp)
+    Agent[AI Agent<br>opencode / Claude Code / Cline / Codex / Copilot] -->|MCP JSON-RPC| Server(aik-mcp)
     Server --> Store[Content Store<br>in memory]
     Store --> Files[Markdown files<br>rules/ skills/ workflows/ ...]
     Server --> Watcher[File Watcher<br>live sync on change]
@@ -152,6 +152,25 @@ Add to `cline.json` or project `.mcp.json`:
 }
 ```
 
+### Codex
+
+Add to `~/.codex/config.toml` or project `.codex/config.toml`:
+
+```toml
+[mcp]
+"aik" = { command = ["npx", "aik-mcp"], env = { AIK_CONTENT_DIR = "/path/to/your/knowledge", LOG_LEVEL = "info" } }
+```
+
+### GitHub Copilot
+
+Configure the MCP server in your IDE settings (VS Code, JetBrains, etc.) and add project instructions to `.github/copilot-instructions.md`:
+
+```markdown
+## MCP servers
+
+aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and templates.
+```
+
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS, etc.) to use the same knowledge base across projects and agents.
 
 ## Content structure
@@ -175,7 +194,7 @@ title: "My Rule"
 description: "What this rule enforces"
 tags: [tag1, tag2]
 version: "1.0.0"
-compatibility: [opencode, claude-code, cline]
+compatibility: [opencode, claude-code, cline, codex, copilot]
 ---
 
 ## My Rule

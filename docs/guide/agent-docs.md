@@ -47,6 +47,8 @@ Once configured, agents can query the RAG index to understand native formats. Fo
 | opencode    | intro, overview, rules, skills, agents, commands, config, mcp-servers, permissions, tools                     |
 | claude-code | overview, memory, skills, hooks, sub-agents, settings, mcp, permissions, best-practices, common-workflows     |
 | cline       | overview, rules, skills, plugins, config, using-commands, subagents, mcp-overview, memory-bank, cli-reference |
+| codex       | overview, quickstart, prompting, customization, memories, sandboxing, subagents, workflows, app, ide, cli, config, permissions, rules, hooks, agents-md, mcp, plugins, skills, best-practices, enterprise, and more (43 pages) |
+| copilot     | custom-instructions, repository-instructions, agent-instructions                                              |
 
 ## Output Structure
 
@@ -62,10 +64,20 @@ rag/
     │   ├── overview.md
     │   ├── memory.md
     │   └── ...
-    └── cline/
-        ├── overview.md
-        ├── rules.md
-        └── ...
+    ├── cline/
+    │   ├── overview.md
+    │   ├── rules.md
+    │   └── ...
+    ├── codex/
+    │   ├── overview.md
+    │   ├── quickstart.md
+    │   ├── rules.md
+    │   ├── config-basics.md
+    │   └── ... (43 pages)
+    └── copilot/
+        ├── custom-instructions.md
+        ├── repository-instructions.md
+        └── agent-instructions.md
 ```
 
 Each file includes frontmatter with the original source URL and scrape timestamp, making it easy to refresh individual pages when docs change.
