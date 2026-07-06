@@ -456,7 +456,7 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
         .replace(/\s*theme="[^"]*"/g, '')
       // Detect raw markdown: no lowercase HTML tags, or content starts with markdown syntax
       const hasHtmlTags = /<\/?[a-z][\s\S]*?>/i.test(stripped)
-      const looksLikeMarkdown = /^[#>*`\-\|\[\n]/.test(stripped.trim())
+      const looksLikeMarkdown = /^[#>*`\-|\[\n]/.test(stripped.trim())
       const isRawMarkdown = !hasHtmlTags || looksLikeMarkdown
       const markdown = isRawMarkdown
         ? cleanMarkdown(stripped)
