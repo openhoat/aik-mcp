@@ -152,4 +152,122 @@ describe('registerListInstalledTool', () => {
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
   })
+
+  test('should handle statSync error in isDirectory', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockImplementation(() => {
+      throw new Error('permission denied')
+    })
+    mockExistsSync.mockReturnValue(false)
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      projectDir: '/project',
+      agent: 'opencode',
+    })) as ToolContent
+    expect(result.content[0].text).toContain('No aik-installed items found')
+  })
+
+  test('should list skills from directory-skill format', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () =>
+        path.includes('.opencode/skills') ||
+        path.includes('.opencode/rules') ||
+        path.includes('.opencode/agents') ||
+        path.includes('.opencode/commands') ||
+        path.includes('.opencode/workflows') ||
+        path.includes('.opencode/templates'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
+    mockReadFileSync.mockReturnValue('---\nname: my-skill\ndescription: A test skill\n---\nContent')
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.endsWith('.opencode/skills'))
+        return [{ name: 'my-skill', isDirectory: () => true, isFile: () => false }]
+      return []
+    })
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      projectDir: '/project',
+      agent: 'opencode',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.count).toBeGreaterThanOrEqual(1)
+    expect(parsed.items[0].title).toBe('my-skill')
+  })
+
+  test('should handle read error in skill dir gracefully', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () =>
+        path.includes('.opencode/skills') ||
+        path.includes('.opencode/rules') ||
+        path.includes('.opencode/agents') ||
+        path.includes('.opencode/commands') ||
+        path.includes('.opencode/workflows') ||
+        path.includes('.opencode/templates'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error('read error')
+    })
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.endsWith('.opencode/skills'))
+        return [{ name: 'my-skill', isDirectory: () => true, isFile: () => false }]
+      return []
+    })
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      projectDir: '/project',
+      agent: 'opencode',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.count).toBeGreaterThanOrEqual(1)
+    // Title should be null since read failed
+    expect(parsed.items[0].title).toBeUndefined()
+  })
+
+  test('should list claude-code items from section format', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/CLAUDE.md',
+      agent: 'claude-code',
+    })
+    mockExistsSync.mockImplementation((path: string) => path.endsWith('CLAUDE.md'))
+    mockReadFileSync.mockReturnValue(
+      '## TypeScript\n\n<source>rules/ts</source>\n\n## ESLint\n\n<source>rules/eslint</source>\n'
+    )
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      projectDir: '/project',
+      agent: 'claude-code',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    // Section format is used for rules AND workflows, so each section appears twice
+    expect(parsed.count).toBe(4)
+    expect(parsed.items[0].title).toBe('TypeScript')
+  })
 })

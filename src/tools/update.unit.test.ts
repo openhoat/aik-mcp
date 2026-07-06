@@ -244,4 +244,123 @@ describe('registerUpdateTool', () => {
     expect(parsed.previousVersion).toBe('1.0.0')
     expect(parsed.newVersion).toBe('2.0.0')
   })
+
+  test('should handle check_updates with installed items that have updates', async () => {
+    const { server, getCheckHandler } = createMockServer()
+    const store = {
+      getByCategory: vi.fn((category: string) => {
+        if (category === 'rules')
+          return [
+            {
+              path: 'rules/typescript',
+              name: 'typescript',
+              version: '2.0.0',
+              category: 'rules',
+            },
+          ]
+        return []
+      }),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('---\nversion: "1.0.0"\n---')
+    mockParseFrontmatter.mockReturnValue({ frontmatter: { version: '1.0.0' } })
+
+    registerCheckUpdatesTool(server, store)
+    const handler = getCheckHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.updateCount).toBe(1)
+    expect(parsed.updates[0].path).toBe('rules/typescript')
+  })
+
+  test('should handle check_updates when installed version is null', async () => {
+    const { server, getCheckHandler } = createMockServer()
+    const store = {
+      getByCategory: vi.fn((category: string) => {
+        if (category === 'rules')
+          return [
+            {
+              path: 'rules/typescript',
+              name: 'typescript',
+              version: '2.0.0',
+              category: 'rules',
+            },
+          ]
+        return []
+      }),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockExistsSync.mockReturnValue(false)
+
+    registerCheckUpdatesTool(server, store)
+    const handler = getCheckHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.updateCount).toBe(0)
+  })
+
+  test('should handle check_updates when installed version is same as store', async () => {
+    const { server, getCheckHandler } = createMockServer()
+    const store = {
+      getByCategory: vi.fn((category: string) => {
+        if (category === 'rules')
+          return [
+            {
+              path: 'rules/typescript',
+              name: 'typescript',
+              version: '1.0.0',
+              category: 'rules',
+            },
+          ]
+        return []
+      }),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('---\nversion: "1.0.0"\n---')
+    mockParseFrontmatter.mockReturnValue({ frontmatter: { version: '1.0.0' } })
+
+    registerCheckUpdatesTool(server, store)
+    const handler = getCheckHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.updateCount).toBe(0)
+  })
+
+  test('should handle update when installed version is null (fresh install)', async () => {
+    const { server, getUpdateHandler } = createMockServer()
+    const store = {
+      getByPath: vi.fn(() => ({
+        version: '1.0.0',
+        fullPath: '/store/rules/typescript.md',
+        path: 'rules/typescript',
+        category: 'rules',
+        name: 'typescript',
+        title: 'TypeScript',
+      })),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockExistsSync.mockReturnValue(false)
+    mockReadFileSync.mockReturnValue(JSON.stringify({ instructions: [] }))
+
+    registerUpdateTool(server, store)
+    const handler = getUpdateHandler()
+    const result = (await handler({ path: 'rules/typescript', agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.updated).toBe('rules/typescript')
+    expect(parsed.previousVersion).toBe('(unknown)')
+  })
 })

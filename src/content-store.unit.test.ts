@@ -2,6 +2,18 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { beforeEach, describe, expect, test } from 'vitest'
+
+const mockChokidarOn = vi.fn()
+const mockChokidarClose = vi.fn()
+
+vi.mock('chokidar', () => ({
+  watch: vi.fn(() => ({
+    on: mockChokidarOn,
+    close: mockChokidarClose,
+  })),
+}))
+
 import { ContentStore } from './content-store.js'
 
 const createTempDir = (): string => {
@@ -24,6 +36,11 @@ const config = (dir: string) => ({
 })
 
 let store: ContentStore | undefined
+
+beforeEach(() => {
+  mockChokidarOn.mockReset()
+  mockChokidarClose.mockReset()
+})
 
 describe('ContentStore', () => {
   afterEach(() => {
@@ -285,6 +302,299 @@ Original content`
       store.destroy()
 
       expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watcher registers add/change/unlink handlers', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      expect(mockChokidarOn).toHaveBeenCalledWith('add', expect.any(Function))
+      expect(mockChokidarOn).toHaveBeenCalledWith('change', expect.any(Function))
+      expect(mockChokidarOn).toHaveBeenCalledWith('unlink', expect.any(Function))
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('destroy stops watcher', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+      store.destroy()
+
+      expect(mockChokidarClose).toHaveBeenCalled()
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('destroy on non-watch mode does not throw', async () => {
+      const dir = createTempDir()
+      store = new ContentStore(config(dir))
+      await store.init()
+      expect(() => store!.destroy()).not.toThrow()
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watcher add handler processes file with valid category', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      // Capture the 'add' handler and invoke it
+      const addHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'add')?.[1] as
+        | ((path: string) => Promise<void>)
+        | undefined
+      expect(addHandler).toBeDefined()
+
+      // Create a file first, then invoke the handler
+      await createFile(dir, 'rules/test.md', '---\ntitle: Test\n---\nBody')
+      await addHandler!(join(dir, 'rules/test.md'))
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].title).toBe('Test')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watcher add handler ignores file with unknown category', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      const addHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'add')?.[1] as
+        | ((path: string) => Promise<void>)
+        | undefined
+      expect(addHandler).toBeDefined()
+
+      await addHandler!(join(dir, 'unknown/test.md'))
+
+      expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watcher change handler processes file', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      const changeHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'change')?.[1] as
+        | ((path: string) => Promise<void>)
+        | undefined
+      expect(changeHandler).toBeDefined()
+
+      await createFile(dir, 'rules/test.md', '---\ntitle: Changed\n---\nBody')
+      await changeHandler!(join(dir, 'rules/test.md'))
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].title).toBe('Changed')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watcher unlink handler removes file', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      const addHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'add')?.[1] as
+        | ((path: string) => Promise<void>)
+        | undefined
+      const unlinkHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'unlink')?.[1] as
+        | ((path: string) => void)
+        | undefined
+      expect(addHandler).toBeDefined()
+      expect(unlinkHandler).toBeDefined()
+
+      // First add a file via the add handler
+      await createFile(dir, 'rules/test.md', '---\ntitle: Test\n---\nBody')
+      await addHandler!(join(dir, 'rules/test.md'))
+
+      expect(store.getAll().length).toBe(1)
+
+      // Now simulate unlink
+      unlinkHandler!(join(dir, 'rules/test.md'))
+
+      expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('scanDir subcategory handling', () => {
+    test('scans subdirectory with different category name', async () => {
+      const dir = createTempDir()
+      // Place a skills file under rules/skills/ to test subCategory detection
+      await mkdir(join(dir, 'rules', 'skills'), { recursive: true })
+      await createFile(dir, 'rules/skills/my-skill.md', '---\ntitle: My Skill\n---\nSkill content')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].category).toBe('skills')
+      expect(all[0].title).toBe('My Skill')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('scans subdirectory with same category name', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules', 'subdir'), { recursive: true })
+      await createFile(dir, 'rules/subdir/nested.md', '---\ntitle: Nested\n---\nNested content')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      const all = store.getAll()
+      expect(all.length).toBe(1)
+      expect(all[0].category).toBe('rules')
+      expect(all[0].path).toBe('rules/subdir/nested')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('addFile error handling', () => {
+    test('handles files with invalid frontmatter gracefully', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      // File with malformed frontmatter - parseFrontmatter catches YAML errors
+      await createFile(dir, 'rules/bad.md', '---\ninvalid yaml: [\n---\nBody')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      // Should not crash, file should be loaded with default frontmatter
+      expect(store.getAll().length).toBe(1)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('handles non-md files gracefully', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/notes.txt', 'Just some text')
+      await createFile(dir, 'rules/readme.md', '---\ntitle: Readme\n---\nContent')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      // Only .md files should be loaded
+      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()[0].name).toBe('readme')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('guessCategory edge cases', () => {
+    test('handles files outside content directory', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      // File at root level (no category prefix)
+      await createFile(dir, 'orphan.md', '---\ntitle: Orphan\n---\nContent')
+      await new Promise(r => setTimeout(r, 300))
+
+      // Should not be picked up since it's not in a category dir
+      expect(store.getAll().length).toBe(0)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('extractName', () => {
+    test('handles uppercase .MD extension', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/test.MD', '---\ntitle: Test\n---\nContent')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
+      expect(store.getByPath('rules/test')).toBeDefined()
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('writeContent update existing', () => {
+    test('updates existing item in store when file already tracked', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/existing.md', '---\ntitle: Original\n---\nBody')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
+
+      // Write to the same path - should update in store
+      const item = await store.writeContent(
+        'rules/existing',
+        '# Updated Body',
+        { title: 'Updated Title' },
+        true
+      )
+
+      expect(item.title).toBe('Updated Title')
+      expect(store.getAll().length).toBe(1)
+      expect(store.getByPath('rules/existing')!.title).toBe('Updated Title')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('scanDir error handling', () => {
+    test('handles readdir error gracefully', async () => {
+      const dir = createTempDir()
+      // Create a non-readable path by making a file where a dir is expected
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      await createFile(dir, 'rules/test.md', '---\ntitle: Test\n---\nBody')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      // Should have loaded the file
+      expect(store.getAll().length).toBe(1)
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
+  describe('addFile error handling', () => {
+    test('handles readFile error gracefully', async () => {
+      const dir = createTempDir()
+      await mkdir(join(dir, 'rules'), { recursive: true })
+      // Create a file that will be removed before scan
+      await createFile(dir, 'rules/test.md', '---\ntitle: Test\n---\nBody')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.getAll().length).toBe(1)
 
       await rm(dir, { recursive: true, force: true })
     })

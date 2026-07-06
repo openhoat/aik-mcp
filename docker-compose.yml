@@ -1,0 +1,18 @@
+services:
+  aik-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./content:/app/content
+    environment:
+      - LOG_LEVEL=info
+    command: ["aik-mcp", "--http"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3456/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

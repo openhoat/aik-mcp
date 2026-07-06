@@ -412,4 +412,145 @@ describe('registerUninstallTool', () => {
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
   })
+
+  test('should return error for invalid category', async () => {
+    const { server, getInstallHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+
+    registerUninstallTool(server, store)
+    const handler = getInstallHandler()
+    const result = (await handler({
+      path: 'invalid/foo',
+      projectDir: '/project',
+      agent: 'opencode',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Invalid category')
+  })
+
+  test('should handle uninstall_all with no items', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockReturnValue({ isDirectory: () => false })
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    expect(result.content[0].text).toContain('No aik-managed items found')
+  })
+
+  test('should handle uninstall_all with items', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () => path.includes('.opencode/rules'),
+    }))
+    mockExistsSync.mockReturnValue(true)
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.includes('.opencode/rules'))
+        return [{ name: 'ts.md', isDirectory: () => false, isFile: () => true }]
+      return []
+    })
+    mockReadFileSync.mockReturnValue(JSON.stringify({ instructions: ['.opencode/rules/ts.md'] }))
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.uninstalledCount).toBeGreaterThanOrEqual(1)
+  })
+
+  test('should handle uninstall_all with directory-skill format', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/.opencode/opencode.jsonc',
+      agent: 'opencode',
+    })
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () => path.includes('.opencode/skills'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.includes('.opencode/skills'))
+        return [{ name: 'my-skill', isDirectory: () => true, isFile: () => false }]
+      return []
+    })
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({ agent: 'opencode' })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.uninstalledCount).toBeGreaterThanOrEqual(1)
+  })
+
+  test('should handle uninstall_all with claude-code (section format)', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockFindExistingConfig.mockReturnValue({
+      path: '/project/CLAUDE.md',
+      agent: 'claude-code',
+    })
+    mockStatSync.mockReturnValue({ isDirectory: () => false })
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({ agent: 'claude-code' })) as ToolContent
+    expect(result.content[0].text).toContain('No aik-managed items found')
+  })
+
+  test('should handle <!-- from --> marker removal in section format', async () => {
+    // The <!-- from --> marker path in removeSections checks if the line itself
+    // contains the source tag. Create content where the marker line includes the source.
+    const content =
+      '# Config\n\n<!-- from rules/foo.md <source>rules/foo</source> -->\nsome content\n\n## Other\nkeep'
+    mockReadFileSync.mockReturnValue(content)
+    mockExistsSync.mockReturnValue(true)
+
+    const result = uninstallContent(
+      'claude-code',
+      'rules',
+      'foo',
+      'rules/foo',
+      '/project',
+      '/project/CLAUDE.md'
+    )
+
+    expect(result).toBe(true)
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      '/project/CLAUDE.md',
+      expect.not.stringContaining('rules/foo'),
+      'utf-8'
+    )
+  })
+
+  test('should handle section format without configPath (uses contentPath)', async () => {
+    const content = '# Config\n\n## TS\n\n<source>rules/ts</source>\n'
+    mockReadFileSync.mockReturnValue(content)
+    mockExistsSync.mockReturnValue(true)
+
+    const result = uninstallContent('claude-code', 'rules', 'ts', 'rules/ts', '/project', null)
+
+    expect(result).toBe(true)
+  })
+
+  test('should return false when section file does not exist', async () => {
+    mockExistsSync.mockReturnValue(false)
+
+    const result = uninstallContent('claude-code', 'rules', 'ts', 'rules/ts', '/project', null)
+
+    expect(result).toBe(false)
+  })
 })

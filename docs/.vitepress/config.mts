@@ -44,6 +44,10 @@ export default withMermaid(
         pattern: 'https://github.com/openhoat/aik-mcp/edit/main/docs/:path',
         text: 'Edit this page on GitHub',
       },
+
+      search: {
+        provider: 'local',
+      },
     },
   })
 )

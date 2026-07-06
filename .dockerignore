@@ -1,0 +1,10 @@
+node_modules
+.git
+.opencode
+coverage
+docs
+scripts
+tests
+.env*
+*.md
+!README.md

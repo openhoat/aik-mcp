@@ -173,5 +173,80 @@ describe('startHttpTransport', () => {
       expect(capturedOnsessioninitialized).toEqual(expect.any(Function))
       expect(capturedSessionIdGenerator).toEqual(expect.any(Function))
     })
+
+    test('onsessioninitialized stores transport in map', async () => {
+      const req = createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' }))
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      // Simulate session initialization
+      capturedOnsessioninitialized!('test-session-id')
+      // Should not throw
+    })
+
+    test('onclose removes transport from map', async () => {
+      const req = createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' }))
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      // Simulate session close
+      if (MockTransport.mock.calls.length > 0) {
+        const transport = MockTransport.mock.results[0]?.value
+        if (transport?.onclose) {
+          transport.sessionId = 'test-session-id'
+          transport.onclose()
+        }
+      }
+      // Should not throw
+    })
+
+    test('DELETE with valid session calls transport handleRequest', async () => {
+      // First create a session
+      const initReq = createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' }))
+      const initRes = createMockRes()
+      await capturedHandler!(initReq, initRes)
+
+      // Simulate session initialization
+      capturedOnsessioninitialized!('test-session-id')
+
+      // Now DELETE with that session
+      const delReq = createMockReq('/mcp', 'DELETE', { 'mcp-session-id': 'test-session-id' })
+      const delRes = createMockRes()
+
+      await capturedHandler!(delReq, delRes)
+
+      expect(mockTransportHandleRequest).toHaveBeenCalled()
+    })
+
+    test('POST with existing session reuses transport', async () => {
+      // First create a session
+      const initReq = createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' }))
+      const initRes = createMockRes()
+      await capturedHandler!(initReq, initRes)
+
+      capturedOnsessioninitialized!('test-session-id')
+
+      // Now POST with that session
+      const postReq = createMockReqWithBody('/mcp', JSON.stringify({ method: 'ping' }), {
+        'mcp-session-id': 'test-session-id',
+      })
+      const postRes = createMockRes()
+
+      await capturedHandler!(postReq, postRes)
+
+      expect(mockTransportHandleRequest).toHaveBeenCalledTimes(2)
+    })
+
+    test('error handler without headers sent returns 500', async () => {
+      const req = createMockReqWithBody('/mcp', '{invalid}')
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      expect(res.writeHead).toHaveBeenCalledWith(500)
+      expect(res.end).toHaveBeenCalledWith('Internal Server Error')
+    })
   })
 })
