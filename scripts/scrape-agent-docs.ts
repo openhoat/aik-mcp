@@ -361,6 +361,8 @@ function extractContent(html: string, selectors: string): string {
 function cleanMarkdown(md: string): string {
   return (
     md
+      // Remove anchor-only links in headings: "# [](#slug)Title" → "# Title"
+      .replace(/\[\]\(#[^)]*\)/g, '')
       // Remove navigation breadcrumb lines like "# [gemini-cli](...)"
       .replace(/^# \[.+\]\(.+\)\n/gm, '')
       // Remove bare URLs that are navigation links
@@ -377,6 +379,16 @@ function cleanMarkdown(md: string): string {
       .replace(/Last updated:?.*/gi, '')
       // Remove "On this page" navigation sections
       .replace(/\* {2}\[On this page\].*\n(\* {4}\[.*\]\(.*\)\n)*/g, '')
+      // Remove table-of-contents navigation lists (lines with only indented links)
+      .replace(/^(\s{2,}\* \[.*\]\(.*\)\n)+/gm, '')
+      // Remove broken table rows (lines with just a word and no separator)
+      .replace(/^(Command|Description)\n\n/gm, '')
+      // Remove empty table header rows (just "| ... |" with no content)
+      .replace(/^\|.*\|$\n/gm, '')
+      // Remove "Did you successfully..." survey blocks
+      .replace(/Did you successfully.*\n.*\n.*/g, '')
+      // Remove "Yes" / "No" button links
+      .replace(/\[Yes\]\(.*\)\s*\[No\]\(.*\)/g, '')
       // Clean escaped backticks (\` → `)
       .replace(/\\`/g, '`')
       // Collapse 3+ consecutive blank lines into 1

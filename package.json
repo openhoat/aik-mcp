@@ -71,7 +71,7 @@
     "scrape:agent-docs": "tsx scripts/scrape-agent-docs.ts",
     "qa:markdown": "wireit",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
-    "qa:markdown:rag": "markdownlint-cli2 --config rag/.markdownlint-cli2.yaml \"rag/**/*.md\"",
+    "qa:markdown:rag": "wireit",
     "start": "node build/index.js",
     "test": "wireit",
     "test:coverage": "wireit",
@@ -103,6 +103,14 @@
       "files": [
         "**/*.md",
         "!node_modules"
+      ],
+      "output": []
+    },
+    "qa:markdown:rag": {
+      "command": "markdownlint-cli2 --config rag/.markdownlint-cli2.yaml \"rag/**/*.md\"",
+      "files": [
+        "rag/**/*.md",
+        "rag/.markdownlint-cli2.yaml"
       ],
       "output": []
     },
@@ -168,6 +176,7 @@
     "validate": {
       "dependencies": [
         "qa",
+        "qa:markdown:rag",
         "typecheck",
         "build",
         "test"
