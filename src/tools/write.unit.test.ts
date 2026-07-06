@@ -13,7 +13,7 @@ vi.mock('../logger.js', () => ({
 
 import { registerWriteTool } from './write.js'
 
-function createMockContentItem(overrides: Record<string, unknown> = {}) {
+const createMockContentItem = (overrides: Record<string, unknown> = {}) => {
   return {
     path: 'rules/test-rule',
     category: 'rules',
@@ -25,7 +25,7 @@ function createMockContentItem(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function setup(writeResult: ReturnType<typeof createMockContentItem>) {
+const setup = (writeResult: ReturnType<typeof createMockContentItem>) => {
   // Partial mock — only implements methods used by the tool handler
   const store = {
     writeContent: vi
@@ -38,20 +38,18 @@ function setup(writeResult: ReturnType<typeof createMockContentItem>) {
         ) => Promise<ReturnType<typeof createMockContentItem>>
       >()
       .mockResolvedValue(writeResult),
-  } as unknown as ContentStore
+  } as unknown as ContentStore // Safe: test mock type limitation
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
-  // Partial mock — only implements the `tool` registration method
   const server = {
-    tool: (_name: string, _desc: string, _schema: Record<string, unknown>, cb: typeof handler) => {
+    registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
 
   registerWriteTool(server, store)
 
-  // handler is guaranteed non-null after registerWriteTool calls server.tool
   return { store, handler: handler! }
 }
 
@@ -147,20 +145,15 @@ describe('registerWriteTool', () => {
           ) => Promise<ReturnType<typeof createMockContentItem>>
         >()
         .mockRejectedValue(new Error('Write failed')),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
 
     let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
     const server = {
-      tool: (
-        _name: string,
-        _desc: string,
-        _schema: Record<string, unknown>,
-        cb: typeof handler
-      ) => {
+      registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
         handler = cb
         return server
       },
-    } as unknown as McpServer
+    } as unknown as McpServer // Safe: test mock type limitation
 
     registerWriteTool(server, store)
 

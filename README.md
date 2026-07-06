@@ -1,9 +1,9 @@
-<p align="center">
+<div align="center">
   <h1 align="center">aik-mcp</h1>
-  <p align="center">
-    <em>AI Knowledge — MCP Server</em>
-  </p>
-</p>
+</div>
+<div align="center">
+  <em>AI Knowledge — MCP Server</em>
+</div>
 
 <p align="center">
 Give your AI agents a memory.<br>
@@ -29,14 +29,14 @@ No database. No API to build. Just Markdown.
 
 ## Features
 
-| Icon | Feature | Why it matters |
-| --- | --- | --- |
-| 📝 | **Knowledge as Markdown** | Plain `.md` files with frontmatter. Version them with git. Review them in PRs. |
-| ⚡ | **Zero config** | `npx aik-mcp` runs immediately. Point it at a folder of Markdown files. Done. |
-| 🔎 | **Full-text search** | Fuzzy search across every rule, skill, and template — powered by [Fuse.js](https://fusejs.io). |
-| 📦 | **Install on demand** | Push knowledge directly into your agent's runtime config with a single tool call. |
-| 👀 | **Live sync** | A file watcher detects changes instantly. No restart. No downtime. |
-| 🔌 | **Universal MCP** | Works with opencode, Claude Code, Cline, and any MCP-compatible client. |
+| Icon | Feature                   | Why it matters                                                                                 |
+|------|---------------------------|------------------------------------------------------------------------------------------------|
+| 📝   | **Knowledge as Markdown** | Plain `.md` files with frontmatter. Version them with git. Review them in PRs.                 |
+| ⚡    | **Zero config**           | `npx aik-mcp` runs immediately. Point it at a folder of Markdown files. Done.                  |
+| 🔎   | **Full-text search**      | Fuzzy search across every rule, skill, and template — powered by [Fuse.js](https://fusejs.io). |
+| 📦   | **Install on demand**     | Push knowledge directly into your agent's runtime config with a single tool call.              |
+| 👀   | **Live sync**             | A file watcher detects changes instantly. No restart. No downtime.                             |
+| 🔌   | **Universal MCP**         | Works with opencode, Claude Code, Cline, and any MCP-compatible client.                        |
 
 ## Quick start
 
@@ -159,14 +159,14 @@ Add to `cline.json` or project `.mcp.json`:
 
 Content items are organized by category:
 
-| Directory | Purpose |
-| --- | --- |
-| `rules/` | Coding standards, conventions, quality gates |
-| `skills/` | Reusable instruction blocks (prompts, recipes) |
-| `workflows/` | Multi-step process definitions |
-| `agents/` | Specialized agent configurations |
-| `commands/` | Custom CLI command definitions |
-| `templates/` | File and project scaffolding |
+| Directory    | Purpose                                        |
+|--------------|------------------------------------------------|
+| `rules/`     | Coding standards, conventions, quality gates   |
+| `skills/`    | Reusable instruction blocks (prompts, recipes) |
+| `workflows/` | Multi-step process definitions                 |
+| `agents/`    | Specialized agent configurations               |
+| `commands/`  | Custom CLI command definitions                 |
+| `templates/` | File and project scaffolding                   |
 
 Each file is a Markdown document with YAML frontmatter:
 
@@ -186,40 +186,40 @@ Content here...
 
 ## MCP tools
 
-| Tool | Description |
-| --- | --- |
-| `aik_list` | List content items, optionally filtered by category or tag |
-| `aik_get` | Retrieve a specific item by path (e.g. `rules/typescript`) |
-| `aik_search` | Full-text fuzzy search across all content |
-| `aik_write` | Create or update a content item from the agent |
-| `aik_delete` | Delete a content item |
-| `aik_install` | Install an item into the project's agent config |
-| `aik_reinstall` | Reinstall the latest version of an installed item |
-| `aik_uninstall` | Remove an installed item from the project |
-| `aik_uninstall_all` | Remove all aik-installed items from the project |
-| `aik_list_installed` | List items currently installed in the project |
+| Tool                 | Description                                                |
+|----------------------|------------------------------------------------------------|
+| `aik_list`           | List content items, optionally filtered by category or tag |
+| `aik_get`            | Retrieve a specific item by path (e.g. `rules/typescript`) |
+| `aik_search`         | Full-text fuzzy search across all content                  |
+| `aik_write`          | Create or update a content item from the agent             |
+| `aik_delete`         | Delete a content item                                      |
+| `aik_install`        | Install an item into the project's agent config            |
+| `aik_reinstall`      | Reinstall the latest version of an installed item          |
+| `aik_uninstall`      | Remove an installed item from the project                  |
+| `aik_uninstall_all`  | Remove all aik-installed items from the project            |
+| `aik_list_installed` | List items currently installed in the project              |
 
 ## Resources
 
-| URI | Description |
-| --- | --- |
-| `aik://{category}` | List all items in a category (e.g. `aik://rules`) |
-| `aik://search?q=...` | Search items by keyword |
+| URI                  | Description                                       |
+|----------------------|---------------------------------------------------|
+| `aik://{category}`   | List all items in a category (e.g. `aik://rules`) |
+| `aik://search?q=...` | Search items by keyword                           |
 
 ## CLI options
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--http` | — | Start in HTTP/SSE mode instead of stdio |
-| `--port <n>` | `3456` | HTTP server port (only with `--http`) |
-| `--no-watch` | — | Disable file watching |
+| Flag         | Default | Description                             |
+|--------------|---------|-----------------------------------------|
+| `--http`     | —       | Start in HTTP/SSE mode instead of stdio |
+| `--port <n>` | `3456`  | HTTP server port (only with `--http`)   |
+| `--no-watch` | —       | Disable file watching                   |
 
 ## Environment variables
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `AIK_CONTENT_DIR` | `.` | Path to the content directory |
-| `LOG_LEVEL` | `info` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
+| Variable          | Default | Description                                                    |
+|-------------------|---------|----------------------------------------------------------------|
+| `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
+| `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
 
 ## Development
 
@@ -232,14 +232,14 @@ npm run qa
 
 ### Scripts
 
-| Script | Description |
-| --- | --- |
-| `npm run build` | Compile TypeScript to `build/` |
-| `npm test` | Run Vitest test suite |
-| `npm run qa` | Lint + format check (Biome + markdownlint) |
-| `npm run qa:fix` | Auto-fix lint and formatting issues |
-| `npm run typecheck` | TypeScript type checking (`tsc --noEmit`) |
-| `npm run validate` | Full pipeline: qa → typecheck → build → test |
+| Script              | Description                                  |
+|---------------------|----------------------------------------------|
+| `npm run build`     | Compile TypeScript to `build/`               |
+| `npm test`          | Run Vitest test suite                        |
+| `npm run qa`        | Lint + format check (Biome + markdownlint)   |
+| `npm run qa:fix`    | Auto-fix lint and formatting issues          |
+| `npm run typecheck` | TypeScript type checking (`tsc --noEmit`)    |
+| `npm run validate`  | Full pipeline: qa → typecheck → build → test |
 
 ## Contributing
 

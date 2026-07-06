@@ -8,18 +8,23 @@ vi.mock('../logger.js', () => ({
 
 const { registerResources } = await import('./index.js')
 
-function createMockServer() {
+const createMockServer = () => {
   const resources: Record<string, { uri: string; cb: (uri: URL) => Promise<unknown> }> = {}
   const server = {
-    resource: (name: string, uri: string, cb: (uri: URL) => Promise<unknown>) => {
+    registerResource: (
+      name: string,
+      uri: string,
+      _config: unknown,
+      cb: (uri: URL) => Promise<unknown>
+    ) => {
       resources[name] = { uri, cb }
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
   return { server, resources }
 }
 
-function createMockStore(
+const createMockStore = (
   items: Array<{
     path: string
     category: string
@@ -29,11 +34,11 @@ function createMockStore(
     tags: string[]
     version: string
   }> = []
-) {
+) => {
   return {
     getByCategory: vi.fn((cat: string) => items.filter(i => i.category === cat)),
     getAll: vi.fn(() => items),
-  } as unknown as ContentStore
+  } as unknown as ContentStore // Safe: test mock type limitation
 }
 
 describe('registerResources', () => {
@@ -276,7 +281,7 @@ describe('registerResources', () => {
     registerResources(server, store)
 
     const url = new URL('aik://search')
-    delete (url as unknown as Record<string, unknown>).searchParams
+    delete (url as unknown as Record<string, unknown>).searchParams // Safe: test mock type limitation
     const result = (await resources.search.cb(url)) as {
       contents: Array<{ text: string }>
     }

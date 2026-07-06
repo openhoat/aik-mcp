@@ -26,14 +26,14 @@ controlled). Installing content copies it into the project's agent config
 
 ### Content Types
 
-| Type | Path prefix | Purpose |
-| --- | --- | --- |
-| Rule | `rules/` | A standard to respect — coding conventions, quality gates, security policies |
-| Skill | `skills/` | A reusable instruction block — a prompt, recipe, or procedure the agent invokes on demand |
-| Workflow | `workflows/` | A multi-step process — release, deployment, onboarding, review |
-| Agent | `agents/` | A specialized agent configuration — role, tools, output format |
-| Command | `commands/` | A CLI command definition — shortcuts for repetitive tasks |
-| Template | `templates/` | A file or project scaffold — starting point for new files |
+| Type     | Path prefix  | Purpose                                                                                   |
+|----------|--------------|-------------------------------------------------------------------------------------------|
+| Rule     | `rules/`     | A standard to respect — coding conventions, quality gates, security policies              |
+| Skill    | `skills/`    | A reusable instruction block — a prompt, recipe, or procedure the agent invokes on demand |
+| Workflow | `workflows/` | A multi-step process — release, deployment, onboarding, review                            |
+| Agent    | `agents/`    | A specialized agent configuration — role, tools, output format                            |
+| Command  | `commands/`  | A CLI command definition — shortcuts for repetitive tasks                                 |
+| Template | `templates/` | A file or project scaffold — starting point for new files                                 |
 
 ### Knowledge Base vs Project Config
 

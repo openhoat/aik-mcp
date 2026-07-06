@@ -5,11 +5,11 @@ import { join } from 'node:path'
 import { ContentStore } from './content-store.js'
 import { formatResult, validateContent } from './validate.js'
 
-function createTempDir(): string {
+const createTempDir = (): string => {
   return mkdtempSync(join(tmpdir(), 'aik-test-'))
 }
 
-async function createFile(dir: string, relPath: string, content: string): Promise<void> {
+const createFile = async (dir: string, relPath: string, content: string): Promise<void> => {
   const fullPath = join(dir, relPath)
   await mkdir(fullPath.replace(/\/[^/]+$/, ''), { recursive: true })
   await writeFile(fullPath, content, 'utf-8')

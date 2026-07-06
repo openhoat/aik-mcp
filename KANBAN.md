@@ -3,12 +3,8 @@
 ## Backlog
 
 - [ ] **[CONFIG]** Add docs page "Content Authoring" — guide for writing good rules and skills (P1, impact: high, effort: low)
-- [ ] **[UX]** Support `.aikrc.json` config file via `--config` flag (P2, impact: medium, effort: medium)
-- [ ] **[CONFIG]** Add docs page "Deployment" — Docker, PM2, systemd, HTTPS reverse proxy (P2, impact: medium, effort: medium)
-- [ ] **[CONFIG]** Add docs page "Deployment" — Docker, PM2, systemd, HTTPS reverse proxy (P2, impact: medium, effort: medium)
-- [ ] **[CONFIG]** Add docs page "API Reference" — complete MCP tool schemas (P2, impact: medium, effort: low)
-- [ ] **[ARCHITECTURE]** Create `scaffold-mcp-tool` skill — template for creating a new MCP tool (P2, impact: high, effort: medium)
 - [ ] **[ARCHITECTURE]** Create `rule-template` template — scaffold for a new rule (P2, impact: medium, effort: low)
+- [ ] **[ARCHITECTURE]** Remote content sources — Support GitHub/Git/HTTP URLs (single source, local + remote) (P2, impact: high, effort: high)
 - [ ] **[ARCHITECTURE]** Create `content-curator` agent — validates aik content quality (P2, impact: medium, effort: medium)
 - [ ] **[DEVOPS]** Docker image — Dockerfile + docker-compose.yml for HTTP deployment (P2, impact: high, effort: low)
 - [ ] **[DEVOPS]** Automated release — GitHub Actions workflow to publish to npm on merge (P2, impact: high, effort: medium)

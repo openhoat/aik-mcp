@@ -4,8 +4,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agent-specs.js'
-import type { Agent, ToolRegistrar } from './shared.js'
+import { getInstallSpec } from './agents/factory.js'
+import type { Agent } from './shared.js'
 import { findExistingConfig } from './shared.js'
 
 interface InstalledItem {
@@ -13,7 +13,7 @@ interface InstalledItem {
   title: string | null
 }
 
-function isDirectory(path: string): boolean {
+const isDirectory = (path: string): boolean => {
   try {
     return statSync(path).isDirectory()
   } catch {
@@ -21,7 +21,7 @@ function isDirectory(path: string): boolean {
   }
 }
 
-function listFromFileDir(baseDir: string, category: Category): InstalledItem[] {
+const listFromFileDir = (baseDir: string, category: Category): InstalledItem[] => {
   if (!isDirectory(baseDir)) return []
   const results: InstalledItem[] = []
 
@@ -33,7 +33,7 @@ function listFromFileDir(baseDir: string, category: Category): InstalledItem[] {
   return results
 }
 
-function listFromSkillDir(baseDir: string, category: Category): InstalledItem[] {
+const listFromSkillDir = (baseDir: string, category: Category): InstalledItem[] => {
   if (!isDirectory(baseDir)) return []
   const results: InstalledItem[] = []
 
@@ -58,7 +58,7 @@ function listFromSkillDir(baseDir: string, category: Category): InstalledItem[] 
   return results
 }
 
-function listFromSections(mdPath: string): InstalledItem[] {
+const listFromSections = (mdPath: string): InstalledItem[] => {
   if (!existsSync(mdPath)) return []
   const content = readFileSync(mdPath, 'utf-8')
   const results: InstalledItem[] = []
@@ -70,11 +70,11 @@ function listFromSections(mdPath: string): InstalledItem[] {
   return results
 }
 
-function listInstalledForAgent(
+const listInstalledForAgent = (
   agent: Agent,
   projectDir: string,
   configPath: string | null
-): InstalledItem[] {
+): InstalledItem[] => {
   const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
   const results: InstalledItem[] = []
 
@@ -104,20 +104,23 @@ function listInstalledForAgent(
   return results
 }
 
-export function registerListInstalledTool(server: McpServer, _store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerListInstalledTool = (server: McpServer, _store: ContentStore): void => {
+  server.registerTool(
     'list_installed',
-    'List all aik-installed content items in the current project config. Supports opencode, Claude Code, and Cline.',
     {
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'List all aik-installed content items in the current project config. Supports opencode, Claude Code, and Cline.',
+      inputSchema: {
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
       logger.trace({ projectDir, agent }, 'list_installed called')
@@ -132,7 +135,7 @@ export function registerListInstalledTool(server: McpServer, _store: ContentStor
         }
       }
 
-      const configPath = existing.agent === agent ? existing.path : null
+      const configPath = existing && existing.agent === agent ? existing.path : null
       const items = listInstalledForAgent(agent, targetDir, configPath)
 
       if (items.length === 0) {

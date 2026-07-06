@@ -56,14 +56,14 @@ Your agent calls `aik_search`, reads the rule, and applies it — all transparen
 
 Content items are organized by category:
 
-| Directory | Purpose |
-| --- | --- |
-| `rules/` | Coding standards, conventions, quality gates |
-| `skills/` | Reusable instruction blocks (prompts, recipes) |
-| `workflows/` | Multi-step process definitions |
-| `agents/` | Specialized agent configurations |
-| `commands/` | Custom CLI command definitions |
-| `templates/` | File and project scaffolding |
+| Directory    | Purpose                                        |
+|--------------|------------------------------------------------|
+| `rules/`     | Coding standards, conventions, quality gates   |
+| `skills/`    | Reusable instruction blocks (prompts, recipes) |
+| `workflows/` | Multi-step process definitions                 |
+| `agents/`    | Specialized agent configurations               |
+| `commands/`  | Custom CLI command definitions                 |
+| `templates/` | File and project scaffolding                   |
 
 Each file is plain Markdown with YAML frontmatter:
 

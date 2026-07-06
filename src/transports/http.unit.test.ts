@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { describe, expect, type Mock, test } from 'vitest'
 
 vi.mock('../logger.js', () => ({
@@ -24,38 +25,50 @@ vi.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
   StreamableHTTPServerTransport: MockTransport,
 }))
 
-let capturedHandler: ((req: any, res: any) => void | Promise<void>) | undefined
+let capturedHandler:
+  | ((req: IncomingMessage, res: ServerResponse) => void | Promise<void>)
+  | undefined
 const mockListen = vi.fn()
 
 vi.mock('node:http', () => ({
-  createServer: vi.fn((handler: any) => {
-    capturedHandler = handler
-    return { listen: mockListen }
-  }),
+  createServer: vi.fn(
+    (handler: (req: IncomingMessage, res: ServerResponse) => void | Promise<void>) => {
+      capturedHandler = handler
+      return { listen: mockListen }
+    }
+  ),
 }))
 
 const { startHttpTransport } = await import('./http.js')
 
-function createMockRes(): any {
+const createMockRes = (): ServerResponse => {
   return {
     writeHead: vi.fn(),
     end: vi.fn(),
     headersSent: false,
-  }
+  } as unknown as ServerResponse // Safe: test mock type limitation
 }
 
-function createMockReq(url: string, method: string, headers?: Record<string, string>): any {
-  return { method, url, headers: headers ?? {}, on: vi.fn() }
+const createMockReq = (
+  url: string,
+  method: string,
+  headers?: Record<string, string>
+): IncomingMessage => {
+  return { method, url, headers: headers ?? {}, on: vi.fn() } as unknown as IncomingMessage // Safe: test mock type limitation
 }
 
-function createMockReqWithBody(url: string, body: string, headers?: Record<string, string>): any {
+const createMockReqWithBody = (
+  url: string,
+  body: string,
+  headers?: Record<string, string>
+): IncomingMessage => {
   const ee = new EventEmitter()
   Object.assign(ee, { method: 'POST', url, headers: headers ?? {} })
   queueMicrotask(() => {
     ee.emit('data', Buffer.from(body))
     ee.emit('end')
   })
-  return ee
+  return ee as unknown as IncomingMessage // Safe: test mock type limitation
 }
 
 describe('startHttpTransport', () => {

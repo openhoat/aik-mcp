@@ -26,13 +26,14 @@ export interface ContentItem {
   content: string
 }
 
-function categoryFromDir(dir: string): Category | null {
+const categoryFromDir = (dir: string): Category | null => {
   const base = dir.split('/').pop() ?? dir
-  if (CATEGORIES.includes(base as Category)) return base as Category
+  const safeCategory = CATEGORIES.find(c => c === base)
+  if (safeCategory) return safeCategory
   return null
 }
 
-function extractName(filePath: string, baseDir: string): string {
+const extractName = (filePath: string, baseDir: string): string => {
   const rel = relative(baseDir, filePath)
   return rel.replace(/\.md$/i, '')
 }
@@ -183,6 +184,7 @@ export class ContentStore {
     await mkdir(dirname(fullPath), { recursive: true })
 
     logger.info({ path, overwrite }, 'writing content')
+    // Safe: frontmatter passed through schema validation
     const fmLines = ['---', serializeFrontmatter(frontmatter as Frontmatter), '---', '']
     const fileContent = fmLines.join('\n') + content.trimStart()
 
@@ -190,10 +192,12 @@ export class ContentStore {
 
     const { frontmatter: parsedFm, body } = parseFrontmatter(fileContent)
     const relPath = extractName(fullPath, this.config.contentDir)
+    const pathCategory = path.split('/')[0]
+    const validCategory: Category = CATEGORIES.find(c => c === pathCategory) ?? 'rules'
     const item: ContentItem = {
       path: relPath,
       fullPath,
-      category: path.split('/')[0] as Category,
+      category: validCategory,
       name: relPath.split('/').pop() ?? relPath,
       ...parsedFm,
       content: body,
@@ -221,7 +225,7 @@ export class ContentStore {
 
   destroy(): void {
     if (this.watcher) {
-      this.watcher.close()
+      void this.watcher.close()
       this.watcher = null
     }
   }

@@ -24,12 +24,14 @@
       "complexity": {
         "preset": "recommended",
         "noForEach": "warn",
-        "useLiteralKeys": "warn"
+        "useLiteralKeys": "warn",
+        "noUselessTernary": "error"
       },
       "correctness": {
         "preset": "recommended",
         "noUnusedImports": "error",
         "noUnusedVariables": "error",
+        "noVoidTypeReturn": "error",
         "useExhaustiveDependencies": "warn",
         "useHookAtTopLevel": "error"
       },
@@ -45,7 +47,8 @@
         "useShorthandAssign": "error",
         "useTemplate": "warn",
         "useConst": "error",
-        "useNodejsImportProtocol": "error"
+        "useNodejsImportProtocol": "error",
+        "noUnusedTemplateLiteral": "error"
       },
       "suspicious": {
         "preset": "recommended",
@@ -53,6 +56,8 @@
         "noArrayIndexKey": "warn",
         "noDebugger": "error",
         "noConsole": "warn",
+        "noConfusingVoidType": "error",
+        "noThenProperty": "error",
         "noEmptyBlockStatements": "error"
       }
     }

@@ -19,7 +19,7 @@ export interface ParsedDoc {
   body: string
 }
 
-export function parseFrontmatter(raw: string): ParsedDoc {
+export const parseFrontmatter = (raw: string): ParsedDoc => {
   const trimmed = raw.trimStart()
   if (!trimmed.startsWith('---')) {
     return { frontmatter: frontmatterSchema.parse({}), body: raw }
@@ -35,7 +35,7 @@ export function parseFrontmatter(raw: string): ParsedDoc {
 
   let parsed: Record<string, unknown>
   try {
-    parsed = (parse(yamlBlock) as Record<string, unknown>) ?? {}
+    parsed = (parse(yamlBlock) ?? {}) as Record<string, unknown>
   } catch {
     parsed = {}
   }
@@ -65,7 +65,7 @@ export function validateFrontmatter(
   }
 }
 
-export function serializeFrontmatter(frontmatter: Frontmatter): string {
+export const serializeFrontmatter = (frontmatter: Frontmatter): string => {
   const obj: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(frontmatter)) {
     if (value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) {

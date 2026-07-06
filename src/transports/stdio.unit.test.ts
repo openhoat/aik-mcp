@@ -10,7 +10,7 @@ import { startStdioTransport } from './stdio.js'
 describe('startStdioTransport', () => {
   test('should connect server with stdio transport', async () => {
     const connect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
-    const server = { connect } as unknown as McpServer
+    const server = { connect } as unknown as McpServer // Safe: test mock type limitation
 
     await startStdioTransport(server)
 

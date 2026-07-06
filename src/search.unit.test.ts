@@ -1,7 +1,7 @@
 import type { ContentItem } from './content-store.js'
 import { SearchEngine } from './search.js'
 
-function makeItem(overrides: Partial<ContentItem>): ContentItem {
+const makeItem = (overrides: Partial<ContentItem>): ContentItem => {
   return {
     path: 'test/item',
     fullPath: '/tmp/test/item.md',

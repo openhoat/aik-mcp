@@ -40,7 +40,7 @@ vi.mock('../frontmatter.js', () => ({
   parseFrontmatter: vi.fn((_content: string) => ({
     frontmatter: { version: '1.0.0' },
   })),
-  serializeFrontmatter: vi.fn((_fm: unknown) => `name: test\ndescription: test`),
+  serializeFrontmatter: vi.fn((_fm: unknown) => 'name: test\ndescription: test'),
 }))
 
 const { parseSemver, isNewer, registerCheckUpdatesTool, registerUpdateTool } = await import(
@@ -106,14 +106,13 @@ describe('isNewer', () => {
   })
 })
 
-function createMockServer() {
+const createMockServer = () => {
   let checkHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   let updateHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
-    tool: (
+    registerTool: (
       name: string,
-      _desc: string,
-      _schema: Record<string, unknown>,
+      _config: Record<string, unknown>,
       cb: ((args: Record<string, unknown>) => Promise<unknown>) | null
     ) => {
       if (name === 'check_updates') {
@@ -123,7 +122,7 @@ function createMockServer() {
       }
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
   return {
     server,
     getCheckHandler: () => checkHandler!,
@@ -134,7 +133,7 @@ function createMockServer() {
 describe('registerCheckUpdatesTool', () => {
   test('should return error when no config found', async () => {
     const { server, getCheckHandler } = createMockServer()
-    const store = { getByPath: vi.fn(), getByCategory: vi.fn(() => []) } as unknown as ContentStore
+    const store = { getByPath: vi.fn(), getByCategory: vi.fn(() => []) } as unknown as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue(null)
 
     registerCheckUpdatesTool(server, store)
@@ -146,7 +145,7 @@ describe('registerCheckUpdatesTool', () => {
 
   test('should return empty when no items installed', async () => {
     const { server, getCheckHandler } = createMockServer()
-    const store = { getByCategory: vi.fn(() => []) } as unknown as ContentStore
+    const store = { getByCategory: vi.fn(() => []) } as unknown as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -164,7 +163,7 @@ describe('registerCheckUpdatesTool', () => {
 describe('registerUpdateTool', () => {
   test('should return error when content not found in store', async () => {
     const { server, getUpdateHandler } = createMockServer()
-    const store = { getByPath: vi.fn(() => null) } as unknown as ContentStore
+    const store = { getByPath: vi.fn(() => null) } as unknown as ContentStore // Safe: test mock type limitation
 
     registerUpdateTool(server, store)
     const handler = getUpdateHandler()
@@ -177,7 +176,7 @@ describe('registerUpdateTool', () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
       getByPath: vi.fn(() => ({ version: '2.0.0', fullPath: '/store/item.md' })),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUpdateTool(server, store)
@@ -198,7 +197,7 @@ describe('registerUpdateTool', () => {
         name: 'typescript',
         title: 'TypeScript',
       })),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -225,7 +224,7 @@ describe('registerUpdateTool', () => {
         name: 'typescript',
         title: 'TypeScript',
       })),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',

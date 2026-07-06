@@ -4,7 +4,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { logger } from '../logger.js'
 
-function readBody(req: IncomingMessage): Promise<string> {
+const readBody = (req: IncomingMessage): Promise<string> => {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
@@ -13,7 +13,7 @@ function readBody(req: IncomingMessage): Promise<string> {
   })
 }
 
-export async function startHttpTransport(server: McpServer, port: number): Promise<void> {
+export const startHttpTransport = async (server: McpServer, port: number): Promise<void> => {
   const transports = new Map<string, StreamableHTTPServerTransport>()
 
   const httpServer = createServer(async (req, res) => {
@@ -30,7 +30,10 @@ export async function startHttpTransport(server: McpServer, port: number): Promi
         return
       }
 
-      const sessionId = req.headers['mcp-session-id'] as string | undefined
+      const sessionId: string | undefined =
+        typeof req.headers['mcp-session-id'] === 'string'
+          ? req.headers['mcp-session-id']
+          : undefined
       let transport = sessionId ? transports.get(sessionId) : undefined
 
       if (req.method === 'DELETE') {

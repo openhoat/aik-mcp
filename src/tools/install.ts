@@ -3,29 +3,30 @@ import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
-import { parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
+import { type Frontmatter, parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agent-specs.js'
-import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
+import { getInstallSpec } from './agents/factory.js'
+import type { Agent, OpenCodeConfig } from './shared.js'
 import { findExistingConfig } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
-export function openCodeConfigPath(targetDir: string, existingPath: string | null): string {
+export const openCodeConfigPath = (targetDir: string, existingPath: string | null): string => {
   if (existingPath) return existingPath
   return resolve(targetDir, '.opencode', 'opencode.jsonc')
 }
 
-function buildSkillContent(rawContent: string, name: string): string {
+const buildSkillContent = (rawContent: string, name: string): string => {
   const { frontmatter, body } = parseFrontmatter(rawContent)
   const skillFrontmatter = {
     name,
     description: frontmatter.description || frontmatter.title,
   }
-  const fm = serializeFrontmatter(skillFrontmatter as never)
+  // Safe: serializeFrontmatter only reads known keys, extra keys are ignored
+  const fm = serializeFrontmatter(skillFrontmatter as unknown as Frontmatter)
   return `---\n${fm}\n---\n\n${body}`
 }
 
-function updateOpencodeInstructions(configPath: string, instructionsEntry: string): boolean {
+const updateOpencodeInstructions = (configPath: string, instructionsEntry: string): boolean => {
   let config: OpenCodeConfig
   if (existsSync(configPath)) {
     config = JSON.parse(readFileSync(configPath, 'utf-8'))
@@ -43,7 +44,7 @@ function updateOpencodeInstructions(configPath: string, instructionsEntry: strin
   return true
 }
 
-export function installContent(
+export const installContent = (
   agent: Agent,
   category: Category,
   name: string,
@@ -52,7 +53,7 @@ export function installContent(
   rawContent: string,
   projectDir: string,
   configPath: string | null
-): { path: string; alreadyInstalled: boolean } {
+): { path: string; alreadyInstalled: boolean } => {
   const spec = getInstallSpec(agent, category)
   const targetFile = spec.contentPath(projectDir, category, name)
 
@@ -83,7 +84,9 @@ export function installContent(
     case 'section': {
       const mdPath = configPath ?? targetFile
       const sourceTag = `<source>${itemPath}</source>`
-      const section = `\n## ${title}\n\n${sourceTag}\n\n${rawContent.trimEnd()}\n`
+
+      const { body } = parseFrontmatter(rawContent)
+      const section = `\n## ${title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
 
       if (existsSync(mdPath)) {
         const existing = readFileSync(mdPath, 'utf-8')
@@ -98,21 +101,24 @@ export function installContent(
   }
 }
 
-export function registerReinstallTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerReinstallTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'reinstall',
-    'Reinstall a previously installed content item. Uninstalls the old entry and installs the latest version from the knowledge base. Supports opencode, Claude Code, and Cline.',
     {
-      path: z.string().describe('Path of the content to reinstall (e.g. "rules/typescript")'),
-      projectDir: z
-        .string()
-        .default(process.cwd())
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Reinstall a previously installed content item. Uninstalls the old entry and installs the latest version from the knowledge base. Supports opencode, Claude Code, and Cline.',
+      inputSchema: {
+        path: z.string().describe('Path of the content to reinstall (e.g. "rules/typescript")'),
+        projectDir: z
+          .string()
+          .default(process.cwd())
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
       logger.trace({ path, projectDir, agent }, 'reinstall called')
@@ -178,21 +184,24 @@ export function registerReinstallTool(server: McpServer, store: ContentStore): v
   )
 }
 
-export function registerInstallTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerInstallTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'install',
-    'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, and Cline.',
     {
-      path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, and Cline.',
+      inputSchema: {
+        path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
       logger.trace({ path, projectDir, agent }, 'install called')
@@ -206,7 +215,7 @@ export function registerInstallTool(server: McpServer, store: ContentStore): voi
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const existing = findExistingConfig(targetDir)
-      const configPath = existing?.agent === agent ? existing.path : null
+      const configPath = existing && existing.agent === agent ? existing.path : null
 
       const rawContent = readFileSync(item.fullPath, 'utf-8')
       const result = installContent(

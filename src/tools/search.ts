@@ -3,23 +3,23 @@ import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { SearchEngine } from '../search.js'
-import type { ToolRegistrar } from './shared.js'
-
-export function registerSearchTool(server: McpServer, store: ContentStore): void {
+export const registerSearchTool = (server: McpServer, store: ContentStore): void => {
   const engine = new SearchEngine()
 
-  ;(server.tool as unknown as ToolRegistrar)(
+  server.registerTool(
     'search',
-    'Full-text fuzzy search across all content items',
     {
-      query: z.string().describe('Search query'),
-      category: z
-        .string()
-        .optional()
-        .describe(
-          'Restrict search to a category (rules, skills, workflows, agents, commands, templates)'
-        ),
-      limit: z.number().min(1).max(50).optional().default(20).describe('Maximum results'),
+      description: 'Full-text fuzzy search across all content items',
+      inputSchema: {
+        query: z.string().describe('Search query'),
+        category: z
+          .string()
+          .optional()
+          .describe(
+            'Restrict search to a category (rules, skills, workflows, agents, commands, templates)'
+          ),
+        limit: z.number().min(1).max(50).optional().default(20).describe('Maximum results'),
+      },
     },
     async ({ query, category, limit }: { query: string; category?: string; limit?: number }) => {
       logger.trace({ query, category, limit }, 'search called')

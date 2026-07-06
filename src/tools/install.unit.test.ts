@@ -322,7 +322,7 @@ describe('installContent - cline skills (directory-skill format)', () => {
   })
 })
 
-function createMockStore(): ContentStore {
+const createMockStore = (): ContentStore => {
   const item = {
     path: 'rules/test-rule',
     category: 'rules',
@@ -340,22 +340,21 @@ function createMockStore(): ContentStore {
   }
   return {
     getByPath: vi.fn<() => typeof item | null>().mockReturnValue(item),
-  } as unknown as ContentStore
+  } as unknown as ContentStore // Safe: test mock type limitation
 }
 
-function createMockServer() {
+const createMockServer = () => {
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
-    tool: (
+    registerTool: (
       _name: string,
-      _desc: string,
-      _schema: Record<string, unknown>,
+      _config: Record<string, unknown>,
       cb: ((args: Record<string, unknown>) => Promise<unknown>) | null
     ) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
   return { server, getHandler: () => handler! }
 }
 
@@ -363,7 +362,7 @@ describe('registerInstallTool', () => {
   test('should return error when content not found', async () => {
     const store = {
       getByPath: vi.fn<() => null>().mockReturnValue(null),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
     const { server, getHandler } = createMockServer()
     registerInstallTool(server, store)
     const handler = getHandler()
@@ -463,7 +462,7 @@ describe('registerReinstallTool', () => {
   test('should return error when content not found', async () => {
     const store = {
       getByPath: vi.fn<() => null>().mockReturnValue(null),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
     const { server, getHandler } = createMockServer()
     registerReinstallTool(server, store)
     const handler = getHandler()

@@ -12,14 +12,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agent-specs.js'
-import type { Agent, OpenCodeConfig, ToolRegistrar } from './shared.js'
+import { getInstallSpec } from './agents/factory.js'
+import type { Agent, OpenCodeConfig } from './shared.js'
 import { findExistingConfig } from './shared.js'
 
-export function removeSections(
+export const removeSections = (
   content: string,
   isTarget: (text: string) => boolean
-): { result: string; count: number } {
+): { result: string; count: number } => {
   const lines = content.split('\n')
   const kept: string[] = []
   let count = 0
@@ -53,7 +53,7 @@ export function removeSections(
   return { result: kept.join('\n'), count }
 }
 
-function isDirectory(path: string): boolean {
+const isDirectory = (path: string): boolean => {
   try {
     return statSync(path).isDirectory()
   } catch {
@@ -61,7 +61,7 @@ function isDirectory(path: string): boolean {
   }
 }
 
-function removeFromOpencodeInstructions(configPath: string, entry: string): boolean {
+const removeFromOpencodeInstructions = (configPath: string, entry: string): boolean => {
   const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
   const instructions = (config.instructions ?? []).filter(e => e !== entry)
 
@@ -72,14 +72,14 @@ function removeFromOpencodeInstructions(configPath: string, entry: string): bool
   return true
 }
 
-export function uninstallContent(
+export const uninstallContent = (
   agent: Agent,
   category: Category,
   name: string,
   itemPath: string,
   projectDir: string,
   configPath: string | null
-): boolean {
+): boolean => {
   const spec = getInstallSpec(agent, category)
   const targetFile = spec.contentPath(projectDir, category, name)
 
@@ -125,68 +125,78 @@ export function uninstallContent(
   }
 }
 
-function uninstallAllForAgent(agent: Agent, projectDir: string, configPath: string | null): number {
+const uninstallAllForAgent = (
+  agent: Agent,
+  projectDir: string,
+  configPath: string | null
+): number => {
   const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
   let count = 0
 
   for (const category of categories) {
     const spec = getInstallSpec(agent, category)
-    const baseDir = spec
-      .contentPath(projectDir, category, '')
-      .replace(/\/SKILL\.md$/, '')
-      .replace(/\/[^/]+\.md$/, '')
 
-    if (!isDirectory(baseDir)) continue
+    // Handle file format (rules, workflows, templates, agents, commands)
+    if (spec.format === 'file') {
+      const targetDir = spec.contentPath(projectDir, category, '').replace(/\/[^/]+\.md$/, '')
 
-    // For directory-skill, baseDir is the parent (e.g. .opencode/skills)
-    // For file format, baseDir is the category dir (e.g. .opencode/rules)
-    const scanDir = spec.format === 'directory-skill' ? baseDir : baseDir
+      if (!isDirectory(targetDir)) continue
 
-    if (!isDirectory(scanDir)) continue
-
-    const entries = readdirSync(scanDir, { withFileTypes: true })
-
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        // Could be a skill directory
-        const skillFile = resolve(scanDir, entry.name, 'SKILL.md')
-        if (existsSync(skillFile)) {
-          rmSync(resolve(scanDir, entry.name), { recursive: true, force: true })
-          count++
+      const entries = readdirSync(targetDir, { withFileTypes: true })
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith('.md')) {
+          const itemPath = `${category}/${entry.name.replace(/\.md$/, '')}`
+          const removed = uninstallContent(
+            agent,
+            category,
+            entry.name.replace(/\.md$/, ''),
+            itemPath,
+            projectDir,
+            configPath
+          )
+          if (removed) count++
         }
-      } else if (entry.isFile() && entry.name.endsWith('.md')) {
-        const itemPath = `${category}/${entry.name.replace(/\.md$/, '')}`
-        const removed = uninstallContent(
-          agent,
-          category,
-          entry.name.replace(/\.md$/, ''),
-          itemPath,
-          projectDir,
-          configPath
-        )
-        if (removed) count++
+      }
+    } else if (spec.format === 'directory-skill') {
+      // Handle directory-skill format (skills)
+      const targetDir = spec.contentPath(projectDir, category, '').replace(/\/SKILL\.md$/, '')
+      if (!isDirectory(targetDir)) continue
+
+      const entries = readdirSync(targetDir, { withFileTypes: true })
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const skillFile = resolve(targetDir, entry.name, 'SKILL.md')
+          if (existsSync(skillFile)) {
+            rmSync(resolve(targetDir, entry.name), { recursive: true, force: true })
+            count++
+          }
+        }
       }
     }
+    // Skip section format (no longer used)
   }
 
   return count
 }
 
-export function registerUninstallTool(server: McpServer, _store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerUninstallTool = (server: McpServer, _store: ContentStore): void => {
+  server.registerTool(
     'uninstall',
-    'Uninstall a previously installed content item from the current project. Removes the file and the config reference. Supports opencode, Claude Code, and Cline.',
     {
-      path: z.string().describe('Path of the content to uninstall (e.g. "rules/typescript")'),
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Uninstall a previously installed content item from the current project. Removes the file and the config reference. Supports opencode, Claude Code, and Cline.',
+      inputSchema: {
+        path: z.string().describe('Path of the content to uninstall (e.g. "rules/typescript")'),
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
       logger.trace({ path, projectDir, agent }, 'uninstall called')
@@ -201,18 +211,27 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
         }
       }
 
-      const [category, ...rest] = path.split('/')
+      const [rawCategory, ...rest] = path.split('/')
       const name = rest.join('/')
       const configPath = existing.agent === agent ? existing.path : null
 
-      const removed = uninstallContent(
-        agent,
-        category as Category,
-        name,
-        path,
-        targetDir,
-        configPath
-      )
+      const validCategories: Category[] = [
+        'rules',
+        'skills',
+        'workflows',
+        'agents',
+        'commands',
+        'templates',
+      ]
+      const category = validCategories.find(c => c === rawCategory)
+      if (!category) {
+        return {
+          content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
+          isError: true,
+        }
+      }
+
+      const removed = uninstallContent(agent, category, name, path, targetDir, configPath)
 
       if (!removed) {
         return {
@@ -233,19 +252,22 @@ export function registerUninstallTool(server: McpServer, _store: ContentStore): 
     }
   )
 
-  ;(server.tool as unknown as ToolRegistrar)(
+  server.registerTool(
     'uninstall_all',
-    'Uninstall ALL aik-installed content items from the current project. Removes all aik-managed files and config references.',
     {
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Uninstall ALL aik-installed content items from the current project. Removes all aik-managed files and config references.',
+      inputSchema: {
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
       logger.trace({ projectDir, agent }, 'uninstall_all called')

@@ -42,11 +42,11 @@ Once configured, agents can query the RAG index to understand native formats. Fo
 
 ## Pages by Agent
 
-| Agent | Pages |
-| ----- | ----- |
-| opencode | intro, overview, rules, skills, agents, commands, config, mcp-servers, permissions, tools |
-| claude-code | overview, memory, skills, hooks, sub-agents, settings, mcp, permissions, best-practices, common-workflows |
-| cline | overview, rules, skills, plugins, config, using-commands, subagents, mcp-overview, memory-bank, cli-reference |
+| Agent       | Pages                                                                                                         |
+|-------------|---------------------------------------------------------------------------------------------------------------|
+| opencode    | intro, overview, rules, skills, agents, commands, config, mcp-servers, permissions, tools                     |
+| claude-code | overview, memory, skills, hooks, sub-agents, settings, mcp, permissions, best-practices, common-workflows     |
+| cline       | overview, rules, skills, plugins, config, using-commands, subagents, mcp-overview, memory-bank, cli-reference |
 
 ## Output Structure
 

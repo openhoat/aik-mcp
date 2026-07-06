@@ -46,26 +46,25 @@ beforeEach(() => {
   mockExistsSync.mockReturnValue(false)
 })
 
-function createMockServer() {
+const createMockServer = () => {
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
-    tool: (
+    registerTool: (
       _name: string,
-      _desc: string,
-      _schema: Record<string, unknown>,
+      _config: Record<string, unknown>,
       cb: ((args: Record<string, unknown>) => Promise<unknown>) | null
     ) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
   return { server, getHandler: () => handler! }
 }
 
 describe('registerListInstalledTool', () => {
   test('should return items for opencode agent by scanning directories', async () => {
     const { server, getHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -101,7 +100,7 @@ describe('registerListInstalledTool', () => {
 
   test('should return items for claude-code agent by scanning sections', async () => {
     const { server, getHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
@@ -122,7 +121,7 @@ describe('registerListInstalledTool', () => {
 
   test('should return empty message when no items', async () => {
     const { server, getHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -141,7 +140,7 @@ describe('registerListInstalledTool', () => {
 
   test('should return error when no config found', async () => {
     const { server, getHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue(null)
 
     registerListInstalledTool(server, store)

@@ -2,18 +2,20 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import type { ToolRegistrar } from './shared.js'
 
 const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
 
-export function registerListTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerListTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'list',
-    'List available content items (rules, skills, workflows, agents, commands, templates)',
     {
-      category: z.string().optional().describe('Filter by content category'),
-      tag: z.string().optional().describe('Filter by tag'),
-      query: z.string().optional().describe('Filter by text query in title/description'),
+      description:
+        'List available content items (rules, skills, workflows, agents, commands, templates)',
+      inputSchema: {
+        category: z.string().optional().describe('Filter by content category'),
+        tag: z.string().optional().describe('Filter by tag'),
+        query: z.string().optional().describe('Filter by text query in title/description'),
+      },
     },
     async ({ category, tag, query }: { category?: string; tag?: string; query?: string }) => {
       logger.trace({ category, tag, query }, 'list called')

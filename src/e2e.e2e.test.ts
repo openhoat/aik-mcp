@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const distIndex = resolve(__dirname, '../build/index.js')
 
-function createTempDir(): string {
+const createTempDir = (): string => {
   return mkdtempSync(join(tmpdir(), 'aik-e2e-'))
 }
 
-async function createFile(dir: string, relPath: string, content: string): Promise<void> {
+const createFile = async (dir: string, relPath: string, content: string): Promise<void> => {
   const fullPath = join(dir, relPath)
   await mkdir(fullPath.replace(/\/[^/]+$/, ''), { recursive: true })
   await writeFile(fullPath, content, 'utf-8')
@@ -32,7 +32,7 @@ interface JsonRpcResponse {
   error?: { code: number; message: string; data?: unknown }
 }
 
-async function connect(server: ChildProcess): Promise<void> {
+const connect = async (server: ChildProcess): Promise<void> => {
   const req: JsonRpcRequest = {
     jsonrpc: '2.0',
     method: 'initialize',
@@ -58,7 +58,6 @@ async function connect(server: ChildProcess): Promise<void> {
     server.stdout!.on('data', onData)
   })
 
-  // send initialized notification
   const notif: JsonRpcRequest = {
     jsonrpc: '2.0',
     method: 'notifications/initialized',
@@ -67,11 +66,11 @@ async function connect(server: ChildProcess): Promise<void> {
   server.stdin!.write(`${JSON.stringify(notif)}\n`)
 }
 
-async function request(
+const request = async (
   server: ChildProcess,
   method: string,
   params?: Record<string, unknown>
-): Promise<unknown> {
+): Promise<unknown> => {
   const id = Math.floor(Math.random() * 1000000)
   const req: JsonRpcRequest = {
     jsonrpc: '2.0',
@@ -111,10 +110,10 @@ async function request(
   })
 }
 
-async function withServer<T>(
+const withServer = async <T>(
   contentDir: string,
   fn: (req: (method: string, params?: Record<string, unknown>) => Promise<unknown>) => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   const proc = spawn(process.execPath, [distIndex, '--no-watch'], {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, AIK_CONTENT_DIR: contentDir, LOG_LEVEL: 'silent' },
@@ -203,7 +202,7 @@ test('aik_get returns error for missing path', async () => {
       name: 'get',
       arguments: { path: 'nonexistent' },
     })) as { content: Array<{ text: string }>; isError?: boolean }
-    expect((result as any).isError).toBeTruthy()
+    expect(result.isError).toBeTruthy()
   })
 })
 
@@ -433,10 +432,10 @@ test('aik_reinstall returns error for missing content', async () => {
   })
 })
 
-async function runValidate(
+const runValidate = async (
   contentDir: string,
   extraArgs: string[] = []
-): Promise<{ stdout: string; exitCode: number | null }> {
+): Promise<{ stdout: string; exitCode: number | null }> => {
   return new Promise((resolve, reject) => {
     const proc = spawn(process.execPath, [distIndex, '--no-watch', '--validate', ...extraArgs], {
       stdio: ['pipe', 'pipe', 'pipe'],

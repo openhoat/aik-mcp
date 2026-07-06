@@ -15,7 +15,7 @@ export interface ValidationResult {
   issues: ValidationIssue[]
 }
 
-export function validateContent(store: ContentStore): ValidationResult {
+export const validateContent = (store: ContentStore): ValidationResult => {
   const items = store.getAll()
   const issues: ValidationIssue[] = []
 
@@ -53,7 +53,11 @@ export function validateContent(store: ContentStore): ValidationResult {
   }
 }
 
-export function formatResult(result: ValidationResult, allPaths: string[], json: boolean): string {
+export const formatResult = (
+  result: ValidationResult,
+  allPaths: string[],
+  json: boolean
+): string => {
   if (json) {
     return JSON.stringify(result, null, 2)
   }

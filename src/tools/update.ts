@@ -5,17 +5,17 @@ import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { parseFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agent-specs.js'
+import { getInstallSpec } from './agents/factory.js'
 import { installContent } from './install.js'
-import type { Agent, ToolRegistrar } from './shared.js'
+import type { Agent } from './shared.js'
 import { findExistingConfig } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
-export function parseSemver(version: string): number[] {
+export const parseSemver = (version: string): number[] => {
   return version.split('.').map(Number)
 }
 
-export function isNewer(storeVersion: string, installedVersion: string): boolean {
+export const isNewer = (storeVersion: string, installedVersion: string): boolean => {
   const store = parseSemver(storeVersion)
   const installed = parseSemver(installedVersion)
   for (let i = 0; i < Math.max(store.length, installed.length); i++) {
@@ -27,48 +27,46 @@ export function isNewer(storeVersion: string, installedVersion: string): boolean
   return false
 }
 
-function getInstalledVersionForSpec(
+const getInstalledVersionForSpec = (
   agent: Agent,
   category: Category,
   name: string,
   projectDir: string
-): string | null {
+): string | null => {
   const spec = getInstallSpec(agent, category)
   const targetFile = spec.contentPath(projectDir, category, name)
 
-  switch (spec.format) {
-    case 'file':
-    case 'directory-skill': {
-      if (!existsSync(targetFile)) return null
-      try {
-        const raw = readFileSync(targetFile, 'utf-8')
-        return parseFrontmatter(raw).frontmatter.version || null
-      } catch {
-        return null
-      }
-    }
-    case 'section': {
-      // For section format (CLAUDE.md), we'd need to parse the section
-      // This is a simplified version — sections don't reliably carry version info
-      return null
-    }
+  // Seuls file et directory-skill sont utilisés après le refactoring
+  if (spec.format !== 'file' && spec.format !== 'directory-skill') {
+    return null
+  }
+
+  if (!existsSync(targetFile)) return null
+  try {
+    const raw = readFileSync(targetFile, 'utf-8')
+    return parseFrontmatter(raw).frontmatter.version || null
+  } catch {
+    return null
   }
 }
 
-export function registerCheckUpdatesTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'check_updates',
-    'Check for installed content items that have newer versions available in the knowledge base.',
     {
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Check for installed content items that have newer versions available in the knowledge base.',
+      inputSchema: {
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
       logger.trace({ projectDir, agent }, 'check_updates called')
@@ -83,7 +81,6 @@ export function registerCheckUpdatesTool(server: McpServer, store: ContentStore)
         }
       }
 
-      const _configPath = existing.agent === agent ? existing.path : null
       const categories: Category[] = [
         'rules',
         'skills',
@@ -143,21 +140,24 @@ export function registerCheckUpdatesTool(server: McpServer, store: ContentStore)
   )
 }
 
-export function registerUpdateTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerUpdateTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'update',
-    'Update a previously installed content item if a newer version is available in the knowledge base. Supports opencode, Claude Code, and Cline.',
     {
-      path: z.string().describe('Path of the content to update (e.g. "rules/typescript")'),
-      projectDir: z
-        .string()
-        .optional()
-        .describe(
-          'Project directory (defaults to current working directory). Config files are found by walking up.'
-        ),
-      agent: z
-        .enum(['opencode', 'claude-code', 'cline'])
-        .describe('Target AI agent (opencode, claude-code, or cline).'),
+      description:
+        'Update a previously installed content item if a newer version is available in the knowledge base. Supports opencode, Claude Code, and Cline.',
+      inputSchema: {
+        path: z.string().describe('Path of the content to update (e.g. "rules/typescript")'),
+        projectDir: z
+          .string()
+          .optional()
+          .describe(
+            'Project directory (defaults to current working directory). Config files are found by walking up.'
+          ),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline'])
+          .describe('Target AI agent (opencode, claude-code, or cline).'),
+      },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
       logger.trace({ path, projectDir, agent }, 'update called')

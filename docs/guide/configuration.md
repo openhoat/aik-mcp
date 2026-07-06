@@ -65,15 +65,15 @@ Add to `cline.json` or `.mcp.json`:
 
 ## CLI options
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--http` | — | Start in HTTP/SSE mode instead of stdio |
-| `--port <n>` | `3456` | HTTP server port (only with `--http`) |
-| `--no-watch` | — | Disable file watching |
+| Flag         | Default | Description                             |
+|--------------|---------|-----------------------------------------|
+| `--http`     | —       | Start in HTTP/SSE mode instead of stdio |
+| `--port <n>` | `3456`  | HTTP server port (only with `--http`)   |
+| `--no-watch` | —       | Disable file watching                   |
 
 ## Environment variables
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `AIK_CONTENT_DIR` | `.` | Path to the content directory |
-| `LOG_LEVEL` | `info` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
+| Variable          | Default | Description                                                    |
+|-------------------|---------|----------------------------------------------------------------|
+| `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
+| `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |

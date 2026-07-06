@@ -10,7 +10,7 @@ vi.mock('../logger.js', () => ({
 
 import { registerSearchTool } from './search.js'
 
-function createItem(overrides: Partial<ContentItem> = {}): ContentItem {
+const createItem = (overrides: Partial<ContentItem> = {}): ContentItem => {
   return {
     path: 'rules/test-rule',
     fullPath: '/tmp/rules/test-rule.md',
@@ -29,18 +29,18 @@ function createItem(overrides: Partial<ContentItem> = {}): ContentItem {
   }
 }
 
-function setup(items: ContentItem[]) {
+const setup = (items: ContentItem[]) => {
   const store = {
     getAll: vi.fn<() => ContentItem[]>().mockReturnValue(items),
-  } as unknown as ContentStore
+  } as unknown as ContentStore // Safe: test mock type limitation
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
-    tool: (_name: string, _desc: string, _schema: Record<string, unknown>, cb: typeof handler) => {
+    registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
 
   registerSearchTool(server, store)
 

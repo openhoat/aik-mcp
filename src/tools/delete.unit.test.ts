@@ -13,24 +13,22 @@ vi.mock('../logger.js', () => ({
 
 import { registerDeleteTool } from './delete.js'
 
-function setup(deleted: boolean) {
+const setup = (deleted: boolean) => {
   // Partial mock — only implements methods used by the tool handler
   const store = {
     deleteContent: vi.fn<(path: string) => Promise<boolean>>().mockResolvedValue(deleted),
-  } as unknown as ContentStore
+  } as unknown as ContentStore // Safe: test mock type limitation
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
-  // Partial mock — only implements the `tool` registration method
   const server = {
-    tool: (_name: string, _desc: string, _schema: Record<string, unknown>, cb: typeof handler) => {
+    registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
 
   registerDeleteTool(server, store)
 
-  // handler is guaranteed non-null after registerDeleteTool calls server.tool
   return { store, handler: handler! }
 }
 
@@ -53,20 +51,15 @@ describe('registerDeleteTool', () => {
       deleteContent: vi
         .fn<(path: string) => Promise<boolean>>()
         .mockRejectedValue(new Error('Delete failed')),
-    } as unknown as ContentStore
+    } as unknown as ContentStore // Safe: test mock type limitation
 
     let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
     const server = {
-      tool: (
-        _name: string,
-        _desc: string,
-        _schema: Record<string, unknown>,
-        cb: typeof handler
-      ) => {
+      registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
         handler = cb
         return server
       },
-    } as unknown as McpServer
+    } as unknown as McpServer // Safe: test mock type limitation
 
     registerDeleteTool(server, store)
 

@@ -2,16 +2,16 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import type { ToolRegistrar } from './shared.js'
-
-export function registerDeleteTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerDeleteTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'delete',
-    'Delete a content item by its path',
     {
-      path: z
-        .string()
-        .describe('Path to the content item to delete (e.g. "rules/coding-standards")'),
+      description: 'Delete a content item by its path',
+      inputSchema: {
+        path: z
+          .string()
+          .describe('Path to the content item to delete (e.g. "rules/coding-standards")'),
+      },
     },
     async ({ path }: { path: string }) => {
       logger.trace({ path }, 'delete called')

@@ -2,13 +2,15 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import type { ToolRegistrar } from './shared.js'
-
-export function registerGetTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerGetTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'get',
-    'Retrieve a specific content item by its path (e.g. "rules/coding-standards")',
-    { path: z.string().describe('Path to the content item (e.g. "rules/coding-standards")') },
+    {
+      description: 'Retrieve a specific content item by its path (e.g. "rules/coding-standards")',
+      inputSchema: {
+        path: z.string().describe('Path to the content item (e.g. "rules/coding-standards")'),
+      },
+    },
     async ({ path }: { path: string }) => {
       logger.trace({ path }, 'get called')
       const item = store.getByPath(path)

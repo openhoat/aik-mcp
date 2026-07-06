@@ -67,7 +67,7 @@ describe('removeSections', () => {
   })
 
   test('should remove matching section', () => {
-    const content = `# Header\n\n## test-section\nsome content\n\n## other\nkeep this`
+    const content = '# Header\n\n## test-section\nsome content\n\n## other\nkeep this'
     const { result, count } = removeSections(content, isTarget)
     expect(count).toBe(1)
     expect(result).toContain('# Header')
@@ -85,7 +85,7 @@ describe('removeSections', () => {
   })
 
   test('should handle sections with no following heading', () => {
-    const content = `# Header\n\n## test-section\ncontent until EOF`
+    const content = '# Header\n\n## test-section\ncontent until EOF'
     const { result, count } = removeSections(content, isTarget)
     expect(count).toBe(1)
     expect(result).toBe('# Header\n')
@@ -276,14 +276,13 @@ describe('uninstallContent - cline rules (file format)', () => {
   })
 })
 
-function createMockServer() {
+const createMockServer = () => {
   let installHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   let uninstallAllHandler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
   const server = {
-    tool: (
+    registerTool: (
       name: string,
-      _desc: string,
-      _schema: Record<string, unknown>,
+      _config: Record<string, unknown>,
       cb: ((args: Record<string, unknown>) => Promise<unknown>) | null
     ) => {
       if (name === 'uninstall') {
@@ -293,7 +292,7 @@ function createMockServer() {
       }
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
   return {
     server,
     getInstallHandler: () => installHandler!,
@@ -304,7 +303,7 @@ function createMockServer() {
 describe('registerUninstallTool', () => {
   test('should uninstall opencode item', async () => {
     const { server, getInstallHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -327,7 +326,7 @@ describe('registerUninstallTool', () => {
 
   test('should uninstall claude-code item', async () => {
     const { server, getInstallHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
@@ -348,7 +347,7 @@ describe('registerUninstallTool', () => {
 
   test('should uninstall cline item', async () => {
     const { server, getInstallHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.clinerules',
       agent: 'cline',
@@ -368,7 +367,7 @@ describe('registerUninstallTool', () => {
 
   test('should return not found message when item not installed', async () => {
     const { server, getInstallHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
@@ -388,7 +387,7 @@ describe('registerUninstallTool', () => {
 
   test('should return error when no config found', async () => {
     const { server, getInstallHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUninstallTool(server, store)
@@ -404,7 +403,7 @@ describe('registerUninstallTool', () => {
 
   test('should return error for uninstall_all when no config', async () => {
     const { server, getUninstallAllHandler } = createMockServer()
-    const store = {} as ContentStore
+    const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue(null)
 
     registerUninstallTool(server, store)

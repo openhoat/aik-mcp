@@ -3,27 +3,28 @@ import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { frontmatterSchema, validateFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
-import type { ToolRegistrar } from './shared.js'
-
-export function registerWriteTool(server: McpServer, store: ContentStore): void {
-  ;(server.tool as unknown as ToolRegistrar)(
+export const registerWriteTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
     'write',
-    'Create or update a content item (rules, skills, workflows, agents, commands, templates)',
     {
-      path: z
-        .string()
-        .describe(
-          'Path for the content (e.g. "rules/coding-standards"). Category is derived from the first path segment.'
-        ),
-      content: z.string().describe('Markdown body content (without frontmatter)'),
-      title: z.string().optional().describe('Title (frontmatter)'),
-      description: z.string().optional().describe('Short description (frontmatter)'),
-      tags: z.array(z.string()).optional().describe('Tags (frontmatter)'),
-      overwrite: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('Set to true to overwrite an existing file'),
+      description:
+        'Create or update a content item (rules, skills, workflows, agents, commands, templates)',
+      inputSchema: {
+        path: z
+          .string()
+          .describe(
+            'Path for the content (e.g. "rules/coding-standards"). Category is derived from the first path segment.'
+          ),
+        content: z.string().describe('Markdown body content (without frontmatter)'),
+        title: z.string().optional().describe('Title (frontmatter)'),
+        description: z.string().optional().describe('Short description (frontmatter)'),
+        tags: z.array(z.string()).optional().describe('Tags (frontmatter)'),
+        overwrite: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe('Set to true to overwrite an existing file'),
+      },
     },
     async ({
       path,

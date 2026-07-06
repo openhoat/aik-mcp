@@ -7,7 +7,7 @@ export interface AikConfig {
   json: boolean
 }
 
-export function loadConfig(args: string[]): AikConfig {
+export const loadConfig = (args: string[]): AikConfig => {
   const contentDir = process.env.AIK_CONTENT_DIR ?? process.cwd()
   const http = args.includes('--http')
   const portIndex = args.indexOf('--port')

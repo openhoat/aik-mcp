@@ -13,7 +13,7 @@ vi.mock('../logger.js', () => ({
 
 import { registerListTool } from './list.js'
 
-function createMockContentItem(overrides: Record<string, unknown> = {}) {
+const createMockContentItem = (overrides: Record<string, unknown> = {}) => {
   return {
     path: 'rules/test-rule',
     category: 'rules',
@@ -28,22 +28,20 @@ function createMockContentItem(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function setup(items: ReturnType<typeof createMockContentItem>[] = []) {
+const setup = (items: ReturnType<typeof createMockContentItem>[] = []) => {
   // Partial mock — only implements methods used by the tool handler
-  const store = { getAll: vi.fn().mockReturnValue(items) } as unknown as ContentStore
+  const store = { getAll: vi.fn().mockReturnValue(items) } as unknown as ContentStore // Safe: test mock type limitation
 
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
-  // Partial mock — only implements the `tool` registration method
   const server = {
-    tool: (_name: string, _desc: string, _schema: Record<string, unknown>, cb: typeof handler) => {
+    registerTool: (_name: string, _config: Record<string, unknown>, cb: typeof handler) => {
       handler = cb
       return server
     },
-  } as unknown as McpServer
+  } as unknown as McpServer // Safe: test mock type limitation
 
   registerListTool(server, store)
 
-  // handler is guaranteed non-null after registerListTool calls server.tool
   return { store, handler: handler! }
 }
 
