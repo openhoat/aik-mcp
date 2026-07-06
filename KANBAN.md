@@ -28,7 +28,7 @@
 ## Done
 
 - [x] **[HIGH]** [refactor] — Migrate install paths to native agent formats (directory-skill, auto-detected subagents/commands), add agent docs scraper + local-rag RAG index
-- [x] **[MEDIUM]** [refactor] — Migrer de Jest vers Vitest
+- [x] **[MEDIUM]** [refactor] — Migrate from Jest to Vitest
 - [x] **[HIGH]** [archi] — Enrich built-in MCP server instructions with discovery, consumption, and lifecycle flows
 - [x] **[MEDIUM]** [ux] — Add `aik validate` CLI to validate content consistency
 - [x] **[MEDIUM]** [archi] — Add Zod schema to validate content file frontmatter

@@ -3,7 +3,7 @@ import { CLINE_CONFIG } from './cline.js'
 import { OPENCODE_CONFIG } from './opencode.js'
 import type { Agent, AgentConfig, Category, InstallSpec } from './types.js'
 
-// Registre centralisé des configurations d'agents
+// Centralized registry of agent configurations
 const AGENT_CONFIGS: Record<Agent, AgentConfig> = {
   opencode: OPENCODE_CONFIG,
   'claude-code': CLAUDE_CODE_CONFIG,

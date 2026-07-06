@@ -16,7 +16,7 @@ export interface AgentDetection {
   priority: number
 }
 
-// Patterns de détection pour chaque agent
+// Detection patterns for each agent
 const DETECTION_PATTERNS: Record<Agent, Array<(dir: string) => AgentDetection | null>> = {
   opencode: [
     dir => {
@@ -70,7 +70,8 @@ export const findAgentConfig = (dir: string): AgentDetection | null => {
   let current = resolve(dir)
 
   for (let i = 0; i < 10; i++) {
-    // Vérifier tous les agents avec leurs patterns de détection
+    // Check all agents using their detection patterns
+    // Safe: literal array values match the Agent union type
     for (const agent of ['opencode', 'claude-code', 'cline'] as Agent[]) {
       // Safe: DETECTION_PATTERNS keys are Agent type
       for (const pattern of DETECTION_PATTERNS[agent]) {
@@ -79,7 +80,7 @@ export const findAgentConfig = (dir: string): AgentDetection | null => {
       }
     }
 
-    // Remonter dans l'arborescence
+    // Move up the directory tree
     const parent = resolve(current, '..')
     if (parent === current) break
     current = parent
@@ -91,7 +92,7 @@ export const findAgentConfig = (dir: string): AgentDetection | null => {
 const AGENTS: Agent[] = ['opencode', 'claude-code', 'cline']
 
 export const detectAgent = (dir: string, preferred?: Agent): Agent => {
-  if (preferred && (AGENTS as readonly Agent[]).includes(preferred)) return preferred
+  if (preferred && AGENTS.includes(preferred)) return preferred
 
   const detected = findAgentConfig(dir)
   return detected?.agent ?? 'opencode'

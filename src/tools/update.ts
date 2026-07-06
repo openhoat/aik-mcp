@@ -36,7 +36,7 @@ const getInstalledVersionForSpec = (
   const spec = getInstallSpec(agent, category)
   const targetFile = spec.contentPath(projectDir, category, name)
 
-  // Seuls file et directory-skill sont utilisés après le refactoring
+  // Only file and directory-skill formats are used after refactoring
   if (spec.format !== 'file' && spec.format !== 'directory-skill') {
     return null
   }

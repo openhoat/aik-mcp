@@ -78,6 +78,7 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
           ],
         }
       } catch (err) {
+        logger.error({ err, path }, 'write tool error')
         return {
           content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],
           isError: true,

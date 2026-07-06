@@ -85,7 +85,8 @@ export const startHttpTransport = async (server: McpServer, port: number): Promi
       const parsed = body ? JSON.parse(body) : undefined
       logger.trace({ sessionId, method: parsed?.method }, 'HTTP: request')
       await transport.handleRequest(req, res, parsed)
-    } catch (_err) {
+    } catch (err) {
+      logger.error({ err }, 'HTTP request handler error')
       if (!res.headersSent) {
         res.writeHead(500)
         res.end('Internal Server Error')

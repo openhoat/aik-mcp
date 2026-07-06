@@ -1,39 +1,39 @@
-// Types d'agents supportés
+// Supported agent types
 export type Agent = 'opencode' | 'claude-code' | 'cline'
 
-// Types de catégories de contenu
+// Content category types
 export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'
 
-// Formats d'installation possibles
+// Possible installation formats
 export type InstallFormat = 'file' | 'directory-skill' | 'section'
 
-// Types de mises à jour de configuration
+// Config update strategy per agent
 export type ConfigUpdate = 'none' | 'opencode-instructions' | 'claude-md-section'
 
-// Configuration spécifique à un agent
+// Agent-specific configuration
 export interface AgentSpec {
   name: Agent
   displayName: string
   configPath: (projectDir: string) => string
   detectionPatterns: Array<(dir: string) => boolean>
-  detectionPriority: number // Plus prioritaire = détecté en premier
+  detectionPriority: number // Higher priority = detected first
 }
 
-// Spécification d'installation pour une catégorie
+// Installation specification for a category
 export interface InstallSpec {
   format: InstallFormat
   contentPath: (projectDir: string, category: string, name: string) => string
   configUpdate: ConfigUpdate
 }
 
-// Configuration complète d'un agent
+// Complete agent configuration
 export interface AgentConfig {
   agent: AgentSpec
   installSpecs: Record<Category, InstallSpec>
-  instructionsCategories?: Category[] // Pour opencode.jsonc
+  instructionsCategories?: Category[] // For opencode.jsonc
 }
 
-// Détection d'agent et configuration trouvée
+// Agent detection result and found configuration
 export interface AgentDetection {
   agent: Agent
   path: string

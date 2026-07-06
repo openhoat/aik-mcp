@@ -22,6 +22,7 @@ export const registerDeleteTool = (server: McpServer, store: ContentStore): void
         }
         return { content: [{ type: 'text', text: `Deleted: ${path}` }] }
       } catch (err) {
+        logger.error({ err, path }, 'delete tool error')
         return {
           content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],
           isError: true,

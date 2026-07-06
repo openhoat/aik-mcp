@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, extname, join, relative } from 'node:path'
 import { watch } from 'chokidar'
 import type { AikConfig } from './config.js'
+import { ContentError } from './errors.js'
 import { type Frontmatter, parseFrontmatter, serializeFrontmatter } from './frontmatter.js'
 import { logger } from './logger.js'
 
@@ -178,7 +179,10 @@ export class ContentStore {
   ): Promise<ContentItem> {
     const fullPath = join(this.config.contentDir, `${path}.md`)
     if (!overwrite && existsSync(fullPath)) {
-      throw new Error(`Content at ${path}.md already exists (use overwrite: true to replace)`)
+      throw new ContentError(
+        'CONTENT_EXISTS',
+        `Content at ${path}.md already exists (use overwrite: true to replace)`
+      )
     }
 
     await mkdir(dirname(fullPath), { recursive: true })

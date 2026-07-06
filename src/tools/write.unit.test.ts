@@ -8,7 +8,7 @@ type ToolContent = { content: Array<{ type: string; text: string }> }
 type ToolResult = ToolContent & { isError?: boolean }
 
 vi.mock('../logger.js', () => ({
-  logger: { trace: vi.fn() },
+  logger: { trace: vi.fn(), error: vi.fn() },
 }))
 
 import { registerWriteTool } from './write.js'

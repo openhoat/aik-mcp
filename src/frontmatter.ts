@@ -35,6 +35,7 @@ export const parseFrontmatter = (raw: string): ParsedDoc => {
 
   let parsed: Record<string, unknown>
   try {
+    // Safe: parse returns object | null, YAML block is always an object
     parsed = (parse(yamlBlock) ?? {}) as Record<string, unknown>
   } catch {
     parsed = {}
@@ -54,9 +55,9 @@ export const frontmatterStrictSchema = z.object({
     .optional(),
 })
 
-export function validateFrontmatter(
+export const validateFrontmatter = (
   data: Record<string, unknown>
-): { valid: true } | { valid: false; errors: string[] } {
+): { valid: true } | { valid: false; errors: string[] } => {
   const result = frontmatterStrictSchema.safeParse(data)
   if (result.success) return { valid: true }
   return {

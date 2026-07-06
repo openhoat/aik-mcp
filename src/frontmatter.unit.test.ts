@@ -158,9 +158,11 @@ describe('validateFrontmatter', () => {
     expect(result.valid).toBe(true)
   })
 
-  function assertInvalid(
+  const assertInvalid: (
     result: ReturnType<typeof validateFrontmatter>
-  ): asserts result is { valid: false; errors: string[] } {
+  ) => asserts result is { valid: false; errors: string[] } = (
+    result
+  ): asserts result is { valid: false; errors: string[] } => {
     if (result.valid) {
       throw new Error('Expected invalid frontmatter')
     }
