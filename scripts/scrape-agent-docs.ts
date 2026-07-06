@@ -345,6 +345,11 @@ async function fetchPage(url: string): Promise<string> {
 }
 
 function extractContent(html: string, selectors: string): string {
+  // If the content has no HTML tags, it's raw markdown — return as-is
+  if (!/<\/?[a-z][\s\S]*>/i.test(html)) {
+    return html
+  }
+
   const selectorList = selectors.split(', ')
 
   for (const selector of selectorList) {
@@ -391,6 +396,14 @@ function cleanMarkdown(md: string): string {
       .replace(/\[Yes\]\(.*\)\s*\[No\]\(.*\)/g, '')
       // Clean escaped backticks (\` → `)
       .replace(/\\`/g, '`')
+      // Clean escaped blockquote markers (\> → >)
+      .replace(/\\>/g, '>')
+      // Clean escaped heading markers (\# → #)
+      .replace(/\\#/g, '#')
+      // Clean escaped bold markers (\*\* → **)
+      .replace(/\\\*\*/g, '**')
+      // Clean escaped dollar signs (\$ → $)
+      .replace(/\\\$/g, '$')
       // Collapse 3+ consecutive blank lines into 1
       .replace(/\n{3,}/g, '\n\n')
       // Trim trailing whitespace on each line
@@ -408,6 +421,15 @@ function cleanHtml(html: string): string {
     .replace(/<nav[\s\S]*?<\/nav>/gi, '')
     .replace(/<footer[\s\S]*?<\/footer>/gi, '')
     .replace(/<header[\s\S]*?<\/header>/gi, '')
+    // Convert custom card/group tags to standard HTML for turndown
+    .replace(/<\/?CardGroup[^>]*>/gi, '')
+    .replace(/<Card[^>]*>/gi, '<div>')
+    .replace(/<\/Card>/gi, '</div>')
+    // Convert inline HTML icons/attributes to plain text
+    .replace(/ icon="[^"]*"/gi, '')
+    .replace(/ href="[^"]*"/gi, '')
+    .replace(/ title="[^"]*"/gi, '')
+    .replace(/ cols={?\d+}?/gi, '')
 }
 
 async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
@@ -424,8 +446,16 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
     try {
       const html = await fetchPage(page.url)
       const contentHtml = extractContent(html, agent.contentSelector)
-      const cleaned = cleanHtml(contentHtml)
-      const markdown = cleanMarkdown(turndown.turndown(cleaned))
+      // Strip custom HTML tags (CardGroup, Card, etc.) before detecting raw markdown
+      const stripped = contentHtml
+        .replace(/<\/?[A-Z][a-zA-Z]*[^>]*>/g, '')
+        .replace(/\s*icon="[^"]*"/g, '')
+        .replace(/\s*href="[^"]*"/g, '')
+        .replace(/\s*cols={?\d+}?/g, '')
+      const isRawMarkdown = !/<\/?[a-z][\s\S]*>/i.test(stripped)
+      const markdown = isRawMarkdown
+        ? cleanMarkdown(stripped)
+        : cleanMarkdown(turndown.turndown(cleanHtml(contentHtml)))
 
       const frontmatter = [
         '---',
