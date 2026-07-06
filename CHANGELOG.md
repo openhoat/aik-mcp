@@ -1,8 +1,19 @@
-# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.2.0...17f8c9b02fc65734f80c327dde75522cb48a170b) (2026-07-05)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.2.1...6e23236e488843d68e5a1efbdd8c85a703ba47d9) (2026-07-06)
+
+### Refactoring
+
+* enforce coding standards and improve error handling ([6e23236](https://github.com/openhoat/aik-mcp/commit/6e23236e488843d68e5a1efbdd8c85a703ba47d9))
+* enforce stricter tsconfig and biome rules ([5058bc3](https://github.com/openhoat/aik-mcp/commit/5058bc3e68c50dc45df27660375090771a987cf6))
+
+## [0.2.1](https://github.com/openhoat/aik-mcp/compare/v0.2.0...v0.2.1) (2026-07-05)
 
 ### Bug Fixes
 
 * add --access public to npm publish for scoped package ([e5c34c0](https://github.com/openhoat/aik-mcp/commit/e5c34c0e897cd85133ba9a1ed22ccf32b75b4970))
+
+### Chores
+
+* **release:** v0.2.1 ([812800a](https://github.com/openhoat/aik-mcp/commit/812800ab6e36552198efbdac6ac0fe75aa65a1ec))
 
 ### Features
 

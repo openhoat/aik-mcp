@@ -1,6 +1,6 @@
 {
   "name": "@headwood/aik-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents, commands, templates)",
   "author": "Olivier Penhoat",
   "license": "MIT",
@@ -186,7 +186,7 @@
     "@commitlint/config-conventional": "21.1.0",
     "@types/node": "26.0.1",
     "@vitest/coverage-v8": "4.1.9",
-    "conventional-changelog": "8.0.1",
+    "conventional-changelog": "6.0.0",
     "conventional-changelog-cli": "5.0.0",
     "husky": "9.1.7",
     "markdownlint-cli2": "0.22.1",
