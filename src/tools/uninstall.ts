@@ -184,7 +184,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
     'uninstall',
     {
       description:
-        'Uninstall a previously installed content item from the current project. Removes the file and the config reference. Supports opencode, Claude Code, and Cline.',
+        'Uninstall a content item from the current project. Removes the file and the config reference. Supports opencode, Claude Code, Cline, and Codex.',
       inputSchema: {
         path: z.string().describe('Path of the content to uninstall (e.g. "rules/typescript")'),
         projectDir: z
@@ -194,8 +194,8 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline'])
-          .describe('Target AI agent (opencode, claude-code, or cline).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex'])
+          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
       },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
@@ -265,8 +265,8 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline'])
-          .describe('Target AI agent (opencode, claude-code, or cline).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex'])
+          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
       },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {

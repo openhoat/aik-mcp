@@ -22,6 +22,12 @@ describe('getAgentConfig', () => {
     expect(config.agent.name).toBe('cline')
     expect(config.agent.displayName).toBe('Cline')
   })
+
+  test('should return codex config', () => {
+    const config = getAgentConfig('codex')
+    expect(config.agent.name).toBe('codex')
+    expect(config.agent.displayName).toBe('Codex')
+  })
 })
 
 describe('getInstallSpec', () => {
@@ -47,6 +53,23 @@ describe('getInstallSpec', () => {
     expect(spec.format).toBe('file')
     expect(spec.configUpdate).toBe('none')
   })
+
+  test('should return section format for codex rules', () => {
+    const spec = getInstallSpec('codex', 'rules')
+    expect(spec.format).toBe('section')
+    expect(spec.configUpdate).toBe('codex-agents-md')
+  })
+
+  test('should return directory-skill format for codex skills', () => {
+    const spec = getInstallSpec('codex', 'skills')
+    expect(spec.format).toBe('directory-skill')
+  })
+
+  test('should return file format for codex agents', () => {
+    const spec = getInstallSpec('codex', 'agents')
+    expect(spec.format).toBe('file')
+    expect(spec.configUpdate).toBe('none')
+  })
 })
 
 describe('getInstructionsCategories', () => {
@@ -66,6 +89,11 @@ describe('getInstructionsCategories', () => {
     const cats = getInstructionsCategories('cline')
     expect(cats).toEqual([])
   })
+
+  test('should return empty for codex', () => {
+    const cats = getInstructionsCategories('codex')
+    expect(cats).toEqual([])
+  })
 })
 
 describe('getAllAgents', () => {
@@ -74,6 +102,7 @@ describe('getAllAgents', () => {
     expect(agents).toContain('opencode')
     expect(agents).toContain('claude-code')
     expect(agents).toContain('cline')
-    expect(agents.length).toBe(3)
+    expect(agents).toContain('codex')
+    expect(agents.length).toBe(4)
   })
 })

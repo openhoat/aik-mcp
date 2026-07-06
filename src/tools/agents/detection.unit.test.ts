@@ -96,6 +96,36 @@ describe('findAgentConfig', () => {
     expect(result!.priority).toBe(8)
   })
 
+  test('should find AGENTS.md (priority 9, codex)', () => {
+    const target = resolve('/project', 'AGENTS.md')
+    mockExistsSync.mockImplementation((path: string) => path === target)
+    const result = findAgentConfig('/project')
+    expect(result).not.toBeNull()
+    expect(result!.agent).toBe('codex')
+    expect(result!.priority).toBe(9)
+  })
+
+  test('should find .codex/config.toml (priority 10, codex)', () => {
+    const target = resolve('/project', '.codex', 'config.toml')
+    mockExistsSync.mockImplementation((path: string) => path === target)
+    const result = findAgentConfig('/project')
+    expect(result).not.toBeNull()
+    expect(result!.agent).toBe('codex')
+    expect(result!.priority).toBe(10)
+  })
+
+  test('should find .codex directory (priority 11, codex)', () => {
+    const target = resolve('/project', '.codex')
+    mockExistsSync.mockReturnValue(false)
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () => path === target,
+    }))
+    const result = findAgentConfig('/project')
+    expect(result).not.toBeNull()
+    expect(result!.agent).toBe('codex')
+    expect(result!.priority).toBe(11)
+  })
+
   test('should return null when no config found', () => {
     mockExistsSync.mockReturnValue(false)
     mockStatSync.mockReturnValue({ isDirectory: () => false })
@@ -122,6 +152,7 @@ describe('detectAgent', () => {
     expect(detectAgent('/dir', 'opencode')).toBe('opencode')
     expect(detectAgent('/dir', 'claude-code')).toBe('claude-code')
     expect(detectAgent('/dir', 'cline')).toBe('cline')
+    expect(detectAgent('/dir', 'codex')).toBe('codex')
   })
 
   test('should return opencode default when no config and no preferred', () => {

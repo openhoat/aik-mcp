@@ -116,8 +116,8 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline'])
-          .describe('Target AI agent (opencode, claude-code, or cline).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex'])
+          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
       },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
@@ -189,7 +189,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
     'install',
     {
       description:
-        'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, and Cline.',
+        'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, Cline, and Codex.',
       inputSchema: {
         path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
         projectDir: z
@@ -199,8 +199,8 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline'])
-          .describe('Target AI agent (opencode, claude-code, or cline).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex'])
+          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
       },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
