@@ -307,6 +307,227 @@ const AGENTS: Record<string, AgentConfig> = {
     ],
     contentSelector: 'main, article, .content, .doc-content',
   },
+  codex: {
+    name: 'codex',
+    pages: [
+      {
+        id: 'overview',
+        title: 'Codex Overview',
+        url: 'https://developers.openai.com/codex/',
+      },
+      {
+        id: 'quickstart',
+        title: 'Codex Quickstart',
+        url: 'https://developers.openai.com/codex/quickstart',
+      },
+      {
+        id: 'prompting',
+        title: 'Codex Prompting',
+        url: 'https://developers.openai.com/codex/prompting',
+      },
+      {
+        id: 'customization',
+        title: 'Codex Customization',
+        url: 'https://developers.openai.com/codex/concepts/customization',
+      },
+      {
+        id: 'memories',
+        title: 'Codex Memories',
+        url: 'https://developers.openai.com/codex/memories',
+      },
+      {
+        id: 'sandboxing',
+        title: 'Codex Sandboxing',
+        url: 'https://developers.openai.com/codex/concepts/sandboxing',
+      },
+      {
+        id: 'subagents',
+        title: 'Codex Subagents',
+        url: 'https://developers.openai.com/codex/concepts/subagents',
+      },
+      {
+        id: 'workflows',
+        title: 'Codex Workflows',
+        url: 'https://developers.openai.com/codex/workflows',
+      },
+      {
+        id: 'app-overview',
+        title: 'Codex App Overview',
+        url: 'https://developers.openai.com/codex/app',
+      },
+      {
+        id: 'app-settings',
+        title: 'Codex App Settings',
+        url: 'https://developers.openai.com/codex/app/settings',
+      },
+      {
+        id: 'app-automations',
+        title: 'Codex App Automations',
+        url: 'https://developers.openai.com/codex/app/automations',
+      },
+      {
+        id: 'app-worktrees',
+        title: 'Codex App Worktrees',
+        url: 'https://developers.openai.com/codex/app/worktrees',
+      },
+      {
+        id: 'app-commands',
+        title: 'Codex App Commands',
+        url: 'https://developers.openai.com/codex/app/commands',
+      },
+      {
+        id: 'ide-overview',
+        title: 'Codex IDE Extension Overview',
+        url: 'https://developers.openai.com/codex/ide',
+      },
+      {
+        id: 'ide-settings',
+        title: 'Codex IDE Settings',
+        url: 'https://developers.openai.com/codex/ide/settings',
+      },
+      {
+        id: 'ide-commands',
+        title: 'Codex IDE Commands',
+        url: 'https://developers.openai.com/codex/ide/commands',
+      },
+      {
+        id: 'ide-slash-commands',
+        title: 'Codex IDE Slash Commands',
+        url: 'https://developers.openai.com/codex/ide/slash-commands',
+      },
+      {
+        id: 'cli-overview',
+        title: 'Codex CLI Overview',
+        url: 'https://developers.openai.com/codex/cli',
+      },
+      {
+        id: 'cli-reference',
+        title: 'Codex CLI Command Line Options',
+        url: 'https://developers.openai.com/codex/cli/reference',
+      },
+      {
+        id: 'cli-slash-commands',
+        title: 'Codex CLI Slash Commands',
+        url: 'https://developers.openai.com/codex/cli/slash-commands',
+      },
+      {
+        id: 'config-basics',
+        title: 'Codex Config Basics',
+        url: 'https://developers.openai.com/codex/config-basic',
+      },
+      {
+        id: 'config-advanced',
+        title: 'Codex Advanced Config',
+        url: 'https://developers.openai.com/codex/config-advanced',
+      },
+      {
+        id: 'config-reference',
+        title: 'Codex Config Reference',
+        url: 'https://developers.openai.com/codex/config-reference',
+      },
+      {
+        id: 'environment-variables',
+        title: 'Codex Environment Variables',
+        url: 'https://developers.openai.com/codex/environment-variables',
+      },
+      {
+        id: 'permissions',
+        title: 'Codex Permissions',
+        url: 'https://developers.openai.com/codex/permissions',
+      },
+      {
+        id: 'speed',
+        title: 'Codex Speed',
+        url: 'https://developers.openai.com/codex/speed',
+      },
+      {
+        id: 'rules',
+        title: 'Codex Rules',
+        url: 'https://developers.openai.com/codex/rules',
+      },
+      {
+        id: 'hooks',
+        title: 'Codex Hooks',
+        url: 'https://developers.openai.com/codex/hooks',
+      },
+      {
+        id: 'agents-md',
+        title: 'Codex AGENTS.md Custom Instructions',
+        url: 'https://developers.openai.com/codex/guides/agents-md',
+      },
+      {
+        id: 'mcp',
+        title: 'Codex MCP',
+        url: 'https://developers.openai.com/codex/mcp',
+      },
+      {
+        id: 'plugins-overview',
+        title: 'Codex Plugins Overview',
+        url: 'https://developers.openai.com/codex/plugins',
+      },
+      {
+        id: 'plugins-build',
+        title: 'Codex Build Plugins',
+        url: 'https://developers.openai.com/codex/plugins/build',
+      },
+      {
+        id: 'sites',
+        title: 'Codex Sites',
+        url: 'https://developers.openai.com/codex/sites',
+      },
+      {
+        id: 'skills-overview',
+        title: 'Codex Skills Overview',
+        url: 'https://developers.openai.com/codex/skills',
+      },
+      {
+        id: 'record-and-replay',
+        title: 'Codex Record & Replay',
+        url: 'https://developers.openai.com/codex/record-and-replay',
+      },
+      {
+        id: 'subagents-config',
+        title: 'Codex Subagents Configuration',
+        url: 'https://developers.openai.com/codex/subagents',
+      },
+      {
+        id: 'best-practices',
+        title: 'Codex Best Practices',
+        url: 'https://developers.openai.com/codex/learn/best-practices',
+      },
+      {
+        id: 'noninteractive',
+        title: 'Codex Non-interactive Mode',
+        url: 'https://developers.openai.com/codex/noninteractive',
+      },
+      {
+        id: 'sdk',
+        title: 'Codex SDK',
+        url: 'https://developers.openai.com/codex/sdk',
+      },
+      {
+        id: 'github-action',
+        title: 'Codex GitHub Action',
+        url: 'https://developers.openai.com/codex/github-action',
+      },
+      {
+        id: 'enterprise-admin',
+        title: 'Codex Enterprise Admin Setup',
+        url: 'https://developers.openai.com/codex/enterprise/admin-setup',
+      },
+      {
+        id: 'enterprise-governance',
+        title: 'Codex Enterprise Governance',
+        url: 'https://developers.openai.com/codex/enterprise/governance',
+      },
+      {
+        id: 'enterprise-managed-config',
+        title: 'Codex Enterprise Managed Configuration',
+        url: 'https://developers.openai.com/codex/enterprise/managed-configuration',
+      },
+    ],
+    contentSelector: 'main, article, .content, .doc-content, .markdown',
+  },
   copilot: {
     name: 'copilot',
     pages: [
@@ -487,11 +708,17 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
 }
 
 async function main(): Promise<void> {
+  const args = process.argv.slice(2)
+  const agentFilter = args.length > 0 ? new Set(args) : null
+
   process.stdout.write('Scraping agent documentation for local RAG...\n\n')
 
   const allResults: Record<string, ScrapeResult[]> = {}
 
   for (const agentKey of Object.keys(AGENTS)) {
+    if (agentFilter && !agentFilter.has(agentKey)) {
+      continue
+    }
     process.stdout.write(`\n[${agentKey}]\n`)
     const results = await scrapeAgent(agentKey)
     allResults[agentKey] = results
