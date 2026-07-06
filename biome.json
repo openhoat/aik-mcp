@@ -23,8 +23,8 @@
       "preset": "recommended",
       "complexity": {
         "preset": "recommended",
-        "noForEach": "warn",
-        "useLiteralKeys": "warn",
+        "noForEach": "error",
+        "useLiteralKeys": "error",
         "noUselessTernary": "error"
       },
       "correctness": {
@@ -32,8 +32,7 @@
         "noUnusedImports": "error",
         "noUnusedVariables": "error",
         "noVoidTypeReturn": "error",
-        "useExhaustiveDependencies": "warn",
-        "useHookAtTopLevel": "error"
+        "noUnusedFunctionParameters": "error"
       },
       "performance": {
         "preset": "recommended"
@@ -45,20 +44,22 @@
         "preset": "recommended",
         "noParameterAssign": "error",
         "useShorthandAssign": "error",
-        "useTemplate": "warn",
+        "useTemplate": "error",
         "useConst": "error",
         "useNodejsImportProtocol": "error",
-        "noUnusedTemplateLiteral": "error"
+        "noUnusedTemplateLiteral": "error",
+        "useConsistentArrayType": "error",
+        "useImportType": "error"
       },
       "suspicious": {
         "preset": "recommended",
-        "noExplicitAny": "warn",
-        "noArrayIndexKey": "warn",
+        "noExplicitAny": "error",
         "noDebugger": "error",
-        "noConsole": "warn",
+        "noConsole": "error",
         "noConfusingVoidType": "error",
         "noThenProperty": "error",
-        "noEmptyBlockStatements": "error"
+        "noEmptyBlockStatements": "error",
+        "noImplicitAnyLet": "error"
       }
     }
   },
