@@ -446,13 +446,18 @@ async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
     try {
       const html = await fetchPage(page.url)
       const contentHtml = extractContent(html, agent.contentSelector)
-      // Strip custom HTML tags (CardGroup, Card, etc.) before detecting raw markdown
+      // Strip custom HTML tags (CardGroup, Card, Warning, Tabs, Tab, etc.) before detecting raw markdown
       const stripped = contentHtml
         .replace(/<\/?[A-Z][a-zA-Z]*[^>]*>/g, '')
+        .replace(/<\/?[a-z]+>/gi, '')
         .replace(/\s*icon="[^"]*"/g, '')
         .replace(/\s*href="[^"]*"/g, '')
         .replace(/\s*cols={?\d+}?/g, '')
-      const isRawMarkdown = !/<\/?[a-z][\s\S]*>/i.test(stripped)
+        .replace(/\s*theme="[^"]*"/g, '')
+      // Detect raw markdown: no lowercase HTML tags, or content starts with markdown syntax
+      const hasHtmlTags = /<\/?[a-z][\s\S]*?>/i.test(stripped)
+      const looksLikeMarkdown = /^[#>*`\-\|\[\n]/.test(stripped.trim())
+      const isRawMarkdown = !hasHtmlTags || looksLikeMarkdown
       const markdown = isRawMarkdown
         ? cleanMarkdown(stripped)
         : cleanMarkdown(turndown.turndown(cleanHtml(contentHtml)))
