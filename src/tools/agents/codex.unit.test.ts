@@ -70,10 +70,18 @@ describe('CODEX_INSTALL_SPECS', () => {
     const commandsPath = CODEX_INSTALL_SPECS.commands.contentPath('/project', 'commands', 'my-cmd')
     expect(commandsPath).toBe('/project/.codex/commands/my-cmd.md')
 
-    const workflowsPath = CODEX_INSTALL_SPECS.workflows.contentPath('/project', 'workflows', 'my-wf')
+    const workflowsPath = CODEX_INSTALL_SPECS.workflows.contentPath(
+      '/project',
+      'workflows',
+      'my-wf'
+    )
     expect(workflowsPath).toBe('/project/AGENTS.md')
 
-    const templatesPath = CODEX_INSTALL_SPECS.templates.contentPath('/project', 'templates', 'my-tpl')
+    const templatesPath = CODEX_INSTALL_SPECS.templates.contentPath(
+      '/project',
+      'templates',
+      'my-tpl'
+    )
     expect(templatesPath).toBe('/project/.codex/templates/my-tpl.md')
   })
 })
