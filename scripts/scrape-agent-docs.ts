@@ -16,7 +16,7 @@ const turndown = new TurndownService({
 
 turndown.addRule('strikethrough', {
   filter: ['del', 's', 'strike'],
-  replacement: content => `~~${content}~~`,
+  replacement: (content: string) => `~~${content}~~`,
 })
 
 turndown.addRule('removeScripts', {
@@ -24,7 +24,26 @@ turndown.addRule('removeScripts', {
   replacement: () => '',
 })
 
-const AGENTS = {
+interface AgentPage {
+  id: string
+  title: string
+  url: string
+}
+
+interface AgentConfig {
+  name: string
+  pages: AgentPage[]
+  contentSelector: string
+}
+
+interface ScrapeResult {
+  id: string
+  status: 'ok' | 'error'
+  url: string
+  error?: string
+}
+
+const AGENTS: Record<string, AgentConfig> = {
   opencode: {
     name: 'opencode',
     pages: [
@@ -163,7 +182,7 @@ const AGENTS = {
   },
 }
 
-async function fetchPage(url) {
+async function fetchPage(url: string): Promise<string> {
   const response = await fetch(url, {
     headers: {
       'User-Agent': 'aik-mcp/0.1.3 (docs scraper)',
@@ -177,7 +196,7 @@ async function fetchPage(url) {
   return response.text()
 }
 
-function extractContent(html, selectors) {
+function extractContent(html: string, selectors: string): string {
   const selectorList = selectors.split(', ')
 
   for (const selector of selectorList) {
@@ -191,7 +210,7 @@ function extractContent(html, selectors) {
   return bodyMatch ? bodyMatch[1] : html
 }
 
-function cleanHtml(html) {
+function cleanHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -200,12 +219,12 @@ function cleanHtml(html) {
     .replace(/<header[\s\S]*?<\/header>/gi, '')
 }
 
-async function scrapeAgent(agentKey) {
+async function scrapeAgent(agentKey: string): Promise<ScrapeResult[]> {
   const agent = AGENTS[agentKey]
   const agentDir = join(OUTPUT_DIR, agentKey)
   await mkdir(agentDir, { recursive: true })
 
-  const results = []
+  const results: ScrapeResult[] = []
 
   for (const page of agent.pages) {
     const filePath = join(agentDir, `${page.id}.md`)
@@ -229,19 +248,20 @@ async function scrapeAgent(agentKey) {
       await writeFile(filePath, `${frontmatter + markdown}\n`)
       process.stdout.write('✓\n')
       results.push({ id: page.id, status: 'ok', url: page.url })
-    } catch (error) {
-      process.stdout.write(`✗ (${error.message})\n`)
-      results.push({ id: page.id, status: 'error', url: page.url, error: error.message })
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      process.stdout.write(`✗ (${message})\n`)
+      results.push({ id: page.id, status: 'error', url: page.url, error: message })
     }
   }
 
   return results
 }
 
-async function main() {
+async function main(): Promise<void> {
   process.stdout.write('Scraping agent documentation for local RAG...\n\n')
 
-  const allResults = {}
+  const allResults: Record<string, ScrapeResult[]> = {}
 
   for (const agentKey of Object.keys(AGENTS)) {
     process.stdout.write(`\n[${agentKey}]\n`)
@@ -269,4 +289,8 @@ async function main() {
   process.exit(totalErr > 0 ? 1 : 0)
 }
 
-main()
+main().catch((err: unknown) => {
+  const message = err instanceof Error ? err.message : String(err)
+  process.stderr.write(`Fatal: ${message}\n`)
+  process.exit(1)
+})

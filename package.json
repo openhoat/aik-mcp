@@ -52,7 +52,7 @@
   "scripts": {
     "build": "wireit",
     "build:test": "wireit",
-    "changelog": "node scripts/changelog.mjs",
+    "changelog": "tsx scripts/changelog.ts",
     "docs:build": "vitepress build docs",
     "docs:dev": "vitepress dev docs",
     "docs:preview": "vitepress preview docs",
@@ -68,7 +68,7 @@
     "qa:biome": "wireit",
     "qa:biome:fix": "biome check --write --unsafe .",
     "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
-    "scrape:agent-docs": "node scripts/scrape-agent-docs.mjs",
+    "scrape:agent-docs": "tsx scripts/scrape-agent-docs.ts",
     "qa:markdown": "wireit",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
     "start": "node build/index.js",
@@ -106,9 +106,11 @@
       "output": []
     },
     "typecheck": {
-      "command": "tsc --noEmit",
+      "command": "tsc -p tsconfig.typecheck.json --noEmit",
       "files": [
         "src/**/*.ts",
+        "scripts/**/*.ts",
+        "tsconfig.typecheck.json",
         "tsconfig.json"
       ],
       "output": []
@@ -185,6 +187,7 @@
     "@commitlint/cli": "21.2.0",
     "@commitlint/config-conventional": "21.2.0",
     "@types/node": "26.1.0",
+    "@types/turndown": "5.0.6",
     "@vitest/coverage-v8": "4.1.10",
     "conventional-changelog": "6.0.0",
     "conventional-changelog-cli": "5.0.0",

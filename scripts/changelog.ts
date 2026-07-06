@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises'
 import { Writable } from 'node:stream'
 import conventionalChangelog from 'conventional-changelog'
 
-const TYPE_SECTIONS = {
+const TYPE_SECTIONS: Record<string, string> = {
   feat: 'Features',
   fix: 'Bug Fixes',
   test: 'Tests',
@@ -19,11 +19,11 @@ const TYPE_SECTIONS = {
 let output = ''
 
 const writable = new Writable({
-  write(chunk, _encoding, callback) {
+  write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
     output += chunk.toString()
     callback()
   },
-  final(callback) {
+  final(callback: (error?: Error | null) => void) {
     writeFile('CHANGELOG.md', output.replace(/\n{3,}/g, '\n\n'))
       .then(() => callback())
       .catch(callback)
@@ -45,7 +45,7 @@ conventionalChangelog(
   undefined,
   undefined,
   {
-    transform: commit => {
+    transform: (commit: { type?: unknown; hash?: unknown; [key: string]: unknown }) => {
       if (!commit.type || typeof commit.type !== 'string') return commit
       const type = commit.type.toLowerCase()
       const section = TYPE_SECTIONS[type]
