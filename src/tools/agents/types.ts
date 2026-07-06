@@ -1,5 +1,5 @@
 // Supported agent types
-export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex'
+export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex' | 'copilot'
 
 // Content category types
 export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'

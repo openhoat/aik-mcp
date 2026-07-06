@@ -82,6 +82,13 @@ const DETECTION_PATTERNS: Record<Agent, Array<(dir: string) => AgentDetection | 
       return null
     },
   ],
+  copilot: [
+    dir => {
+      const path = resolve(dir, '.github', 'copilot-instructions.md')
+      if (existsSync(path)) return { agent: 'copilot', path, priority: 12 }
+      return null
+    },
+  ],
 }
 
 export const findAgentConfig = (dir: string): AgentDetection | null => {
@@ -90,7 +97,7 @@ export const findAgentConfig = (dir: string): AgentDetection | null => {
   for (let i = 0; i < 10; i++) {
     // Check all agents using their detection patterns
     // Safe: literal array values match the Agent union type
-    for (const agent of ['opencode', 'claude-code', 'cline', 'codex'] as Agent[]) {
+    for (const agent of ['opencode', 'claude-code', 'cline', 'codex', 'copilot'] as Agent[]) {
       // Safe: DETECTION_PATTERNS keys are Agent type
       for (const pattern of DETECTION_PATTERNS[agent]) {
         const result = pattern(current)
@@ -107,7 +114,7 @@ export const findAgentConfig = (dir: string): AgentDetection | null => {
   return null
 }
 
-const AGENTS: Agent[] = ['opencode', 'claude-code', 'cline', 'codex']
+const AGENTS: Agent[] = ['opencode', 'claude-code', 'cline', 'codex', 'copilot']
 
 export const detectAgent = (dir: string, preferred?: Agent): Agent => {
   if (preferred && AGENTS.includes(preferred)) return preferred

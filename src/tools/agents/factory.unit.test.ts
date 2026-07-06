@@ -28,6 +28,12 @@ describe('getAgentConfig', () => {
     expect(config.agent.name).toBe('codex')
     expect(config.agent.displayName).toBe('Codex')
   })
+
+  test('should return copilot config', () => {
+    const config = getAgentConfig('copilot')
+    expect(config.agent.name).toBe('copilot')
+    expect(config.agent.displayName).toBe('GitHub Copilot')
+  })
 })
 
 describe('getInstallSpec', () => {
@@ -70,6 +76,18 @@ describe('getInstallSpec', () => {
     expect(spec.format).toBe('file')
     expect(spec.configUpdate).toBe('none')
   })
+
+  test('should return section format for copilot rules', () => {
+    const spec = getInstallSpec('copilot', 'rules')
+    expect(spec.format).toBe('section')
+    expect(spec.configUpdate).toBe('none')
+  })
+
+  test('should return file format for copilot skills', () => {
+    const spec = getInstallSpec('copilot', 'skills')
+    expect(spec.format).toBe('file')
+    expect(spec.configUpdate).toBe('none')
+  })
 })
 
 describe('getInstructionsCategories', () => {
@@ -94,6 +112,11 @@ describe('getInstructionsCategories', () => {
     const cats = getInstructionsCategories('codex')
     expect(cats).toEqual([])
   })
+
+  test('should return empty for copilot', () => {
+    const cats = getInstructionsCategories('copilot')
+    expect(cats).toEqual([])
+  })
 })
 
 describe('getAllAgents', () => {
@@ -103,6 +126,7 @@ describe('getAllAgents', () => {
     expect(agents).toContain('claude-code')
     expect(agents).toContain('cline')
     expect(agents).toContain('codex')
-    expect(agents.length).toBe(4)
+    expect(agents).toContain('copilot')
+    expect(agents.length).toBe(5)
   })
 })

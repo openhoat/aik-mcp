@@ -194,8 +194,8 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline', 'codex'])
-          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
+          .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
       },
     },
     async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
@@ -265,8 +265,8 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline', 'codex'])
-          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
+          .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
       },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
