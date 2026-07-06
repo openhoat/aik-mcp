@@ -106,7 +106,7 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
     'reinstall',
     {
       description:
-        'Reinstall a previously installed content item. Uninstalls the old entry and installs the latest version from the knowledge base. Supports opencode, Claude Code, and Cline.',
+        'Reinstall a previously installed content item. Uninstalls the old entry and installs the latest version from the knowledge base. Supports opencode, Claude Code, Cline, and Codex.',
       inputSchema: {
         path: z.string().describe('Path of the content to reinstall (e.g. "rules/typescript")'),
         projectDir: z
