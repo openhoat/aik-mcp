@@ -1,6 +1,7 @@
 import { CLAUDE_CODE_CONFIG } from './claude-code.js'
 import { CLINE_CONFIG } from './cline.js'
 import { CODEX_CONFIG } from './codex.js'
+import { COPILOT_CONFIG } from './copilot.js'
 import { OPENCODE_CONFIG } from './opencode.js'
 import type { Agent, AgentConfig, Category, InstallSpec } from './types.js'
 
@@ -10,6 +11,7 @@ const AGENT_CONFIGS: Record<Agent, AgentConfig> = {
   'claude-code': CLAUDE_CODE_CONFIG,
   cline: CLINE_CONFIG,
   codex: CODEX_CONFIG,
+  copilot: COPILOT_CONFIG,
 }
 
 export const getAgentConfig = (agent: Agent): AgentConfig => {

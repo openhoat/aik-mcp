@@ -126,6 +126,15 @@ describe('findAgentConfig', () => {
     expect(result!.priority).toBe(11)
   })
 
+  test('should find .github/copilot-instructions.md (priority 12, copilot)', () => {
+    const target = resolve('/project', '.github', 'copilot-instructions.md')
+    mockExistsSync.mockImplementation((path: string) => path === target)
+    const result = findAgentConfig('/project')
+    expect(result).not.toBeNull()
+    expect(result!.agent).toBe('copilot')
+    expect(result!.priority).toBe(12)
+  })
+
   test('should return null when no config found', () => {
     mockExistsSync.mockReturnValue(false)
     mockStatSync.mockReturnValue({ isDirectory: () => false })
@@ -153,6 +162,7 @@ describe('detectAgent', () => {
     expect(detectAgent('/dir', 'claude-code')).toBe('claude-code')
     expect(detectAgent('/dir', 'cline')).toBe('cline')
     expect(detectAgent('/dir', 'codex')).toBe('codex')
+    expect(detectAgent('/dir', 'copilot')).toBe('copilot')
   })
 
   test('should return opencode default when no config and no preferred', () => {
