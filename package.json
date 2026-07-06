@@ -1,6 +1,6 @@
 {
   "name": "@headwood/aik-mcp",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents, commands, templates)",
   "author": "Olivier Penhoat",
   "license": "MIT",
