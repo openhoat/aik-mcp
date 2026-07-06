@@ -109,7 +109,7 @@ export const registerListInstalledTool = (server: McpServer, _store: ContentStor
     'list_installed',
     {
       description:
-        'List all aik-installed content items in the current project config. Supports opencode, Claude Code, and Cline.',
+        'List all aik-installed content items in the current project config. Supports opencode, Claude Code, Cline, and Codex.',
       inputSchema: {
         projectDir: z
           .string()
@@ -118,8 +118,8 @@ export const registerListInstalledTool = (server: McpServer, _store: ContentStor
             'Project directory (defaults to current working directory). Config files are found by walking up.'
           ),
         agent: z
-          .enum(['opencode', 'claude-code', 'cline'])
-          .describe('Target AI agent (opencode, claude-code, or cline).'),
+          .enum(['opencode', 'claude-code', 'cline', 'codex'])
+          .describe('Target AI agent (opencode, claude-code, cline, or codex).'),
       },
     },
     async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {

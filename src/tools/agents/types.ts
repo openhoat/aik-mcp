@@ -1,5 +1,5 @@
 // Supported agent types
-export type Agent = 'opencode' | 'claude-code' | 'cline'
+export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex'
 
 // Content category types
 export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'
@@ -8,7 +8,7 @@ export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' 
 export type InstallFormat = 'file' | 'directory-skill' | 'section'
 
 // Config update strategy per agent
-export type ConfigUpdate = 'none' | 'opencode-instructions' | 'claude-md-section'
+export type ConfigUpdate = 'none' | 'opencode-instructions' | 'claude-md-section' | 'codex-agents-md'
 
 // Agent-specific configuration
 export interface AgentSpec {
