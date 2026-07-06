@@ -77,7 +77,8 @@ const DETECTION_PATTERNS: Record<Agent, Array<(dir: string) => AgentDetection | 
     },
     dir => {
       const path = resolve(dir, '.codex')
-      if (isDirectory(path)) return { agent: 'codex', path: resolve(dir, 'AGENTS.md'), priority: 11 }
+      if (isDirectory(path))
+        return { agent: 'codex', path: resolve(dir, 'AGENTS.md'), priority: 11 }
       return null
     },
   ],
