@@ -23,4 +23,5 @@ Thumbs.db
 .wireit/
 
 rag/
+!rag/.markdownlint-cli2.yaml
 models/
