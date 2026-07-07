@@ -1,4 +1,6 @@
-# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.2.2...c145fd23e0c752b0b83eda1ed643bf0d042f2623) (2026-07-06)
+# [Unreleased](https://github.com/openhoat/aik-mcp/compare/v0.3.0...c92bd7e77b30abf03687e62de310cf60914e5c03) (2026-07-07)
+
+# [0.3.0](https://github.com/openhoat/aik-mcp/compare/v0.2.2...v0.3.0) (2026-07-07)
 
 ## [0.2.2](https://github.com/openhoat/aik-mcp/compare/v0.2.1...v0.2.2) (2026-07-06)
 
