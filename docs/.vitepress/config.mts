@@ -15,10 +15,10 @@ export default withMermaid(
       nav: [
         { text: 'Get Started', link: '/guide/getting-started' },
         { text: 'Content Authoring', link: '/guide/content-authoring' },
-        { text: 'Tools', link: '/guide/tools' },
+        { text: 'MCP Tools', link: '/guide/tools' },
         { text: 'Architecture', link: '/guide/architecture' },
-        { text: 'Agent Docs RAG', link: '/guide/agent-docs' },
         { text: 'Configuration', link: '/guide/configuration' },
+        { text: 'Contributing', link: '/guide/contributing' },
       ],
 
       sidebar: [
@@ -28,9 +28,9 @@ export default withMermaid(
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Content Authoring', link: '/guide/content-authoring' },
             { text: 'Architecture', link: '/guide/architecture' },
-            { text: 'Agent Docs RAG', link: '/guide/agent-docs' },
             { text: 'MCP Tools', link: '/guide/tools' },
             { text: 'Configuration', link: '/guide/configuration' },
+            { text: 'Contributing', link: '/guide/contributing' },
           ],
         },
       ],
