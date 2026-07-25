@@ -26,6 +26,7 @@ vi.mock('../logger.js', () => ({
 
 vi.mock('./shared.js', () => ({
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
+  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -513,5 +514,167 @@ describe('registerReinstallTool', () => {
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
+  })
+})
+
+describe('installContent - opencode global rules (section format)', () => {
+  test('should append section to AGENTS.md for global scope', () => {
+    mockExistsSync.mockReturnValue(false)
+
+    const result = installContent(
+      'opencode',
+      'rules',
+      'my-rule',
+      'rules/my-rule',
+      'My Rule',
+      '# My Rule',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(mockAppendFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('AGENTS.md'),
+      expect.stringContaining('<source>rules/my-rule</source>'),
+      'utf-8'
+    )
+    expect(result.alreadyInstalled).toBe(false)
+  })
+
+  test('should detect already installed section in AGENTS.md', () => {
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('<source>rules/my-rule</source>')
+
+    const result = installContent(
+      'opencode',
+      'rules',
+      'my-rule',
+      'rules/my-rule',
+      'My Rule',
+      '# My Rule',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(mockAppendFileSync).not.toHaveBeenCalled()
+    expect(result.alreadyInstalled).toBe(true)
+  })
+})
+
+describe('installContent - opencode global skills (directory-skill format)', () => {
+  test('should create SKILL.md directly in skills/ under global dir', () => {
+    mockExistsSync.mockReturnValue(false)
+
+    const result = installContent(
+      'opencode',
+      'skills',
+      'my-skill',
+      'skills/my-skill',
+      'My Skill',
+      '---\ndescription: A test skill\n---\n# My Skill\nbody',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('/skills/my-skill/SKILL.md'),
+      expect.any(String),
+      'utf-8'
+    )
+    expect(result.alreadyInstalled).toBe(false)
+  })
+
+  test('should detect already installed skill in global dir', () => {
+    mockExistsSync.mockReturnValue(true)
+
+    const result = installContent(
+      'opencode',
+      'skills',
+      'my-skill',
+      'skills/my-skill',
+      'My Skill',
+      '---\ndescription: A test skill\n---\nbody',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(result.alreadyInstalled).toBe(true)
+  })
+})
+
+describe('registerInstallTool - global scope', () => {
+  test('should install globally with opencode agent', async () => {
+    const store = createMockStore()
+    const { server, getHandler } = createMockServer()
+    mockReadFileSync.mockReturnValue('# My Rule\ncontent')
+    mockExistsSync.mockReturnValue(false)
+
+    registerInstallTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      path: 'rules/test-rule',
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.installed).toBe('rules/test-rule')
+    expect(parsed.agent).toBe('opencode')
+    expect(parsed.scope).toBe('global')
+  })
+
+  test('should return error for copilot global install', async () => {
+    const store = createMockStore()
+    const { server, getHandler } = createMockServer()
+
+    registerInstallTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      path: 'rules/test-rule',
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+  })
+})
+
+describe('registerReinstallTool - global scope', () => {
+  test('should reinstall globally with opencode agent', async () => {
+    const store = createMockStore()
+    const { server, getHandler } = createMockServer()
+    mockUninstallContent.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('# My Rule\ncontent')
+    mockExistsSync.mockReturnValue(false)
+
+    registerReinstallTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      path: 'rules/test-rule',
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.reinstalled).toBe('rules/test-rule')
+    expect(parsed.agent).toBe('opencode')
+    expect(parsed.scope).toBe('global')
+    expect(parsed.hadPreviousInstall).toBe(true)
+  })
+
+  test('should return error for copilot global reinstall', async () => {
+    const store = createMockStore()
+    const { server, getHandler } = createMockServer()
+
+    registerReinstallTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      path: 'rules/test-rule',
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
   })
 })

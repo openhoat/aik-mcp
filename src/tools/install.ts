@@ -5,9 +5,9 @@ import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { type Frontmatter, parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agents/factory.js'
-import type { Agent, OpenCodeConfig } from './shared.js'
-import { findExistingConfig } from './shared.js'
+import { getInstallSpecForScope } from './agents/factory.js'
+import type { Agent, OpenCodeConfig, Scope } from './shared.js'
+import { findExistingConfig, resolveGlobalDir } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
 export const openCodeConfigPath = (targetDir: string, existingPath: string | null): string => {
@@ -51,19 +51,20 @@ export const installContent = (
   itemPath: string,
   title: string,
   rawContent: string,
-  projectDir: string,
-  configPath: string | null
+  targetDir: string,
+  configPath: string | null,
+  scope: Scope = 'project'
 ): { path: string; alreadyInstalled: boolean } => {
-  const spec = getInstallSpec(agent, category)
-  const targetFile = spec.contentPath(projectDir, category, name)
+  const spec = getInstallSpecForScope(agent, category, scope)
+  const targetFile = spec.contentPath(targetDir, category, name)
 
   switch (spec.format) {
     case 'file': {
       mkdirSync(dirname(targetFile), { recursive: true })
       writeFileSync(targetFile, rawContent, 'utf-8')
 
-      if (spec.configUpdate === 'opencode-instructions') {
-        const opencodeConfig = openCodeConfigPath(projectDir, configPath)
+      if (scope === 'project' && spec.configUpdate === 'opencode-instructions') {
+        const opencodeConfig = openCodeConfigPath(targetDir, configPath)
         const entry = `.opencode/${category}/${name}.md`
         const wasAdded = updateOpencodeInstructions(opencodeConfig, entry)
         return { path: opencodeConfig, alreadyInstalled: !wasAdded }
@@ -118,16 +119,82 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
         agent: z
           .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
           .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe(
+            'Installation scope (project or global). Requires explicit agent for global scope.'
+          ),
       },
     },
-    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
-      logger.trace({ path, projectDir, agent }, 'reinstall called')
+    async ({
+      path,
+      projectDir,
+      agent,
+      scope,
+    }: {
+      path: string
+      projectDir?: string
+      agent: Agent
+      scope?: Scope
+    }) => {
+      logger.trace({ path, projectDir, agent, scope }, 'reinstall called')
+      const effectiveScope = scope ?? 'project'
 
       const item = store.getByPath(path)
       if (!item) {
         return {
           content: [{ type: 'text', text: `Content not found: ${path}` }],
           isError: true,
+        }
+      }
+
+      if (effectiveScope === 'global') {
+        if (agent === 'copilot') {
+          return {
+            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
+            isError: true,
+          }
+        }
+        const globalDir = resolveGlobalDir(agent)
+        const uninstalled = uninstallContent(
+          agent,
+          item.category,
+          item.name,
+          path,
+          globalDir,
+          null,
+          'global'
+        )
+        const rawContent = readFileSync(item.fullPath, 'utf-8')
+        const result = installContent(
+          agent,
+          item.category,
+          item.name,
+          item.path,
+          item.title,
+          rawContent,
+          globalDir,
+          null,
+          'global'
+        )
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  reinstalled: path,
+                  agent,
+                  scope: 'global',
+                  hadPreviousInstall: uninstalled,
+                  config: result.path,
+                },
+                null,
+                2
+              ),
+            },
+          ],
         }
       }
 
@@ -168,12 +235,7 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           {
             type: 'text',
             text: JSON.stringify(
-              {
-                reinstalled: path,
-                agent,
-                hadPreviousInstall: uninstalled,
-                config: result.path,
-              },
+              { reinstalled: path, agent, hadPreviousInstall: uninstalled, config: result.path },
               null,
               2
             ),
@@ -201,10 +263,28 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         agent: z
           .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
           .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe(
+            'Installation scope (project or global). Requires explicit agent for global scope.'
+          ),
       },
     },
-    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
-      logger.trace({ path, projectDir, agent }, 'install called')
+    async ({
+      path,
+      projectDir,
+      agent,
+      scope,
+    }: {
+      path: string
+      projectDir?: string
+      agent: Agent
+      scope?: Scope
+    }) => {
+      logger.trace({ path, projectDir, agent, scope }, 'install called')
+      const effectiveScope = scope ?? 'project'
+
       const item = store.getByPath(path)
       if (!item) {
         return {
@@ -213,11 +293,61 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         }
       }
 
+      const rawContent = readFileSync(item.fullPath, 'utf-8')
+
+      if (effectiveScope === 'global') {
+        if (agent === 'copilot') {
+          return {
+            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
+            isError: true,
+          }
+        }
+        const globalDir = resolveGlobalDir(agent)
+        const result = installContent(
+          agent,
+          item.category,
+          item.name,
+          item.path,
+          item.title,
+          rawContent,
+          globalDir,
+          null,
+          'global'
+        )
+        if (result.alreadyInstalled) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Already installed globally: ${path} in ${agent} (${result.path})`,
+              },
+            ],
+          }
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  installed: path,
+                  agent,
+                  scope: 'global',
+                  file: item.fullPath,
+                  config: result.path,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        }
+      }
+
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const existing = findExistingConfig(targetDir)
       const configPath = existing && existing.agent === agent ? existing.path : null
 
-      const rawContent = readFileSync(item.fullPath, 'utf-8')
       const result = installContent(
         agent,
         item.category,
@@ -245,12 +375,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
           {
             type: 'text',
             text: JSON.stringify(
-              {
-                installed: path,
-                agent,
-                file: item.fullPath,
-                config: result.path,
-              },
+              { installed: path, agent, file: item.fullPath, config: result.path },
               null,
               2
             ),
