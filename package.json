@@ -2,16 +2,6 @@
   "name": "@headwood/aik-mcp",
   "version": "0.3.1",
   "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents, commands, templates)",
-  "author": "Olivier Penhoat",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/openhoat/aik-mcp.git"
-  },
-  "bugs": {
-    "url": "https://github.com/openhoat/aik-mcp/issues"
-  },
-  "homepage": "https://openhoat.github.io/aik-mcp/",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -28,38 +18,25 @@
     "cline",
     "aik"
   ],
-  "publishConfig": {
-    "access": "public"
+  "license": "MIT",
+  "author": "Olivier Penhoat",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openhoat/aik-mcp.git"
   },
+  "bugs": {
+    "url": "https://github.com/openhoat/aik-mcp/issues"
+  },
+  "homepage": "https://openhoat.github.io/aik-mcp/",
   "type": "module",
-  "main": "build/index.js",
-  "bin": {
-    "aik-mcp": "build/index.js"
-  },
-  "files": [
-    "build",
-    "LICENSE",
-    "README.md"
-  ],
-  "engines": {
-    "node": ">=22.13.0",
-    "npm": ">=10.9.2"
-  },
-  "volta": {
-    "node": "22.13.0",
-    "npm": "10.9.2"
-  },
   "scripts": {
     "build": "wireit",
+    "build:changelog": "tsx scripts/changelog.ts",
+    "build:docs": "vitepress build docs",
     "build:test": "wireit",
-    "changelog": "tsx scripts/changelog.ts",
-    "docs:build": "vitepress build docs",
-    "docs:dev": "vitepress dev docs",
-    "docs:preview": "vitepress preview docs",
     "clean": "npm run clean:test:coverage && rimraf build dist .wireit",
     "clean:test:coverage": "rimraf coverage",
     "clean:wireit": "rimraf .wireit",
-    "mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts",
     "postversion": "git push --follow-tags",
     "prepare": "husky",
     "prepublishOnly": "npm run validate",
@@ -68,20 +45,95 @@
     "qa:biome": "wireit",
     "qa:biome:fix": "biome check --write --unsafe .",
     "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
-    "scrape:agent-docs": "tsx scripts/scrape-agent-docs.ts",
     "qa:markdown": "wireit",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
     "qa:markdown:rag": "wireit",
     "start": "node build/index.js",
+    "start:docs": "vitepress dev docs",
+    "start:docs:preview": "vitepress preview docs",
+    "start:mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts",
     "test": "wireit",
     "test:coverage": "wireit",
     "test:coverage:open": "open-cli coverage/lcov-report/index.html",
     "test:watch": "vitest",
     "typecheck": "wireit",
     "validate": "wireit",
-    "version": "npm run changelog && git add -A"
+    "version": "npm run build:changelog && git add -A"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "chokidar": "5.0.0",
+    "fuse.js": "7.4.2",
+    "pino": "10.3.1",
+    "pino-pretty": "13.1.3",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.2",
+    "@commitlint/cli": "21.2.0",
+    "@commitlint/config-conventional": "21.2.0",
+    "@types/node": "26.1.0",
+    "@types/turndown": "5.0.6",
+    "@vitest/coverage-v8": "4.1.10",
+    "conventional-changelog": "6.0.0",
+    "conventional-changelog-cli": "5.0.0",
+    "husky": "9.1.7",
+    "markdownlint-cli2": "0.23.0",
+    "open-cli": "9.0.0",
+    "rimraf": "6.1.3",
+    "tsx": "4.23.0",
+    "turndown": "7.2.4",
+    "typescript": "6.0.3",
+    "vitepress": "1.6.4",
+    "vitepress-plugin-mermaid": "2.0.17",
+    "vitest": "4.1.10",
+    "wireit": "0.14.13"
+  },
+  "bin": {
+    "aik-mcp": "build/index.js"
+  },
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10.9.2"
+  },
+  "files": [
+    "build",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "build/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "volta": {
+    "node": "22.13.0",
+    "npm": "10.9.2"
   },
   "wireit": {
+    "build": {
+      "command": "tsc -p tsconfig.build.json && cp -r src/built-in build/built-in",
+      "clean": "if-file-deleted",
+      "files": [
+        "src/**/*.ts",
+        "!src/**/*.test.ts",
+        "src/built-in/**/*",
+        "tsconfig.build.json",
+        "tsconfig.json"
+      ],
+      "output": [
+        "build/**"
+      ]
+    },
+    "build:test": {
+      "command": "tsc -p tsconfig.test.json",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.test.json",
+        "tsconfig.json"
+      ],
+      "output": []
+    },
     "qa": {
       "dependencies": [
         "qa:biome",
@@ -114,39 +166,6 @@
       ],
       "output": []
     },
-    "typecheck": {
-      "command": "tsc -p tsconfig.typecheck.json --noEmit",
-      "files": [
-        "src/**/*.ts",
-        "scripts/**/*.ts",
-        "tsconfig.typecheck.json",
-        "tsconfig.json"
-      ],
-      "output": []
-    },
-    "build": {
-      "command": "tsc -p tsconfig.build.json && cp -r src/built-in build/built-in",
-      "clean": "if-file-deleted",
-      "files": [
-        "src/**/*.ts",
-        "!src/**/*.test.ts",
-        "src/built-in/**/*",
-        "tsconfig.build.json",
-        "tsconfig.json"
-      ],
-      "output": [
-        "build/**"
-      ]
-    },
-    "build:test": {
-      "command": "tsc -p tsconfig.test.json",
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.test.json",
-        "tsconfig.json"
-      ],
-      "output": []
-    },
     "test": {
       "command": "vitest run",
       "dependencies": [
@@ -172,6 +191,16 @@
       "output": [
         "coverage/**"
       ]
+    },
+    "typecheck": {
+      "command": "tsc -p tsconfig.typecheck.json --noEmit",
+      "files": [
+        "src/**/*.ts",
+        "scripts/**/*.ts",
+        "tsconfig.typecheck.json",
+        "tsconfig.json"
+      ],
+      "output": []
     },
     "validate": {
       "dependencies": [
@@ -212,5 +241,6 @@
     "vitepress-plugin-mermaid": "2.0.17",
     "vitest": "4.1.10",
     "wireit": "0.14.13"
+  }
   }
 }
