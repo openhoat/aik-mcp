@@ -33,12 +33,14 @@ vi.mock('../logger.js', () => ({
 
 vi.mock('./shared.js', () => ({
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
+  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
 vi.mock('../frontmatter.js', () => ({
   parseFrontmatter: vi.fn((_content: string) => ({
     frontmatter: { version: '1.0.0' },
+    body: '# Content',
   })),
   serializeFrontmatter: vi.fn((_fm: unknown) => 'name: test\ndescription: test'),
 }))
@@ -62,7 +64,7 @@ beforeEach(() => {
   mockReaddirSync.mockReset()
   mockFindExistingConfig.mockReset()
   mockParseFrontmatter.mockReset()
-  mockParseFrontmatter.mockReturnValue({ frontmatter: { version: '1.0.0' } })
+  mockParseFrontmatter.mockReturnValue({ frontmatter: { version: '1.0.0' }, body: '# Content' })
   mockStatSync.mockReturnValue({ isDirectory: () => false })
 })
 
@@ -362,5 +364,111 @@ describe('registerUpdateTool', () => {
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.updated).toBe('rules/typescript')
     expect(parsed.previousVersion).toBe('(unknown)')
+  })
+})
+
+describe('registerCheckUpdatesTool - global scope', () => {
+  test('should check updates globally for opencode', async () => {
+    const { server, getCheckHandler } = createMockServer()
+    const store = {
+      getByCategory: vi.fn(() => []),
+    } as unknown as ContentStore // Safe: test mock type limitation
+
+    registerCheckUpdatesTool(server, store)
+    const handler = getCheckHandler()
+    const result = (await handler({
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.scope).toBe('global')
+    expect(parsed.updateCount).toBe(0)
+  })
+
+  test('should return error for copilot global check_updates', async () => {
+    const { server, getCheckHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerCheckUpdatesTool(server, store)
+    const handler = getCheckHandler()
+    const result = (await handler({
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+  })
+})
+
+describe('registerUpdateTool - global scope', () => {
+  test('should update globally for opencode', async () => {
+    const { server, getUpdateHandler } = createMockServer()
+    const store = {
+      getByPath: vi.fn(() => ({
+        version: '2.0.0',
+        fullPath: '/store/agents/reviewer.md',
+        path: 'agents/reviewer',
+        category: 'agents',
+        name: 'reviewer',
+        title: 'Reviewer',
+      })),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('---\nversion: "1.0.0"\n---')
+
+    registerUpdateTool(server, store)
+    const handler = getUpdateHandler()
+    const result = (await handler({
+      path: 'agents/reviewer',
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.updated).toBe('agents/reviewer')
+    expect(parsed.scope).toBe('global')
+    expect(parsed.previousVersion).toBe('1.0.0')
+    expect(parsed.newVersion).toBe('2.0.0')
+  })
+
+  test('should return error for copilot global update', async () => {
+    const { server, getUpdateHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerUpdateTool(server, store)
+    const handler = getUpdateHandler()
+    const result = (await handler({
+      path: 'rules/typescript',
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+  })
+
+  test('should return already-up-to-date for global scope', async () => {
+    const { server, getUpdateHandler } = createMockServer()
+    const store = {
+      getByPath: vi.fn(() => ({
+        version: '1.0.0',
+        fullPath: '/store/agents/reviewer.md',
+        path: 'agents/reviewer',
+        category: 'agents',
+        name: 'reviewer',
+        title: 'Reviewer',
+      })),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('---\nversion: "1.0.0"\n---')
+
+    registerUpdateTool(server, store)
+    const handler = getUpdateHandler()
+    const result = (await handler({
+      path: 'agents/reviewer',
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.status).toBe('already-up-to-date')
+    expect(parsed.scope).toBe('global')
   })
 })

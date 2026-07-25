@@ -4,8 +4,12 @@ export { type AgentDetection, detectAgent, findAgentConfig } from './detection.j
 export {
   getAgentConfig,
   getAllAgents,
+  getGlobalBaseDir,
+  getGlobalSupportedCategories,
   getInstallSpec,
+  getInstallSpecForScope,
   getInstructionsCategories,
+  validateGlobalSupported,
 } from './factory.js'
 export { OPENCODE_CONFIG } from './opencode.js'
 export type {
@@ -16,4 +20,5 @@ export type {
   ConfigUpdate,
   InstallFormat,
   InstallSpec,
+  Scope,
 } from './types.js'

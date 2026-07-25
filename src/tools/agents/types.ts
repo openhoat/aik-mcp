@@ -4,6 +4,9 @@ export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex' | 'copilot'
 // Content category types
 export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'
 
+// Installation scope
+export type Scope = 'project' | 'global'
+
 // Possible installation formats
 export type InstallFormat = 'file' | 'directory-skill' | 'section'
 
@@ -19,6 +22,7 @@ export interface AgentSpec {
   name: Agent
   displayName: string
   configPath: (projectDir: string) => string
+  globalBaseDir: () => string
   detectionPatterns: Array<(dir: string) => boolean>
   detectionPriority: number // Higher priority = detected first
 }
@@ -26,7 +30,7 @@ export interface AgentSpec {
 // Installation specification for a category
 export interface InstallSpec {
   format: InstallFormat
-  contentPath: (projectDir: string, category: string, name: string) => string
+  contentPath: (baseDir: string, category: string, name: string) => string
   configUpdate: ConfigUpdate
 }
 
@@ -34,6 +38,7 @@ export interface InstallSpec {
 export interface AgentConfig {
   agent: AgentSpec
   installSpecs: Record<Category, InstallSpec>
+  globalInstallSpecs?: Partial<Record<Category, InstallSpec>>
   instructionsCategories?: Category[] // For opencode.jsonc
 }
 
@@ -43,3 +48,12 @@ export interface AgentDetection {
   path: string
   priority: number
 }
+
+export const CATEGORIES: Category[] = [
+  'rules',
+  'skills',
+  'workflows',
+  'agents',
+  'commands',
+  'templates',
+]

@@ -1,3 +1,4 @@
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, InstallSpec } from './types.js'
 
@@ -5,6 +6,7 @@ export const CODEX_AGENT: AgentSpec = {
   name: 'codex',
   displayName: 'Codex',
   configPath: dir => join(dir, '.codex'),
+  globalBaseDir: () => process.env.CODEX_HOME || join(homedir(), '.codex'),
   detectionPatterns: [],
   detectionPriority: 7,
 }
@@ -42,7 +44,22 @@ export const CODEX_INSTALL_SPECS: Record<Category, InstallSpec> = {
   },
 }
 
+// Codex global only supports rules and workflows (appended to AGENTS.md)
+export const CODEX_GLOBAL_INSTALL_SPECS: Partial<Record<Category, InstallSpec>> = {
+  rules: {
+    format: 'section',
+    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
+    configUpdate: 'none',
+  },
+  workflows: {
+    format: 'section',
+    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
+    configUpdate: 'none',
+  },
+}
+
 export const CODEX_CONFIG: AgentConfig = {
   agent: CODEX_AGENT,
   installSpecs: CODEX_INSTALL_SPECS,
+  globalInstallSpecs: CODEX_GLOBAL_INSTALL_SPECS,
 }

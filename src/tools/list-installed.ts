@@ -4,9 +4,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agents/factory.js'
-import type { Agent } from './shared.js'
-import { findExistingConfig } from './shared.js'
+import { getInstallSpecForScope } from './agents/factory.js'
+import type { Agent, Scope } from './shared.js'
+import { findExistingConfig, resolveGlobalDir } from './shared.js'
 
 interface InstalledItem {
   path: string
@@ -72,29 +72,30 @@ const listFromSections = (mdPath: string): InstalledItem[] => {
 
 const listInstalledForAgent = (
   agent: Agent,
-  projectDir: string,
-  configPath: string | null
+  baseDir: string,
+  configPath: string | null,
+  scope: Scope = 'project'
 ): InstalledItem[] => {
   const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
   const results: InstalledItem[] = []
 
   for (const category of categories) {
-    const spec = getInstallSpec(agent, category)
+    const spec = getInstallSpecForScope(agent, category, scope)
 
     switch (spec.format) {
       case 'file': {
-        const baseDir = dirname(spec.contentPath(projectDir, category, 'placeholder'))
-        results.push(...listFromFileDir(baseDir, category))
+        const targetDir = dirname(spec.contentPath(baseDir, category, 'placeholder'))
+        results.push(...listFromFileDir(targetDir, category))
         break
       }
       case 'directory-skill': {
-        const skillFile = spec.contentPath(projectDir, category, 'placeholder')
-        const baseDir = dirname(dirname(skillFile))
-        results.push(...listFromSkillDir(baseDir, category))
+        const skillFile = spec.contentPath(baseDir, category, 'placeholder')
+        const targetDir = dirname(dirname(skillFile))
+        results.push(...listFromSkillDir(targetDir, category))
         break
       }
       case 'section': {
-        const mdPath = configPath ?? spec.contentPath(projectDir, category, 'placeholder')
+        const mdPath = configPath ?? spec.contentPath(baseDir, category, 'placeholder')
         results.push(...listFromSections(mdPath))
         break
       }
@@ -120,10 +121,43 @@ export const registerListInstalledTool = (server: McpServer, _store: ContentStor
         agent: z
           .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
           .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe('Scope to list (project or global).'),
       },
     },
-    async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
-      logger.trace({ projectDir, agent }, 'list_installed called')
+    async ({ projectDir, agent, scope }: { projectDir?: string; agent: Agent; scope?: Scope }) => {
+      logger.trace({ projectDir, agent, scope }, 'list_installed called')
+      const effectiveScope = scope ?? 'project'
+
+      if (effectiveScope === 'global') {
+        if (agent === 'copilot') {
+          return {
+            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
+            isError: true,
+          }
+        }
+        const globalDir = resolveGlobalDir(agent)
+        const items = listInstalledForAgent(agent, globalDir, null, 'global')
+        if (items.length === 0) {
+          return {
+            content: [{ type: 'text', text: `No aik-installed items found globally for ${agent}` }],
+          }
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                { agent, scope: 'global', config: globalDir, count: items.length, items },
+                null,
+                2
+              ),
+            },
+          ],
+        }
+      }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const existing = findExistingConfig(targetDir)
