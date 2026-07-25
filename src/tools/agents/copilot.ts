@@ -1,3 +1,4 @@
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, InstallSpec } from './types.js'
 
@@ -5,6 +6,7 @@ export const COPILOT_AGENT: AgentSpec = {
   name: 'copilot',
   displayName: 'GitHub Copilot',
   configPath: dir => join(dir, '.github', 'copilot-instructions.md'),
+  globalBaseDir: () => join(homedir(), '.github'),
   detectionPatterns: [],
   detectionPriority: 12,
 }
@@ -42,6 +44,7 @@ export const COPILOT_INSTALL_SPECS: Record<Category, InstallSpec> = {
   },
 }
 
+// Copilot does not support global scope
 export const COPILOT_CONFIG: AgentConfig = {
   agent: COPILOT_AGENT,
   installSpecs: COPILOT_INSTALL_SPECS,

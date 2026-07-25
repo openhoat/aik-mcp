@@ -29,6 +29,7 @@ vi.mock('../logger.js', () => ({
 
 vi.mock('./shared.js', () => ({
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
+  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -269,5 +270,62 @@ describe('registerListInstalledTool', () => {
     // Section format is used for rules AND workflows, so each section appears twice
     expect(parsed.count).toBe(4)
     expect(parsed.items[0].title).toBe('TypeScript')
+  })
+})
+
+describe('registerListInstalledTool - global scope', () => {
+  test('should list items globally for opencode', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () => path.includes('agents') || path.includes('commands'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('AGENTS.md'))
+    mockReadFileSync.mockReturnValue('## TS Rule\n\n<source>rules/ts</source>\n')
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.includes('agents'))
+        return [{ name: 'reviewer.md', isDirectory: () => false, isFile: () => true }]
+      return []
+    })
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.agent).toBe('opencode')
+    expect(parsed.scope).toBe('global')
+    expect(parsed.count).toBeGreaterThanOrEqual(1)
+  })
+
+  test('should return empty message when no items globally', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockStatSync.mockReturnValue({ isDirectory: () => false })
+    mockExistsSync.mockReturnValue(false)
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    expect(result.content[0].text).toContain('No aik-installed items found globally')
+  })
+
+  test('should return error for copilot global list', async () => {
+    const { server, getHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerListInstalledTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
   })
 })

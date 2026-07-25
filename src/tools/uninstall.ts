@@ -12,9 +12,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { getInstallSpec } from './agents/factory.js'
-import type { Agent, OpenCodeConfig } from './shared.js'
-import { findExistingConfig } from './shared.js'
+import { getInstallSpecForScope } from './agents/factory.js'
+import type { Agent, OpenCodeConfig, Scope } from './shared.js'
+import { findExistingConfig, resolveGlobalDir } from './shared.js'
 
 export const removeSections = (
   content: string,
@@ -77,18 +77,19 @@ export const uninstallContent = (
   category: Category,
   name: string,
   itemPath: string,
-  projectDir: string,
-  configPath: string | null
+  targetDir: string,
+  configPath: string | null,
+  scope: Scope = 'project'
 ): boolean => {
-  const spec = getInstallSpec(agent, category)
-  const targetFile = spec.contentPath(projectDir, category, name)
+  const spec = getInstallSpecForScope(agent, category, scope)
+  const targetFile = spec.contentPath(targetDir, category, name)
 
   switch (spec.format) {
     case 'file': {
       let removed = false
 
-      if (spec.configUpdate === 'opencode-instructions') {
-        const opencodeConfig = configPath ?? resolve(projectDir, '.opencode', 'opencode.jsonc')
+      if (scope === 'project' && spec.configUpdate === 'opencode-instructions') {
+        const opencodeConfig = configPath ?? resolve(targetDir, '.opencode', 'opencode.jsonc')
         const entry = `.opencode/${category}/${name}.md`
         removed = removeFromOpencodeInstructions(opencodeConfig, entry)
       }
@@ -127,18 +128,19 @@ export const uninstallContent = (
 
 const uninstallAllForAgent = (
   agent: Agent,
-  projectDir: string,
-  configPath: string | null
+  baseDir: string,
+  configPath: string | null,
+  scope: Scope = 'project'
 ): number => {
   const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
   let count = 0
 
   for (const category of categories) {
-    const spec = getInstallSpec(agent, category)
+    const spec = getInstallSpecForScope(agent, category, scope)
 
     // Handle file format (rules, workflows, templates, agents, commands)
     if (spec.format === 'file') {
-      const targetDir = spec.contentPath(projectDir, category, '').replace(/\/[^/]+\.md$/, '')
+      const targetDir = spec.contentPath(baseDir, category, '').replace(/\/[^/]+\.md$/, '')
 
       if (!isDirectory(targetDir)) continue
 
@@ -151,15 +153,16 @@ const uninstallAllForAgent = (
             category,
             entry.name.replace(/\.md$/, ''),
             itemPath,
-            projectDir,
-            configPath
+            baseDir,
+            configPath,
+            scope
           )
           if (removed) count++
         }
       }
     } else if (spec.format === 'directory-skill') {
       // Handle directory-skill format (skills)
-      const targetDir = spec.contentPath(projectDir, category, '').replace(/\/SKILL\.md$/, '')
+      const targetDir = spec.contentPath(baseDir, category, '').replace(/\/SKILL\.md$/, '')
       if (!isDirectory(targetDir)) continue
 
       const entries = readdirSync(targetDir, { withFileTypes: true })
@@ -173,7 +176,7 @@ const uninstallAllForAgent = (
         }
       }
     }
-    // Skip section format (no longer used)
+    // Skip section format (no longer used for scanning all items)
   }
 
   return count
@@ -196,10 +199,68 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
         agent: z
           .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
           .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe('Installation scope (project or global).'),
       },
     },
-    async ({ path, projectDir, agent }: { path: string; projectDir?: string; agent: Agent }) => {
-      logger.trace({ path, projectDir, agent }, 'uninstall called')
+    async ({
+      path,
+      projectDir,
+      agent,
+      scope,
+    }: {
+      path: string
+      projectDir?: string
+      agent: Agent
+      scope?: Scope
+    }) => {
+      logger.trace({ path, projectDir, agent, scope }, 'uninstall called')
+      const effectiveScope = scope ?? 'project'
+
+      if (effectiveScope === 'global') {
+        if (agent === 'copilot') {
+          return {
+            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
+            isError: true,
+          }
+        }
+        const [rawCategory, ...rest] = path.split('/')
+        const name = rest.join('/')
+        const validCategories: Category[] = [
+          'rules',
+          'skills',
+          'workflows',
+          'agents',
+          'commands',
+          'templates',
+        ]
+        const category = validCategories.find(c => c === rawCategory)
+        if (!category) {
+          return {
+            content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
+            isError: true,
+          }
+        }
+        const globalDir = resolveGlobalDir(agent)
+        const removed = uninstallContent(agent, category, name, path, globalDir, null, 'global')
+        if (!removed) {
+          return {
+            content: [
+              { type: 'text', text: `Not found: ${path} is not installed globally in ${agent}` },
+            ],
+          }
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ uninstalled: path, agent, scope: 'global' }, null, 2),
+            },
+          ],
+        }
+      }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const existing = findExistingConfig(targetDir)
@@ -267,10 +328,39 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
         agent: z
           .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
           .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe('Installation scope (project or global).'),
       },
     },
-    async ({ projectDir, agent }: { projectDir?: string; agent: Agent }) => {
-      logger.trace({ projectDir, agent }, 'uninstall_all called')
+    async ({ projectDir, agent, scope }: { projectDir?: string; agent: Agent; scope?: Scope }) => {
+      logger.trace({ projectDir, agent, scope }, 'uninstall_all called')
+      const effectiveScope = scope ?? 'project'
+
+      if (effectiveScope === 'global') {
+        if (agent === 'copilot') {
+          return {
+            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
+            isError: true,
+          }
+        }
+        const globalDir = resolveGlobalDir(agent)
+        const removed = uninstallAllForAgent(agent, globalDir, null, 'global')
+        if (removed === 0) {
+          return {
+            content: [{ type: 'text', text: `No aik-managed items found globally for ${agent}` }],
+          }
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ uninstalledCount: removed, agent, scope: 'global' }, null, 2),
+            },
+          ],
+        }
+      }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
       const existing = findExistingConfig(targetDir)

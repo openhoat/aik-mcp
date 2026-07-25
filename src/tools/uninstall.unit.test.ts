@@ -35,6 +35,7 @@ vi.mock('../logger.js', () => ({
 
 vi.mock('./shared.js', () => ({
   findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
+  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
   AGENTS: ['opencode', 'claude-code', 'cline'],
 }))
 
@@ -552,5 +553,147 @@ describe('registerUninstallTool', () => {
     const result = uninstallContent('claude-code', 'rules', 'ts', 'rules/ts', '/project', null)
 
     expect(result).toBe(false)
+  })
+})
+
+describe('uninstallContent - opencode global rules (section format)', () => {
+  test('should remove section with source tag from AGENTS.md', () => {
+    const content = [
+      '# Agents',
+      '',
+      '## My Rule',
+      '',
+      '<source>rules/my-rule</source>',
+      '',
+      '## Other',
+      '',
+      'stuff',
+      '',
+    ].join('\n')
+    mockReadFileSync.mockReturnValue(content)
+    mockExistsSync.mockReturnValue(true)
+
+    const result = uninstallContent(
+      'opencode',
+      'rules',
+      'my-rule',
+      'rules/my-rule',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(result).toBe(true)
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('AGENTS.md'),
+      expect.not.stringContaining('rules/my-rule'),
+      'utf-8'
+    )
+  })
+
+  test('should return false when source tag not found globally', () => {
+    mockReadFileSync.mockReturnValue('# Agents\n\n')
+    mockExistsSync.mockReturnValue(true)
+
+    const result = uninstallContent(
+      'opencode',
+      'rules',
+      'my-rule',
+      'rules/my-rule',
+      '/home/user/.config/opencode',
+      null,
+      'global'
+    )
+
+    expect(result).toBe(false)
+  })
+})
+
+describe('registerUninstallTool - global scope', () => {
+  test('should uninstall globally with opencode agent', async () => {
+    const { server, getInstallHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    const content = '# Agents\n\n## My Rule\n\n<source>rules/my-rule</source>\n'
+    mockReadFileSync.mockReturnValue(content)
+    mockExistsSync.mockReturnValue(true)
+
+    registerUninstallTool(server, store)
+    const handler = getInstallHandler()
+    const result = (await handler({
+      path: 'rules/my-rule',
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.uninstalled).toBe('rules/my-rule')
+    expect(parsed.agent).toBe('opencode')
+    expect(parsed.scope).toBe('global')
+  })
+
+  test('should return error for copilot global uninstall', async () => {
+    const { server, getInstallHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerUninstallTool(server, store)
+    const handler = getInstallHandler()
+    const result = (await handler({
+      path: 'rules/my-rule',
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+  })
+
+  test('should uninstall_all globally with opencode agent', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockStatSync.mockReturnValue({ isDirectory: () => false })
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    expect(result.content[0].text).toContain('No aik-managed items found globally')
+  })
+
+  test('should return error for copilot global uninstall_all', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({
+      agent: 'copilot',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+  })
+
+  test('should handle global uninstall_all with items', async () => {
+    const { server, getUninstallAllHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () => path.includes('agents'),
+    }))
+    mockExistsSync.mockReturnValue(true)
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.includes('agents'))
+        return [{ name: 'reviewer.md', isDirectory: () => false, isFile: () => true }]
+      return []
+    })
+
+    registerUninstallTool(server, store)
+    const handler = getUninstallAllHandler()
+    const result = (await handler({
+      agent: 'opencode',
+      scope: 'global',
+    })) as ToolContent
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.uninstalledCount).toBe(1)
+    expect(parsed.scope).toBe('global')
   })
 })
