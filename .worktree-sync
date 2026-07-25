@@ -1,0 +1,10 @@
+# Environment configuration
+.envrc
+.env.local
+.env.development.local
+
+# Agent config directories (synced recursively; missing ones are skipped)
+.opencode/
+.claude/
+.cline/
+.codex/

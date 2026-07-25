@@ -31,6 +31,7 @@ ignores:
   - "node_modules"
   - ".git"
   - ".opencode"
+  - "build"
   - "dist"
   - "CHANGELOG.md"
   - "rag"
