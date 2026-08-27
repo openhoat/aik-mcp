@@ -175,8 +175,8 @@ describe('installContent - opencode agents (file, no config update)', () => {
   })
 })
 
-describe('installContent - claude-code rules (section format)', () => {
-  test('should append section to CLAUDE.md', () => {
+describe('installContent - claude-code rules (file format)', () => {
+  test('should write rule file to .claude/rules/', () => {
     mockExistsSync.mockReturnValue(false)
 
     const result = installContent(
@@ -190,31 +190,12 @@ describe('installContent - claude-code rules (section format)', () => {
       null
     )
 
-    expect(mockAppendFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('CLAUDE.md'),
-      expect.stringContaining('rules/my-rule'),
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('.claude/rules/my-rule.md'),
+      '# Content',
       'utf-8'
     )
     expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should detect already installed section', () => {
-    mockExistsSync.mockReturnValue(true)
-    mockReadFileSync.mockReturnValue('<source>rules/my-rule</source>')
-
-    const result = installContent(
-      'claude-code',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# Content',
-      '/project',
-      '/project/CLAUDE.md'
-    )
-
-    expect(mockAppendFileSync).not.toHaveBeenCalled()
-    expect(result.alreadyInstalled).toBe(true)
   })
 })
 

@@ -187,21 +187,8 @@ describe('uninstallContent - opencode skills (directory-skill format)', () => {
   })
 })
 
-describe('uninstallContent - claude-code rules (section format)', () => {
-  test('should remove section with source tag', () => {
-    const content = [
-      '# Config',
-      '',
-      '## TypeScript',
-      '',
-      '<source>rules/typescript</source>',
-      '',
-      '## Other',
-      '',
-      'stuff',
-      '',
-    ].join('\n')
-    mockReadFileSync.mockReturnValue(content)
+describe('uninstallContent - claude-code rules (file format)', () => {
+  test('should delete rule file', () => {
     mockExistsSync.mockReturnValue(true)
 
     const result = uninstallContent(
@@ -214,16 +201,13 @@ describe('uninstallContent - claude-code rules (section format)', () => {
     )
 
     expect(result).toBe(true)
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/CLAUDE.md',
-      expect.not.stringContaining('rules/typescript'),
-      'utf-8'
+    expect(mockUnlinkSync).toHaveBeenCalledWith(
+      expect.stringContaining('.claude/rules/typescript.md')
     )
   })
 
-  test('should return false when source tag not found', () => {
-    mockReadFileSync.mockReturnValue('# Config\n\n')
-    mockExistsSync.mockReturnValue(true)
+  test('should return false when rule file not found', () => {
+    mockExistsSync.mockReturnValue(false)
 
     const result = uninstallContent(
       'claude-code',
@@ -497,7 +481,7 @@ describe('registerUninstallTool', () => {
     expect(parsed.uninstalledCount).toBeGreaterThanOrEqual(1)
   })
 
-  test('should handle uninstall_all with claude-code (section format)', async () => {
+  test('should handle uninstall_all with claude-code (file format)', async () => {
     const { server, getUninstallAllHandler } = createMockServer()
     const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
@@ -510,49 +494,6 @@ describe('registerUninstallTool', () => {
     const handler = getUninstallAllHandler()
     const result = (await handler({ agent: 'claude-code' })) as ToolContent
     expect(result.content[0].text).toContain('No aik-managed items found')
-  })
-
-  test('should handle <!-- from --> marker removal in section format', async () => {
-    // The <!-- from --> marker path in removeSections checks if the line itself
-    // contains the source tag. Create content where the marker line includes the source.
-    const content =
-      '# Config\n\n<!-- from rules/foo.md <source>rules/foo</source> -->\nsome content\n\n## Other\nkeep'
-    mockReadFileSync.mockReturnValue(content)
-    mockExistsSync.mockReturnValue(true)
-
-    const result = uninstallContent(
-      'claude-code',
-      'rules',
-      'foo',
-      'rules/foo',
-      '/project',
-      '/project/CLAUDE.md'
-    )
-
-    expect(result).toBe(true)
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/CLAUDE.md',
-      expect.not.stringContaining('rules/foo'),
-      'utf-8'
-    )
-  })
-
-  test('should handle section format without configPath (uses contentPath)', async () => {
-    const content = '# Config\n\n## TS\n\n<source>rules/ts</source>\n'
-    mockReadFileSync.mockReturnValue(content)
-    mockExistsSync.mockReturnValue(true)
-
-    const result = uninstallContent('claude-code', 'rules', 'ts', 'rules/ts', '/project', null)
-
-    expect(result).toBe(true)
-  })
-
-  test('should return false when section file does not exist', async () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = uninstallContent('claude-code', 'rules', 'ts', 'rules/ts', '/project', null)
-
-    expect(result).toBe(false)
   })
 })
 

@@ -99,15 +99,28 @@ describe('registerListInstalledTool', () => {
     expect(parsed.count).toBeGreaterThanOrEqual(1)
   })
 
-  test('should return items for claude-code agent by scanning sections', async () => {
+  test('should return items for claude-code agent by scanning rule files', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
     })
-    mockExistsSync.mockImplementation((path: string) => path.endsWith('CLAUDE.md'))
-    mockReadFileSync.mockReturnValue('## TS\n\n<source>rules/ts</source>\n')
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () =>
+        path.includes('.claude/rules') ||
+        path.includes('.claude/workflows') ||
+        path.includes('.claude/agents') ||
+        path.includes('.claude/commands') ||
+        path.includes('.claude/templates') ||
+        path.includes('.claude/skills'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('.claude/rules/ts.md'))
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.endsWith('.claude/rules'))
+        return [{ name: 'ts.md', isDirectory: () => false, isFile: () => true }]
+      return []
+    })
 
     registerListInstalledTool(server, store)
     const handler = getHandler()
@@ -248,17 +261,31 @@ describe('registerListInstalledTool', () => {
     expect(parsed.items[0].title).toBeUndefined()
   })
 
-  test('should list claude-code items from section format', async () => {
+  test('should list claude-code items from rule files', async () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore // Safe: test mock type limitation
     mockFindExistingConfig.mockReturnValue({
       path: '/project/CLAUDE.md',
       agent: 'claude-code',
     })
-    mockExistsSync.mockImplementation((path: string) => path.endsWith('CLAUDE.md'))
-    mockReadFileSync.mockReturnValue(
-      '## TypeScript\n\n<source>rules/ts</source>\n\n## ESLint\n\n<source>rules/eslint</source>\n'
-    )
+    mockStatSync.mockImplementation((path: string) => ({
+      isDirectory: () =>
+        path.includes('.claude/rules') ||
+        path.includes('.claude/workflows') ||
+        path.includes('.claude/agents') ||
+        path.includes('.claude/commands') ||
+        path.includes('.claude/templates') ||
+        path.includes('.claude/skills'),
+    }))
+    mockExistsSync.mockImplementation((path: string) => path.includes('.claude/rules/'))
+    mockReaddirSync.mockImplementation((path: string) => {
+      if (path.endsWith('.claude/rules'))
+        return [
+          { name: 'ts.md', isDirectory: () => false, isFile: () => true },
+          { name: 'eslint.md', isDirectory: () => false, isFile: () => true },
+        ]
+      return []
+    })
 
     registerListInstalledTool(server, store)
     const handler = getHandler()
@@ -267,9 +294,8 @@ describe('registerListInstalledTool', () => {
       agent: 'claude-code',
     })) as ToolContent
     const parsed = JSON.parse(result.content[0].text)
-    // Section format is used for rules AND workflows, so each section appears twice
-    expect(parsed.count).toBe(4)
-    expect(parsed.items[0].title).toBe('TypeScript')
+    expect(parsed.count).toBe(2)
+    expect(parsed.items[0].path).toBe('rules/ts')
   })
 })
 

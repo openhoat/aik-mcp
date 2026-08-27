@@ -48,10 +48,10 @@ describe('getInstallSpec', () => {
     expect(spec.format).toBe('directory-skill')
   })
 
-  test('should return section format for claude-code rules', () => {
+  test('should return file format for claude-code rules', () => {
     const spec = getInstallSpec('claude-code', 'rules')
-    expect(spec.format).toBe('section')
-    expect(spec.configUpdate).toBe('claude-md-section')
+    expect(spec.format).toBe('file')
+    expect(spec.configUpdate).toBe('none')
   })
 
   test('should return file format for cline rules', () => {

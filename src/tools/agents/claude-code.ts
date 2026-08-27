@@ -13,9 +13,9 @@ export const CLAUDE_CODE_AGENT: AgentSpec = {
 
 export const CLAUDE_CODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
   rules: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'CLAUDE.md'),
-    configUpdate: 'claude-md-section',
+    format: 'file',
+    contentPath: (dir, _cat, name) => join(dir, '.claude', 'rules', `${name}.md`),
+    configUpdate: 'none',
   },
   skills: {
     format: 'directory-skill',
@@ -33,9 +33,9 @@ export const CLAUDE_CODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
     configUpdate: 'none',
   },
   workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'CLAUDE.md'),
-    configUpdate: 'claude-md-section',
+    format: 'file',
+    contentPath: (dir, _cat, name) => join(dir, '.claude', 'workflows', `${name}.md`),
+    configUpdate: 'none',
   },
   templates: {
     format: 'file',
@@ -47,8 +47,8 @@ export const CLAUDE_CODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
 // Global: same as project but uses ~/.claude base
 export const CLAUDE_CODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
   rules: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'CLAUDE.md'),
+    format: 'file',
+    contentPath: (dir, _cat, name) => join(dir, 'rules', `${name}.md`),
     configUpdate: 'none',
   },
   skills: {
@@ -67,8 +67,8 @@ export const CLAUDE_CODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
     configUpdate: 'none',
   },
   workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'CLAUDE.md'),
+    format: 'file',
+    contentPath: (dir, _cat, name) => join(dir, 'workflows', `${name}.md`),
     configUpdate: 'none',
   },
   templates: {
