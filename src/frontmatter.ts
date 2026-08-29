@@ -16,18 +16,19 @@ export type Frontmatter = z.infer<typeof frontmatterSchema>
 
 export interface ParsedDoc {
   frontmatter: Frontmatter
+  raw: Record<string, unknown>
   body: string
 }
 
 export const parseFrontmatter = (raw: string): ParsedDoc => {
   const trimmed = raw.trimStart()
   if (!trimmed.startsWith('---')) {
-    return { frontmatter: frontmatterSchema.parse({}), body: raw }
+    return { frontmatter: frontmatterSchema.parse({}), raw: {}, body: raw }
   }
 
   const endIndex = trimmed.indexOf('---', 3)
   if (endIndex === -1) {
-    return { frontmatter: frontmatterSchema.parse({}), body: raw }
+    return { frontmatter: frontmatterSchema.parse({}), raw: {}, body: raw }
   }
 
   const yamlBlock = trimmed.slice(3, endIndex).trim()
@@ -42,7 +43,7 @@ export const parseFrontmatter = (raw: string): ParsedDoc => {
   }
 
   const frontmatter = frontmatterSchema.parse(parsed)
-  return { frontmatter, body }
+  return { frontmatter, raw: parsed, body }
 }
 
 export const frontmatterStrictSchema = z.object({
@@ -67,8 +68,12 @@ export const validateFrontmatter = (
 }
 
 export const serializeFrontmatter = (frontmatter: Frontmatter): string => {
+  return serializeFrontmatterRaw(frontmatter as unknown as Record<string, unknown>)
+}
+
+export const serializeFrontmatterRaw = (raw: Record<string, unknown>): string => {
   const obj: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(frontmatter)) {
+  for (const [key, value] of Object.entries(raw)) {
     if (value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) {
       obj[key] = value
     }

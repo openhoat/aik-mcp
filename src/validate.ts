@@ -1,7 +1,7 @@
 import type { ContentStore } from './content-store.js'
 import { validateFrontmatter } from './frontmatter.js'
 
-const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents']
 
 export interface ValidationIssue {
   path: string

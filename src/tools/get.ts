@@ -31,6 +31,7 @@ export const registerGetTool = (server: McpServer, store: ContentStore): void =>
         created: item.created,
         updated: item.updated,
         content: item.content,
+        assets: item.assets,
       }
 
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }

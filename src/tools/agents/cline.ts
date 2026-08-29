@@ -32,19 +32,9 @@ export const CLINE_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, cat, name) => join(dir, '.cline', cat, `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.cline', cat, `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
     format: 'file',
     contentPath: (dir, _cat, name) => join(dir, '.clinerules', `${name}.md`),
-    configUpdate: 'none',
-  },
-  templates: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.cline', cat, `${name}.md`),
     configUpdate: 'none',
   },
 }

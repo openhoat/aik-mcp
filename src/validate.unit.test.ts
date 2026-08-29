@@ -10,8 +10,8 @@ const createTempDir = (): string => {
 }
 
 const createFile = async (dir: string, relPath: string, content: string): Promise<void> => {
-  const fullPath = join(dir, relPath)
-  await mkdir(fullPath.replace(/\/[^/]+$/, ''), { recursive: true })
+  const fullPath = join(dir, relPath, 'README.md')
+  await mkdir(join(dir, relPath), { recursive: true })
   await writeFile(fullPath, content, 'utf-8')
 }
 
@@ -36,7 +36,7 @@ describe('validateContent', () => {
     await mkdir(join(dir, 'rules'), { recursive: true })
     await createFile(
       dir,
-      'rules/valid-rule.md',
+      'rules/valid-rule',
       `---
 title: Valid Rule
 description: A valid rule
@@ -62,7 +62,7 @@ tags: [test]
     await mkdir(join(dir, 'rules'), { recursive: true })
     await createFile(
       dir,
-      'rules/no-title.md',
+      'rules/no-title',
       `---
 description: Desc
 tags: [t]
@@ -86,7 +86,7 @@ tags: [t]
     await mkdir(join(dir, 'rules'), { recursive: true })
     await createFile(
       dir,
-      'rules/empty-body.md',
+      'rules/empty-body',
       `---
 title: Empty Body
 description: Desc
@@ -124,7 +124,7 @@ tags: [t]
     await mkdir(join(dir, 'rules'), { recursive: true })
     await createFile(
       dir,
-      'rules/valid.md',
+      'rules/valid',
       `---
 title: Valid
 description: Desc
@@ -134,7 +134,7 @@ tags: [t]
     )
     await createFile(
       dir,
-      'rules/invalid.md',
+      'rules/invalid',
       `---
 description: Desc
 tags: [t]

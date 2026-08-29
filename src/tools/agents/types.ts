@@ -2,7 +2,7 @@
 export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex' | 'copilot'
 
 // Content category types
-export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'
+export type Category = 'rules' | 'skills' | 'workflows' | 'agents'
 
 // Installation scope
 export type Scope = 'project' | 'global'
@@ -45,11 +45,4 @@ export interface AgentDetection {
   priority: number
 }
 
-export const CATEGORIES: Category[] = [
-  'rules',
-  'skills',
-  'workflows',
-  'agents',
-  'commands',
-  'templates',
-]
+export const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents']

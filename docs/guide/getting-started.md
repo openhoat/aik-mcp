@@ -54,7 +54,8 @@ Your agent calls `aik_search`, reads the rule, and applies it — all transparen
 
 ## Content structure
 
-Content items are organized by category:
+Content items are organized by category as **bundles** — a directory with a
+`README.md` entry file plus optional supporting assets:
 
 | Directory    | Purpose                                        |
 |--------------|------------------------------------------------|
@@ -62,10 +63,15 @@ Content items are organized by category:
 | `skills/`    | Reusable instruction blocks (prompts, recipes) |
 | `workflows/` | Multi-step process definitions                 |
 | `agents/`    | Specialized agent configurations               |
-| `commands/`  | Custom CLI command definitions                 |
-| `templates/` | File and project scaffolding                   |
 
-Each file is plain Markdown with YAML frontmatter:
+```text
+content/
+  skills/generate-changelog/
+    README.md                 # entry file — carries the frontmatter
+    assets/changelog.mjs      # supporting asset
+```
+
+The `README.md` entry file is plain Markdown with YAML frontmatter:
 
 ```markdown
 ---

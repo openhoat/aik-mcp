@@ -1,9 +1,17 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import {
+  appendFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
-import { type Frontmatter, parseFrontmatter, serializeFrontmatter } from '../frontmatter.js'
+import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import { getInstallSpecForScope } from './agents/factory.js'
 import type { Agent, OpenCodeConfig, Scope } from './shared.js'
@@ -15,15 +23,24 @@ export const openCodeConfigPath = (targetDir: string, existingPath: string | nul
   return resolve(targetDir, '.opencode', 'opencode.jsonc')
 }
 
+const ENTRY_FILE = 'README.md'
+
 const buildSkillContent = (rawContent: string, name: string): string => {
-  const { frontmatter, body } = parseFrontmatter(rawContent)
-  const skillFrontmatter = {
-    name,
-    description: frontmatter.description || frontmatter.title,
-  }
-  // Safe: serializeFrontmatter only reads known keys, extra keys are ignored
-  const fm = serializeFrontmatter(skillFrontmatter as unknown as Frontmatter)
+  const { raw, body } = parseFrontmatter(rawContent)
+  const skillFrontmatter = { ...raw }
+  if (!skillFrontmatter.name) skillFrontmatter.name = name
+  const fm = serializeFrontmatterRaw(skillFrontmatter)
   return `---\n${fm}\n---\n\n${body}`
+}
+
+const copyBundleAssets = (sourceDir: string, targetDir: string): void => {
+  const entries = readdirSync(sourceDir, { withFileTypes: true })
+  for (const entry of entries) {
+    if (entry.name === ENTRY_FILE) continue
+    const src = join(sourceDir, entry.name)
+    const dest = join(targetDir, entry.name)
+    cpSync(src, dest, { recursive: true })
+  }
 }
 
 const updateOpencodeInstructions = (configPath: string, instructionsEntry: string): boolean => {
@@ -53,7 +70,8 @@ export const installContent = (
   rawContent: string,
   targetDir: string,
   configPath: string | null,
-  scope: Scope = 'project'
+  scope: Scope = 'project',
+  sourceDir: string | null = null
 ): { path: string; alreadyInstalled: boolean } => {
   const spec = getInstallSpecForScope(agent, category, scope)
   const targetFile = spec.contentPath(targetDir, category, name)
@@ -73,11 +91,15 @@ export const installContent = (
     }
 
     case 'directory-skill': {
-      const skillContent = buildSkillContent(rawContent, name)
-      mkdirSync(dirname(targetFile), { recursive: true })
+      const skillDir = dirname(targetFile)
       if (existsSync(targetFile)) {
         return { path: targetFile, alreadyInstalled: true }
       }
+      mkdirSync(skillDir, { recursive: true })
+      if (sourceDir && existsSync(sourceDir)) {
+        copyBundleAssets(sourceDir, skillDir)
+      }
+      const skillContent = buildSkillContent(rawContent, name)
       writeFileSync(targetFile, skillContent, 'utf-8')
       return { path: targetFile, alreadyInstalled: false }
     }
@@ -176,7 +198,8 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           rawContent,
           globalDir,
           null,
-          'global'
+          'global',
+          dirname(item.fullPath)
         )
         return {
           content: [
@@ -227,7 +250,9 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
         item.title,
         rawContent,
         targetDir,
-        configPath
+        configPath,
+        'project',
+        dirname(item.fullPath)
       )
 
       return {
@@ -251,7 +276,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
     'install',
     {
       description:
-        'Install a content item (rule, skill, workflow, agent, command, or template) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, Cline, and Codex.',
+        'Install a content item (rule, skill, workflow, or agent) into the current project so it is loaded automatically in future sessions. Supports opencode, Claude Code, Cline, and Codex.',
       inputSchema: {
         path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
         projectDir: z
@@ -312,7 +337,8 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
           rawContent,
           globalDir,
           null,
-          'global'
+          'global',
+          dirname(item.fullPath)
         )
         if (result.alreadyInstalled) {
           return {
@@ -356,7 +382,9 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         item.title,
         rawContent,
         targetDir,
-        configPath
+        configPath,
+        'project',
+        dirname(item.fullPath)
       )
 
       if (result.alreadyInstalled) {

@@ -1,10 +1,10 @@
 ---
 title: "How to Create Shareable Knowledge Content"
 description: "Guidelines for discovering, consuming, creating, and maintaining
-  rules, skills, workflows, agents, commands, and templates via the aik system.
+  rules, skills, workflows, and agents via the aik system.
   Ensures content is generic, self-contained, and cross-project shareable."
 tags: [aik, meta, shareable-content, workflow]
-version: "2.0.0"
+version: "3.0.0"
 compatibility: [opencode, claude-code, cline]
 ---
 
@@ -13,7 +13,7 @@ compatibility: [opencode, claude-code, cline]
 `aik` is a knowledge system for AI agents. It provides two main flows:
 
 - **Consumption** — discover, read, and install existing knowledge content
-  (rules, skills, workflows, agents, commands, templates) into the current
+  (rules, skills, workflows, agents) into the current
   project.
 - **Creation** — write new knowledge content into the shared knowledge base so
   it can be reused across projects and sessions.
@@ -32,15 +32,34 @@ controlled). Installing content copies it into the project's agent config
 | Skill    | `skills/`    | A reusable instruction block — a prompt, recipe, or procedure the agent invokes on demand |
 | Workflow | `workflows/` | A multi-step process — release, deployment, onboarding, review                            |
 | Agent    | `agents/`    | A specialized agent configuration — role, tools, output format                            |
-| Command  | `commands/`  | A CLI command definition — shortcuts for repetitive tasks                                 |
-| Template | `templates/` | A file or project scaffold — starting point for new files                                 |
+
+### Bundle Structure
+
+Each content item is a **bundle**: a directory containing a `README.md` entry
+file plus optional supporting assets (examples, scripts, templates) referenced
+by the README.
+
+```text
+content/
+  skills/generate-changelog/
+    README.md                 # Entry file — carries the frontmatter
+    assets/
+      changelog.mjs           # Supporting asset, referenced relatively
+```
+
+- The **entry file** is always `README.md`. It holds the frontmatter
+  (title, description, tags, version, compatibility).
+- **Assets** are any other files in the bundle. `aik_get` lists them via the
+  `assets` field; `aik_get_asset(path, asset)` reads one.
+- The category is carried by the parent directory — no subdirectories.
 
 ### Knowledge Base vs Project Config
 
 - `aik_write` writes to the **shared knowledge base** (`AIK_CONTENT_DIR`).
   Content must be generic — no project-specific paths, names, or assumptions.
 - `aik_install` copies content from the knowledge base into the **project's
-  agent config** (e.g. `.opencode/rules/`, `.claude/commands/`).
+  agent config** (e.g. `.opencode/rules/`, `.claude/skills/`). Skill bundles
+  are copied recursively so assets travel with the skill.
 - `aik_list_installed` shows what's currently installed in the project.
 
 ## Discovery Flow
@@ -107,7 +126,15 @@ issues with installed content.
 
 ## Content Structure
 
-A well-formed content file follows this structure:
+A well-formed content bundle follows this structure:
+
+```text
+{category}/{name}/
+  README.md
+  assets/…                # optional supporting files
+```
+
+The `README.md` entry file:
 
 ```markdown
 ---
@@ -131,6 +158,21 @@ apply.
 
 How compliance is verified or how this integrates with other content.
 ```
+
+### Assets
+
+Supporting files (examples, scripts, templates) live in the bundle and are
+referenced relatively from the README:
+
+```text
+skills/generate-changelog/
+  README.md
+  assets/changelog.mjs
+```
+
+- `aik_get(path)` returns the item with its `assets` list.
+- `aik_get_asset(path, asset)` reads a single asset's content.
+- When a skill is installed, its assets are copied alongside `SKILL.md`.
 
 ### Tagging guidelines
 

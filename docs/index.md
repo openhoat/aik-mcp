@@ -4,7 +4,7 @@ layout: home
 hero:
   name: aik-mcp
   text: AI Knowledge — MCP Server
-  tagline: Give your AI agents a memory. Rules, skills, workflows, and templates — as plain Markdown, served over the Model Context Protocol.
+  tagline: Give your AI agents a memory. Rules, skills, workflows, and agents — as plain Markdown, served over the Model Context Protocol.
   image:
     src: /logo.svg
     alt: aik-mcp

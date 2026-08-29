@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -13,8 +13,8 @@ const createTempDir = (): string => {
 }
 
 const createFile = async (dir: string, relPath: string, content: string): Promise<void> => {
-  const fullPath = join(dir, relPath)
-  await mkdir(fullPath.replace(/\/[^/]+$/, ''), { recursive: true })
+  const fullPath = join(dir, relPath, 'README.md')
+  await mkdir(join(dir, relPath), { recursive: true })
   await writeFile(fullPath, content, 'utf-8')
 }
 
@@ -141,12 +141,12 @@ afterEach(async () => {
 test('aik_list returns all items', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
+    'rules/test-rule',
     '---\ntitle: Test Rule\ntags: [test]\n---\n# Test Rule\n\ncontent'
   )
   await createFile(
     tempDir,
-    'skills/test-skill.md',
+    'skills/test-skill',
     '---\ntitle: Test Skill\ntags: [test]\n---\n# Test Skill\n\ncontent'
   )
 
@@ -163,12 +163,12 @@ test('aik_list returns all items', async () => {
 test('aik_list filters by category', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
+    'rules/test-rule',
     '---\ntitle: Test Rule\ntags: [test]\n---\n# Test Rule'
   )
   await createFile(
     tempDir,
-    'skills/test-skill.md',
+    'skills/test-skill',
     '---\ntitle: Test Skill\ntags: [test]\n---\n# Test Skill'
   )
 
@@ -184,7 +184,7 @@ test('aik_list filters by category', async () => {
 })
 
 test('aik_get retrieves a specific item', async () => {
-  await createFile(tempDir, 'rules/test-rule.md', '---\ntitle: Test Rule\n---\n# Hello World')
+  await createFile(tempDir, 'rules/test-rule', '---\ntitle: Test Rule\n---\n# Hello World')
 
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
@@ -207,11 +207,7 @@ test('aik_get returns error for missing path', async () => {
 })
 
 test('aik_search finds items by content', async () => {
-  await createFile(
-    tempDir,
-    'rules/test-rule.md',
-    '---\ntitle: Test Rule\n---\n# UniqueSearchPhrase'
-  )
+  await createFile(tempDir, 'rules/test-rule', '---\ntitle: Test Rule\n---\n# UniqueSearchPhrase')
 
   await withServer(tempDir, async req => {
     const result = (await req('tools/call', {
@@ -247,7 +243,7 @@ test('aik_write creates a new item', async () => {
 test('aik_write overwrites existing item', async () => {
   await createFile(
     tempDir,
-    'rules/existing.md',
+    'rules/existing',
     '---\ntitle: Old\ndescription: Old desc\ntags: [test]\n---\n# Old Content'
   )
 
@@ -274,7 +270,7 @@ test('aik_write overwrites existing item', async () => {
 })
 
 test('aik_delete removes an item', async () => {
-  await createFile(tempDir, 'rules/to-delete.md', '---\ntitle: To Delete\n---\n# Delete Me')
+  await createFile(tempDir, 'rules/to-delete', '---\ntitle: To Delete\n---\n# Delete Me')
 
   await withServer(tempDir, async req => {
     await req('tools/call', { name: 'delete', arguments: { path: 'rules/to-delete' } })
@@ -287,15 +283,76 @@ test('aik_delete removes an item', async () => {
   })
 })
 
-test('aik_list_installed returns installed items for opencode', async () => {
+test('aik_get_asset reads a bundle asset', async () => {
+  await createFile(tempDir, 'skills/my-skill', '---\ntitle: My Skill\n---\n# My Skill')
+  const assetPath = join(tempDir, 'skills', 'my-skill', 'assets', 'script.mjs')
+  await mkdir(join(tempDir, 'skills', 'my-skill', 'assets'), { recursive: true })
+  await writeFile(assetPath, 'export const hello = "world"\n', 'utf-8')
+
+  await withServer(tempDir, async req => {
+    const result = (await req('tools/call', {
+      name: 'get_asset',
+      arguments: { path: 'skills/my-skill', asset: 'assets/script.mjs' },
+    })) as { content: Array<{ text: string }> }
+    const text = result.content[0].text
+    expect(text).toContain('"asset": "assets/script.mjs"')
+    expect(text).toContain('hello')
+  })
+})
+
+test('aik_get_asset returns error for unknown asset', async () => {
+  await createFile(tempDir, 'skills/my-skill', '---\ntitle: My Skill\n---\n# My Skill')
+
+  await withServer(tempDir, async req => {
+    const result = (await req('tools/call', {
+      name: 'get_asset',
+      arguments: { path: 'skills/my-skill', asset: 'nope.mjs' },
+    })) as { isError?: boolean; content: Array<{ text: string }> }
+    expect(result.isError).toBeTruthy()
+    expect(result.content[0].text).toContain('Asset not found')
+  })
+})
+
+test('aik_install skill copies assets into SKILL.md bundle', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
-    '---\ntitle: Test Rule\n---\n# Test Rule\ncontent'
+    'skills/my-skill',
+    '---\ntitle: My Skill\ntags: [test]\n---\n# My Skill\ncontent'
   )
+  await mkdir(join(tempDir, 'skills', 'my-skill', 'assets'), { recursive: true })
+  await writeFile(
+    join(tempDir, 'skills', 'my-skill', 'assets', 'run.sh'),
+    '#!/bin/sh\necho hi\n',
+    'utf-8'
+  )
+  await mkdir(join(tempDir, '.opencode'), { recursive: true })
+  await writeFile(
+    join(tempDir, '.opencode', 'opencode.jsonc'),
+    JSON.stringify({}, null, 2),
+    'utf-8'
+  )
+
+  await withServer(tempDir, async req => {
+    const result = (await req('tools/call', {
+      name: 'install',
+      arguments: { path: 'skills/my-skill', projectDir: tempDir, agent: 'opencode' },
+    })) as { content: Array<{ text: string }> }
+    expect(JSON.parse(result.content[0].text).installed).toBe('skills/my-skill')
+
+    const skillFile = join(tempDir, '.opencode', 'skills', 'my-skill', 'SKILL.md')
+    const assetFile = join(tempDir, '.opencode', 'skills', 'my-skill', 'assets', 'run.sh')
+    const skillContent = readFileSync(skillFile, 'utf-8')
+    expect(skillContent).toContain('name: my-skill')
+    expect(skillContent).toContain('tags')
+    expect(readFileSync(assetFile, 'utf8')).toContain('echo hi')
+  })
+})
+
+test('aik_list_installed returns installed items for opencode', async () => {
+  await createFile(tempDir, 'rules/test-rule', '---\ntitle: Test Rule\n---\n# Test Rule\ncontent')
   await createFile(
     tempDir,
-    'skills/test-skill.md',
+    'skills/test-skill',
     '---\ntitle: Test Skill\n---\n# Test Skill\ncontent'
   )
 
@@ -373,7 +430,7 @@ test('aik_list_installed returns error when no config found', async () => {
 test('aik_reinstall reinstalls an item via opencode', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
+    'rules/test-rule',
     '---\ntitle: Test Rule\ntags: [test]\n---\n# Test Rule\n\nnew content'
   )
 
@@ -460,7 +517,7 @@ const runValidate = async (
 test('--validate passes for valid content', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
+    'rules/test-rule',
     '---\ntitle: Test Rule\ndescription: A test\ntags: [test]\n---\n# Hello World'
   )
 
@@ -472,7 +529,7 @@ test('--validate passes for valid content', async () => {
 })
 
 test('--validate fails for invalid content', async () => {
-  await createFile(tempDir, 'rules/bad-rule.md', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
+  await createFile(tempDir, 'rules/bad-rule', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
 
   const { stdout, exitCode } = await runValidate(tempDir)
 
@@ -483,7 +540,7 @@ test('--validate fails for invalid content', async () => {
 test('--validate --json outputs JSON', async () => {
   await createFile(
     tempDir,
-    'rules/test-rule.md',
+    'rules/test-rule',
     '---\ntitle: Test Rule\ndescription: A test\ntags: [test]\n---\n# Hello World'
   )
 
@@ -495,7 +552,7 @@ test('--validate --json outputs JSON', async () => {
 })
 
 test('--validate --json outputs JSON with errors', async () => {
-  await createFile(tempDir, 'rules/bad-rule.md', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
+  await createFile(tempDir, 'rules/bad-rule', '---\ntitle: ""\ndescription: ""\ntags: []\n---\n')
 
   const { stdout, exitCode } = await runValidate(tempDir, ['--json'])
 
@@ -507,9 +564,9 @@ test('--validate --json outputs JSON with errors', async () => {
 })
 
 test('handles concurrent requests', async () => {
-  await createFile(tempDir, 'rules/a.md', '---\ntitle: A\n---\n# A')
-  await createFile(tempDir, 'rules/b.md', '---\ntitle: B\n---\n# B')
-  await createFile(tempDir, 'rules/c.md', '---\ntitle: C\n---\n# C')
+  await createFile(tempDir, 'rules/a', '---\ntitle: A\n---\n# A')
+  await createFile(tempDir, 'rules/b', '---\ntitle: B\n---\n# B')
+  await createFile(tempDir, 'rules/c', '---\ntitle: C\n---\n# C')
 
   await withServer(tempDir, async req => {
     const results = await Promise.all([

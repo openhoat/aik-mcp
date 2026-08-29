@@ -11,6 +11,14 @@ const mockReadFileSync = vi.fn<(path: string, encoding?: string) => string>()
 const mockWriteFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
 const mockMkdirSync = vi.fn<(path: string, opts?: { recursive?: boolean }) => void>()
 const mockAppendFileSync = vi.fn<(path: string, data: string, encoding?: string) => void>()
+const mockCpSync = vi.fn<(src: string, dest: string, opts?: { recursive?: boolean }) => void>()
+const mockReaddirSync =
+  vi.fn<
+    (
+      path: string,
+      opts?: { withFileTypes?: boolean }
+    ) => Array<{ name: string; isDirectory: () => boolean }>
+  >()
 
 vi.mock('node:fs', () => ({
   existsSync: mockExistsSync,
@@ -18,6 +26,8 @@ vi.mock('node:fs', () => ({
   writeFileSync: mockWriteFileSync,
   mkdirSync: mockMkdirSync,
   appendFileSync: mockAppendFileSync,
+  cpSync: mockCpSync,
+  readdirSync: mockReaddirSync,
 }))
 
 vi.mock('../logger.js', () => ({
@@ -46,6 +56,8 @@ beforeEach(() => {
   mockWriteFileSync.mockReset()
   mockMkdirSync.mockReset()
   mockAppendFileSync.mockReset()
+  mockCpSync.mockReset()
+  mockReaddirSync.mockReset()
   mockFindExistingConfig.mockReset()
   mockUninstallContent.mockReset()
 })
@@ -224,6 +236,39 @@ describe('installContent - claude-code skills (directory-skill format)', () => {
     )
     expect(result.alreadyInstalled).toBe(false)
   })
+
+  test('should copy bundle assets alongside SKILL.md', () => {
+    mockExistsSync.mockImplementation((path: string) => path.includes('/store/skills/my-skill'))
+    mockReaddirSync.mockReturnValue([
+      { name: 'README.md', isDirectory: () => false },
+      { name: 'scripts', isDirectory: () => true },
+    ])
+
+    const result = installContent(
+      'claude-code',
+      'skills',
+      'my-skill',
+      'skills/my-skill',
+      'My Skill',
+      '---\ndescription: A skill\n---\nbody',
+      '/project',
+      null,
+      'project',
+      '/store/skills/my-skill'
+    )
+
+    expect(mockCpSync).toHaveBeenCalledWith(
+      '/store/skills/my-skill/scripts',
+      expect.stringContaining('.claude/skills/my-skill/scripts'),
+      { recursive: true }
+    )
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('.claude/skills/my-skill/SKILL.md'),
+      expect.any(String),
+      'utf-8'
+    )
+    expect(result.alreadyInstalled).toBe(false)
+  })
 })
 
 describe('installContent - claude-code agents (file format)', () => {
@@ -244,6 +289,30 @@ describe('installContent - claude-code agents (file format)', () => {
     expect(mockWriteFileSync).toHaveBeenCalledWith(
       expect.stringContaining('.claude/agents/code-reviewer.md'),
       '# Code Reviewer',
+      'utf-8'
+    )
+    expect(result.alreadyInstalled).toBe(false)
+  })
+})
+
+describe('installContent - claude-code workflows (file format)', () => {
+  test('should write workflow file to .claude/commands/', () => {
+    mockExistsSync.mockReturnValue(false)
+
+    const result = installContent(
+      'claude-code',
+      'workflows',
+      'release',
+      'workflows/release',
+      'Release',
+      '# Release',
+      '/project',
+      null
+    )
+
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('.claude/commands/release.md'),
+      '# Release',
       'utf-8'
     )
     expect(result.alreadyInstalled).toBe(false)

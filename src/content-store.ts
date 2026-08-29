@@ -1,15 +1,16 @@
-import { existsSync } from 'node:fs'
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
-import { dirname, extname, join, relative } from 'node:path'
+import { existsSync, readdirSync } from 'node:fs'
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { dirname, join, relative } from 'node:path'
 import { watch } from 'chokidar'
 import type { AikConfig } from './config.js'
 import { ContentError } from './errors.js'
 import { type Frontmatter, parseFrontmatter, serializeFrontmatter } from './frontmatter.js'
 import { logger } from './logger.js'
 
-export type Category = 'rules' | 'skills' | 'workflows' | 'agents' | 'commands' | 'templates'
+export type Category = 'rules' | 'skills' | 'workflows' | 'agents'
 
-const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents']
+const ENTRY_FILE = 'README.md'
 
 export interface ContentItem {
   path: string
@@ -25,18 +26,30 @@ export interface ContentItem {
   created: string
   updated: string
   content: string
+  assets: string[]
 }
 
-const categoryFromDir = (dir: string): Category | null => {
-  const base = dir.split('/').pop() ?? dir
-  const safeCategory = CATEGORIES.find(c => c === base)
-  if (safeCategory) return safeCategory
-  return null
-}
-
-const extractName = (filePath: string, baseDir: string): string => {
-  const rel = relative(baseDir, filePath)
-  return rel.replace(/\.md$/i, '')
+const listAssets = (bundleDir: string): string[] => {
+  const assets: string[] = []
+  const walk = (dir: string): void => {
+    let entries: import('node:fs').Dirent[]
+    try {
+      entries = readdirSync(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const full = join(dir, entry.name)
+      const rel = relative(bundleDir, full)
+      if (entry.isDirectory()) {
+        walk(full)
+      } else if (entry.isFile() && rel !== ENTRY_FILE) {
+        assets.push(rel)
+      }
+    }
+  }
+  walk(bundleDir)
+  return assets.sort()
 }
 
 export class ContentStore {
@@ -63,99 +76,71 @@ export class ContentStore {
     for (const cat of CATEGORIES) {
       const catDir = join(this.config.contentDir, cat)
       if (!existsSync(catDir)) continue
-      await this.scanDir(catDir, cat)
+      await this.scanCategory(catDir, cat)
     }
   }
 
-  private async scanDir(dirPath: string, category: Category): Promise<void> {
+  private async scanCategory(catDir: string, category: Category): Promise<void> {
     let entries: import('node:fs').Dirent[]
     try {
-      entries = await readdir(dirPath, { withFileTypes: true })
+      entries = await readdir(catDir, { withFileTypes: true })
     } catch {
       return
     }
     for (const entry of entries) {
-      const fullPath = join(dirPath, entry.name)
-      if (entry.isDirectory()) {
-        const subCategory = categoryFromDir(join(category, entry.name))
-        if (subCategory && subCategory !== category) {
-          await this.scanDir(fullPath, subCategory)
-        } else {
-          await this.scanDir(fullPath, category)
-        }
-      } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.md') {
-        await this.addFile(fullPath, category)
-      }
+      if (!entry.isDirectory()) continue
+      const bundleDir = join(catDir, entry.name)
+      const entryFile = join(bundleDir, ENTRY_FILE)
+      if (!existsSync(entryFile)) continue
+      await this.addBundle(bundleDir, entryFile, category, entry.name)
     }
   }
 
-  private async addFile(fullPath: string, category: Category): Promise<void> {
+  private async addBundle(
+    bundleDir: string,
+    entryFile: string,
+    category: Category,
+    name: string
+  ): Promise<void> {
     try {
-      const raw = await readFile(fullPath, 'utf-8')
+      const raw = await readFile(entryFile, 'utf-8')
       const { frontmatter, body } = parseFrontmatter(raw)
-      const relPath = extractName(fullPath, this.config.contentDir)
-
       const item: ContentItem = {
-        path: relPath,
-        fullPath,
+        path: `${category}/${name}`,
+        fullPath: entryFile,
         category,
-        name: relPath.split('/').pop() ?? relPath,
+        name,
         ...frontmatter,
         content: body,
+        assets: listAssets(bundleDir),
       }
 
-      const existingIndex = this.items.findIndex(i => i.fullPath === fullPath)
+      const existingIndex = this.items.findIndex(i => i.fullPath === entryFile)
       if (existingIndex >= 0) {
         this.items[existingIndex] = item
       } else {
         this.items.push(item)
       }
     } catch (err) {
-      logger.warn({ file: fullPath, err }, 'failed to load content file')
+      logger.warn({ file: entryFile, err }, 'failed to load content bundle')
     }
   }
 
-  private removeFile(fullPath: string): void {
-    this.items = this.items.filter(i => i.fullPath !== fullPath)
+  private removeBundle(entryFile: string): void {
+    this.items = this.items.filter(i => i.fullPath !== entryFile)
   }
 
   private startWatch(): void {
-    const patterns = CATEGORIES.map(c => join(this.config.contentDir, c, '**/*.md'))
+    const patterns = CATEGORIES.map(c => join(this.config.contentDir, c, '*', '**'))
     this.watcher = watch(patterns, {
       ignoreInitial: true,
       persistent: true,
     })
 
-    this.watcher.on('add', async filePath => {
-      const cat = this.guessCategory(filePath)
-      logger.trace({ file: filePath, category: cat }, 'file added')
-      if (cat) await this.addFile(filePath, cat)
+    this.watcher.on('all', async () => {
+      logger.trace({}, 'content directory changed, rescanning')
+      await this.scan()
     })
-
-    this.watcher.on('change', async filePath => {
-      const cat = this.guessCategory(filePath)
-      logger.trace({ file: filePath, category: cat }, 'file changed')
-      if (cat) await this.addFile(filePath, cat)
-    })
-
-    this.watcher.on('unlink', filePath => {
-      logger.trace({ file: filePath }, 'file removed')
-      this.removeFile(filePath)
-    })
-  }
-
-  private guessCategory(filePath: string): Category | null {
-    const rel = relative(this.config.contentDir, filePath)
-    const parts = rel.split('/')
-    if (parts.length > 0) {
-      const cat = categoryFromDir(parts[0])
-      if (cat) return cat
-      if (parts.length > 1) {
-        const sub = categoryFromDir(parts[1])
-        if (sub) return sub
-      }
-    }
-    return null
   }
 
   getAll(): ContentItem[] {
@@ -177,11 +162,13 @@ export class ContentStore {
     frontmatter: Record<string, unknown>,
     overwrite: boolean
   ): Promise<ContentItem> {
-    const fullPath = join(this.config.contentDir, `${path}.md`)
+    const [cat, ...rest] = path.split('/')
+    const name = rest.join('/')
+    const fullPath = join(this.config.contentDir, cat, name, ENTRY_FILE)
     if (!overwrite && existsSync(fullPath)) {
       throw new ContentError(
         'CONTENT_EXISTS',
-        `Content at ${path}.md already exists (use overwrite: true to replace)`
+        `Content at ${path} already exists (use overwrite: true to replace)`
       )
     }
 
@@ -195,16 +182,15 @@ export class ContentStore {
     await writeFile(fullPath, fileContent, 'utf-8')
 
     const { frontmatter: parsedFm, body } = parseFrontmatter(fileContent)
-    const relPath = extractName(fullPath, this.config.contentDir)
-    const pathCategory = path.split('/')[0]
-    const validCategory: Category = CATEGORIES.find(c => c === pathCategory) ?? 'rules'
+    const validCategory: Category = CATEGORIES.find(c => c === cat) ?? 'rules'
     const item: ContentItem = {
-      path: relPath,
+      path,
       fullPath,
       category: validCategory,
-      name: relPath.split('/').pop() ?? relPath,
+      name,
       ...parsedFm,
       content: body,
+      assets: listAssets(dirname(fullPath)),
     }
 
     const existingIndex = this.items.findIndex(i => i.fullPath === fullPath)
@@ -222,8 +208,8 @@ export class ContentStore {
     if (!item) return false
 
     logger.info({ path, file: item.fullPath }, 'deleting content')
-    await unlink(item.fullPath)
-    this.removeFile(item.fullPath)
+    await rm(dirname(item.fullPath), { recursive: true, force: true })
+    this.removeBundle(item.fullPath)
     return true
   }
 

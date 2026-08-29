@@ -15,9 +15,7 @@ export const registerSearchTool = (server: McpServer, store: ContentStore): void
         category: z
           .string()
           .optional()
-          .describe(
-            'Restrict search to a category (rules, skills, workflows, agents, commands, templates)'
-          ),
+          .describe('Restrict search to a category (rules, skills, workflows, agents)'),
         limit: z.number().min(1).max(50).optional().default(20).describe('Maximum results'),
       },
     },

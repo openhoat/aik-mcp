@@ -16,6 +16,7 @@ const makeItem = (overrides: Partial<ContentItem>): ContentItem => {
     created: '',
     updated: '',
     content: '',
+    assets: [],
     ...overrides,
   }
 }

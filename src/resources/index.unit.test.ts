@@ -62,8 +62,6 @@ describe('registerResources', () => {
     expect(resources['skills-list']).toBeDefined()
     expect(resources['workflows-list']).toBeDefined()
     expect(resources['agents-list']).toBeDefined()
-    expect(resources['commands-list']).toBeDefined()
-    expect(resources['templates-list']).toBeDefined()
   })
 
   test('should register search resource', async () => {

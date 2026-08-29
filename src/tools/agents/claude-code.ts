@@ -27,19 +27,9 @@ export const CLAUDE_CODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, _cat, name) => join(dir, '.claude', 'agents', `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'commands', `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
     format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'workflows', `${name}.md`),
-    configUpdate: 'none',
-  },
-  templates: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'templates', `${name}.md`),
+    contentPath: (dir, _cat, name) => join(dir, '.claude', 'commands', `${name}.md`),
     configUpdate: 'none',
   },
 }
@@ -61,19 +51,9 @@ export const CLAUDE_CODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
     format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, 'workflows', `${name}.md`),
-    configUpdate: 'none',
-  },
-  templates: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
+    contentPath: (dir, _cat, name) => join(dir, 'commands', `${name}.md`),
     configUpdate: 'none',
   },
 }

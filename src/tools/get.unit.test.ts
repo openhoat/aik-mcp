@@ -27,6 +27,7 @@ const createMockContentItem = (overrides: Record<string, unknown> = {}) => {
     created: undefined,
     updated: undefined,
     content: '# Test\ncontent',
+    assets: [],
     ...overrides,
   }
 }

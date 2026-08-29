@@ -95,7 +95,6 @@ describe('getInstructionsCategories', () => {
     const cats = getInstructionsCategories('opencode')
     expect(cats).toContain('rules')
     expect(cats).toContain('workflows')
-    expect(cats).toContain('templates')
   })
 
   test('should return empty for claude-code', () => {

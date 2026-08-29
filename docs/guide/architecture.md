@@ -21,12 +21,12 @@ graph TB
         CS[ContentStore<br>in-memory cache]
         FW[File Watcher<br>chokidar]
         RT[Resource Templates<br>aik:// ]
-        TL[MCP Tools<br>list, get, search, write<br>install, uninstall]
+        TL[MCP Tools<br>list, get, get_asset, search, write<br>install, uninstall]
         VA[Validate<br>--validate flag]
     end
 
     subgraph "Filesystem"
-        MD[Markdown files<br>rules/ skills/ workflows/<br>agents/ commands/ templates/]
+        MD[Content bundles<br>rules/ skills/ workflows/ agents/<br>each with README.md + assets/]
     end
 
     OC --> ST

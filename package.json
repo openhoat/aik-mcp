@@ -1,7 +1,7 @@
 {
   "name": "@headwood/aik-mcp",
   "version": "0.4.0",
-  "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents, commands, templates)",
+  "description": "MCP server for AI knowledge repository (rules, skills, workflows, agents)",
   "keywords": [
     "mcp",
     "model-context-protocol",

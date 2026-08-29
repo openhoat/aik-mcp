@@ -24,6 +24,7 @@ const createMockContentItem = (overrides: Record<string, unknown> = {}) => {
     version: '1.0.0',
     compatibility: ['opencode', 'claude-code', 'cline'],
     content: '# Test\ncontent',
+    assets: [],
     ...overrides,
   }
 }

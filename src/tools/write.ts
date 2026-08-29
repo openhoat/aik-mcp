@@ -7,8 +7,7 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
   server.registerTool(
     'write',
     {
-      description:
-        'Create or update a content item (rules, skills, workflows, agents, commands, templates)',
+      description: 'Create or update a content item (rules, skills, workflows, agents)',
       inputSchema: {
         path: z
           .string()

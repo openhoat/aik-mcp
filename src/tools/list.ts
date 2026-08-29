@@ -3,14 +3,13 @@ import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 
-const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents']
 
 export const registerListTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
     'list',
     {
-      description:
-        'List available content items (rules, skills, workflows, agents, commands, templates)',
+      description: 'List available content items (rules, skills, workflows, agents)',
       inputSchema: {
         category: z.string().optional().describe('Filter by content category'),
         tag: z.string().optional().describe('Filter by tag'),

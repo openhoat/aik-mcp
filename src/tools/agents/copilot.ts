@@ -27,19 +27,9 @@ export const COPILOT_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, cat, name) => join(dir, '.github', cat, `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.github', cat, `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
     format: 'section',
     contentPath: (dir, _cat, _name) => join(dir, '.github', 'copilot-instructions.md'),
-    configUpdate: 'none',
-  },
-  templates: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.github', cat, `${name}.md`),
     configUpdate: 'none',
   },
 }

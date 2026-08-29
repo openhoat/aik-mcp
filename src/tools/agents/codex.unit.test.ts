@@ -39,22 +39,10 @@ describe('CODEX_INSTALL_SPECS', () => {
     expect(spec.configUpdate).toBe('none')
   })
 
-  test('should have file format for commands', () => {
-    const spec = CODEX_INSTALL_SPECS.commands
-    expect(spec.format).toBe('file')
-    expect(spec.configUpdate).toBe('none')
-  })
-
   test('should have section format for workflows', () => {
     const spec = CODEX_INSTALL_SPECS.workflows
     expect(spec.format).toBe('section')
     expect(spec.configUpdate).toBe('codex-agents-md')
-  })
-
-  test('should have file format for templates', () => {
-    const spec = CODEX_INSTALL_SPECS.templates
-    expect(spec.format).toBe('file')
-    expect(spec.configUpdate).toBe('none')
   })
 
   test('should compute correct content paths', () => {
@@ -67,22 +55,12 @@ describe('CODEX_INSTALL_SPECS', () => {
     const agentsPath = CODEX_INSTALL_SPECS.agents.contentPath('/project', 'agents', 'my-agent')
     expect(agentsPath).toBe('/project/.codex/agents/my-agent.md')
 
-    const commandsPath = CODEX_INSTALL_SPECS.commands.contentPath('/project', 'commands', 'my-cmd')
-    expect(commandsPath).toBe('/project/.codex/commands/my-cmd.md')
-
     const workflowsPath = CODEX_INSTALL_SPECS.workflows.contentPath(
       '/project',
       'workflows',
       'my-wf'
     )
     expect(workflowsPath).toBe('/project/AGENTS.md')
-
-    const templatesPath = CODEX_INSTALL_SPECS.templates.contentPath(
-      '/project',
-      'templates',
-      'my-tpl'
-    )
-    expect(templatesPath).toBe('/project/.codex/templates/my-tpl.md')
   })
 })
 

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
@@ -102,14 +102,7 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
         configLabel = existing.path
       }
 
-      const categories: Category[] = [
-        'rules',
-        'skills',
-        'workflows',
-        'agents',
-        'commands',
-        'templates',
-      ]
+      const categories: Category[] = ['rules', 'skills', 'workflows', 'agents']
       const updates: Array<{
         path: string
         installedVersion: string | null
@@ -283,7 +276,8 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
         rawContent,
         baseDir,
         configPath,
-        effectiveScope
+        effectiveScope,
+        dirname(storeItem.fullPath)
       )
 
       return {

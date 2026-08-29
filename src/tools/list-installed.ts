@@ -76,7 +76,7 @@ const listInstalledForAgent = (
   configPath: string | null,
   scope: Scope = 'project'
 ): InstalledItem[] => {
-  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents']
   const results: InstalledItem[] = []
 
   for (const category of categories) {

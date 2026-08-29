@@ -75,9 +75,7 @@ describe('registerListInstalledTool', () => {
       isDirectory: () =>
         path.includes('.opencode/rules') ||
         path.includes('.opencode/agents') ||
-        path.includes('.opencode/commands') ||
         path.includes('.opencode/workflows') ||
-        path.includes('.opencode/templates') ||
         path.includes('.opencode/skills') ||
         path === '/project/.opencode',
     }))
@@ -109,10 +107,8 @@ describe('registerListInstalledTool', () => {
     mockStatSync.mockImplementation((path: string) => ({
       isDirectory: () =>
         path.includes('.claude/rules') ||
-        path.includes('.claude/workflows') ||
         path.includes('.claude/agents') ||
         path.includes('.claude/commands') ||
-        path.includes('.claude/templates') ||
         path.includes('.claude/skills'),
     }))
     mockExistsSync.mockImplementation((path: string) => path.includes('.claude/rules/ts.md'))
@@ -200,9 +196,7 @@ describe('registerListInstalledTool', () => {
         path.includes('.opencode/skills') ||
         path.includes('.opencode/rules') ||
         path.includes('.opencode/agents') ||
-        path.includes('.opencode/commands') ||
-        path.includes('.opencode/workflows') ||
-        path.includes('.opencode/templates'),
+        path.includes('.opencode/workflows'),
     }))
     mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
     mockReadFileSync.mockReturnValue('---\nname: my-skill\ndescription: A test skill\n---\nContent')
@@ -235,9 +229,7 @@ describe('registerListInstalledTool', () => {
         path.includes('.opencode/skills') ||
         path.includes('.opencode/rules') ||
         path.includes('.opencode/agents') ||
-        path.includes('.opencode/commands') ||
-        path.includes('.opencode/workflows') ||
-        path.includes('.opencode/templates'),
+        path.includes('.opencode/workflows'),
     }))
     mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
     mockReadFileSync.mockImplementation(() => {
@@ -271,10 +263,8 @@ describe('registerListInstalledTool', () => {
     mockStatSync.mockImplementation((path: string) => ({
       isDirectory: () =>
         path.includes('.claude/rules') ||
-        path.includes('.claude/workflows') ||
         path.includes('.claude/agents') ||
         path.includes('.claude/commands') ||
-        path.includes('.claude/templates') ||
         path.includes('.claude/skills'),
     }))
     mockExistsSync.mockImplementation((path: string) => path.includes('.claude/rules/'))
@@ -304,7 +294,7 @@ describe('registerListInstalledTool - global scope', () => {
     const { server, getHandler } = createMockServer()
     const store = {} as ContentStore // Safe: test mock type limitation
     mockStatSync.mockImplementation((path: string) => ({
-      isDirectory: () => path.includes('agents') || path.includes('commands'),
+      isDirectory: () => path.includes('agents'),
     }))
     mockExistsSync.mockImplementation((path: string) => path.includes('AGENTS.md'))
     mockReadFileSync.mockReturnValue('## TS Rule\n\n<source>rules/ts</source>\n')

@@ -8,6 +8,7 @@ import { logger } from './logger.js'
 import { registerResources } from './resources/index.js'
 import { registerDeleteTool } from './tools/delete.js'
 import { registerGetTool } from './tools/get.js'
+import { registerGetAssetTool } from './tools/get-asset.js'
 import { registerInstallTool, registerReinstallTool } from './tools/install.js'
 import { registerListTool } from './tools/list.js'
 import { registerListInstalledTool } from './tools/list-installed.js'
@@ -60,13 +61,14 @@ const server = new McpServer(
     name: 'aik',
     version: '1.0.0',
     description:
-      'MCP server for AI knowledge repository — query rules, skills, workflows, agents, commands, and templates',
+      'MCP server for AI knowledge repository — query rules, skills, workflows, and agents',
   },
   ...(instructions ? [{ instructions }] : [])
 )
 
 registerListTool(server, store)
 registerGetTool(server, store)
+registerGetAssetTool(server, store)
 registerInstallTool(server, store)
 registerReinstallTool(server, store)
 registerListInstalledTool(server, store)

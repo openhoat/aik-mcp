@@ -25,6 +25,7 @@ const createItem = (overrides: Partial<ContentItem> = {}): ContentItem => {
     created: '2026-01-01',
     updated: '2026-07-04',
     content: 'Content body',
+    assets: [],
     ...overrides,
   }
 }

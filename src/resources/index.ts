@@ -3,7 +3,7 @@ import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 
 export const registerResources = (server: McpServer, store: ContentStore): void => {
-  const categories = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates'] as const
+  const categories = ['rules', 'skills', 'workflows', 'agents'] as const
 
   logger.trace({ categories }, 'registering resource templates')
 

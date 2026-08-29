@@ -77,7 +77,7 @@ Configure the MCP server in your IDE settings (VS Code, JetBrains, etc.) and add
 ```markdown
 ## MCP servers
 
-aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and templates.
+aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and agents.
 ```
 
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS) to use the same knowledge base across projects and agents.

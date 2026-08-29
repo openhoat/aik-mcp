@@ -7,7 +7,7 @@
 
 <p align="center">
 Give your AI agents a memory.<br>
-Rules, skills, workflows, and templates — as plain Markdown, served over the Model Context Protocol.
+Rules, skills, workflows, and agents — as plain Markdown, served over the Model Context Protocol.
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@ Rules, skills, workflows, and templates — as plain Markdown, served over the M
 
 **aik-mcp** turns a directory of Markdown files into a live, queryable knowledge base for any [MCP](https://modelcontextprotocol.io)-compatible AI agent — [opencode](https://opencode.ai), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Cline](https://cline.bot), [Codex](https://developers.openai.com/codex), [GitHub Copilot](https://github.com/features/copilot), and more.
 
-Write your team's conventions, reusable workflows, agent prompts, and project templates as plain `.md` files with YAML frontmatter. **aik-mcp** serves them on demand — your agent can discover, read, search, and install them at runtime, across any project.
+Write your team's conventions, reusable workflows, and agent prompts as plain `.md` files with YAML frontmatter. **aik-mcp** serves them on demand — your agent can discover, read, search, and install them at runtime, across any project.
 
 No database. No API to build. Just Markdown.
 
@@ -168,14 +168,15 @@ Configure the MCP server in your IDE settings (VS Code, JetBrains, etc.) and add
 ```markdown
 ## MCP servers
 
-aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and templates.
+aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, `aik_install`, and related tools to manage rules, skills, workflows, and agents.
 ```
 
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS, etc.) to use the same knowledge base across projects and agents.
 
 ## Content structure
 
-Content items are organized by category:
+Content items are organized by category as **bundles** — a directory with a
+`README.md` entry file plus optional supporting assets:
 
 | Directory    | Purpose                                        |
 |--------------|------------------------------------------------|
@@ -183,10 +184,15 @@ Content items are organized by category:
 | `skills/`    | Reusable instruction blocks (prompts, recipes) |
 | `workflows/` | Multi-step process definitions                 |
 | `agents/`    | Specialized agent configurations               |
-| `commands/`  | Custom CLI command definitions                 |
-| `templates/` | File and project scaffolding                   |
 
-Each file is a Markdown document with YAML frontmatter:
+```text
+content/
+  skills/generate-changelog/
+    README.md                 # entry file — carries the frontmatter
+    assets/changelog.mjs      # supporting asset, referenced relatively
+```
+
+The `README.md` entry file is a Markdown document with YAML frontmatter:
 
 ```markdown
 ---
@@ -201,6 +207,9 @@ compatibility: [opencode, claude-code, cline, codex, copilot]
 
 Content here...
 ```
+
+Supporting assets are listed by `aik_get` and read via `aik_get_asset`.
+When a skill is installed, its assets are copied alongside `SKILL.md`.
 
 ## MCP tools
 

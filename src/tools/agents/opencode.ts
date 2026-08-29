@@ -27,17 +27,7 @@ export const OPENCODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, cat, name) => join(dir, '.opencode', cat, `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.opencode', cat, `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.opencode', cat, `${name}.md`),
-    configUpdate: 'opencode-instructions',
-  },
-  templates: {
     format: 'file',
     contentPath: (dir, cat, name) => join(dir, '.opencode', cat, `${name}.md`),
     configUpdate: 'opencode-instructions',
@@ -60,17 +50,7 @@ export const OPENCODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
     contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
     configUpdate: 'none',
   },
-  commands: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
-    configUpdate: 'none',
-  },
   workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'none',
-  },
-  templates: {
     format: 'section',
     contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
     configUpdate: 'none',
@@ -81,5 +61,5 @@ export const OPENCODE_CONFIG: AgentConfig = {
   agent: OPENCODE_AGENT,
   installSpecs: OPENCODE_INSTALL_SPECS,
   globalInstallSpecs: OPENCODE_GLOBAL_INSTALL_SPECS,
-  instructionsCategories: ['rules', 'workflows', 'templates'],
+  instructionsCategories: ['rules', 'workflows'],
 }

@@ -132,13 +132,13 @@ const uninstallAllForAgent = (
   configPath: string | null,
   scope: Scope = 'project'
 ): number => {
-  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents', 'commands', 'templates']
+  const categories: Category[] = ['rules', 'skills', 'workflows', 'agents']
   let count = 0
 
   for (const category of categories) {
     const spec = getInstallSpecForScope(agent, category, scope)
 
-    // Handle file format (rules, workflows, templates, agents, commands)
+    // Handle file format (rules, workflows, agents)
     if (spec.format === 'file') {
       const targetDir = spec.contentPath(baseDir, category, '').replace(/\/[^/]+\.md$/, '')
 
@@ -228,14 +228,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
         }
         const [rawCategory, ...rest] = path.split('/')
         const name = rest.join('/')
-        const validCategories: Category[] = [
-          'rules',
-          'skills',
-          'workflows',
-          'agents',
-          'commands',
-          'templates',
-        ]
+        const validCategories: Category[] = ['rules', 'skills', 'workflows', 'agents']
         const category = validCategories.find(c => c === rawCategory)
         if (!category) {
           return {
@@ -276,14 +269,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       const name = rest.join('/')
       const configPath = existing.agent === agent ? existing.path : null
 
-      const validCategories: Category[] = [
-        'rules',
-        'skills',
-        'workflows',
-        'agents',
-        'commands',
-        'templates',
-      ]
+      const validCategories: Category[] = ['rules', 'skills', 'workflows', 'agents']
       const category = validCategories.find(c => c === rawCategory)
       if (!category) {
         return {

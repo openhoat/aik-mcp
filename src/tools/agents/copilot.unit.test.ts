@@ -39,21 +39,9 @@ describe('COPILOT_INSTALL_SPECS', () => {
     expect(spec.configUpdate).toBe('none')
   })
 
-  test('should have file format for commands', () => {
-    const spec = COPILOT_INSTALL_SPECS.commands
-    expect(spec.format).toBe('file')
-    expect(spec.configUpdate).toBe('none')
-  })
-
   test('should have section format for workflows', () => {
     const spec = COPILOT_INSTALL_SPECS.workflows
     expect(spec.format).toBe('section')
-    expect(spec.configUpdate).toBe('none')
-  })
-
-  test('should have file format for templates', () => {
-    const spec = COPILOT_INSTALL_SPECS.templates
-    expect(spec.format).toBe('file')
     expect(spec.configUpdate).toBe('none')
   })
 
@@ -67,26 +55,12 @@ describe('COPILOT_INSTALL_SPECS', () => {
     const agentsPath = COPILOT_INSTALL_SPECS.agents.contentPath('/project', 'agents', 'my-agent')
     expect(agentsPath).toBe('/project/.github/agents/my-agent.md')
 
-    const commandsPath = COPILOT_INSTALL_SPECS.commands.contentPath(
-      '/project',
-      'commands',
-      'my-cmd'
-    )
-    expect(commandsPath).toBe('/project/.github/commands/my-cmd.md')
-
     const workflowsPath = COPILOT_INSTALL_SPECS.workflows.contentPath(
       '/project',
       'workflows',
       'my-wf'
     )
     expect(workflowsPath).toBe('/project/.github/copilot-instructions.md')
-
-    const templatesPath = COPILOT_INSTALL_SPECS.templates.contentPath(
-      '/project',
-      'templates',
-      'my-tpl'
-    )
-    expect(templatesPath).toBe('/project/.github/templates/my-tpl.md')
   })
 })
 
