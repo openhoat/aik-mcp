@@ -21,6 +21,8 @@ const createMockContentItem = (overrides: Record<string, unknown> = {}) => {
     title: 'Test Rule',
     description: 'A description',
     tags: ['test'],
+    version: '1.0.0',
+    compatibility: ['opencode', 'claude-code', 'cline'],
     assets: [],
     ...overrides,
   }
@@ -71,7 +73,16 @@ describe('registerWriteTool', () => {
     expect(store.writeContent).toHaveBeenCalledWith(
       'rules/test-rule',
       '# Test',
-      { title: 'Test Rule', description: 'A description', tags: ['test'] },
+      {
+        title: 'Test Rule',
+        description: 'A description',
+        tags: ['test'],
+        version: '1.0.0',
+        compatibility: ['opencode', 'claude-code', 'cline'],
+        author: '',
+        created: '',
+        updated: '',
+      },
       false
     )
   })
@@ -129,9 +140,53 @@ describe('registerWriteTool', () => {
     expect(store.writeContent).toHaveBeenCalledWith(
       'rules/test-rule',
       '# Test',
-      { title: 'Test Rule', description: 'A description', tags: ['test'] },
+      {
+        title: 'Test Rule',
+        description: 'A description',
+        tags: ['test'],
+        version: '1.0.0',
+        compatibility: ['opencode', 'claude-code', 'cline'],
+        author: '',
+        created: '',
+        updated: '',
+      },
       true
     )
+  })
+
+  test('should pass version and compatibility when provided', async () => {
+    const item = createMockContentItem()
+    const { handler, store } = setup(item)
+    await handler({
+      path: 'rules/test-rule',
+      content: '# Test',
+      title: 'Test Rule',
+      description: 'A description',
+      tags: ['test'],
+      version: '2.3.4',
+      compatibility: ['opencode'],
+    })
+    expect(store.writeContent).toHaveBeenCalledWith(
+      'rules/test-rule',
+      '# Test',
+      expect.objectContaining({ version: '2.3.4', compatibility: ['opencode'] }),
+      false
+    )
+  })
+
+  test('should reject a non-semver version', async () => {
+    const item = createMockContentItem()
+    const { handler } = setup(item)
+    const result = (await handler({
+      path: 'rules/test-rule',
+      content: '# Test',
+      title: 'Test Rule',
+      description: 'A description',
+      tags: ['test'],
+      version: 'abc',
+    })) as ToolContent
+    const text = result.content[0].text
+    expect(text ?? '').toContain('version')
   })
 
   test('should handle store error', async () => {

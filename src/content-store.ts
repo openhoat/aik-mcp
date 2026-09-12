@@ -175,7 +175,7 @@ export class ContentStore {
     await mkdir(dirname(fullPath), { recursive: true })
 
     logger.info({ path, overwrite }, 'writing content')
-    // Safe: frontmatter passed through schema validation
+    // Safe: frontmatter normalized through frontmatterSchema
     const fmLines = ['---', serializeFrontmatter(frontmatter as Frontmatter), '---', '']
     const fileContent = fmLines.join('\n') + content.trimStart()
 
@@ -187,8 +187,8 @@ export class ContentStore {
       path,
       fullPath,
       category: validCategory,
-      name,
       ...parsedFm,
+      name,
       content: body,
       assets: listAssets(dirname(fullPath)),
     }

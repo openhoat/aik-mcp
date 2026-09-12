@@ -124,7 +124,10 @@
       "command": "markdownlint-cli2",
       "files": [
         "**/*.md",
-        "!node_modules"
+        "!node_modules",
+        "!build",
+        "!dist",
+        "!rag"
       ],
       "output": []
     },

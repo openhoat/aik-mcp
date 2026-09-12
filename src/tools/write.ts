@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { frontmatterSchema, validateFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
+
 export const registerWriteTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
     'write',
@@ -18,6 +19,17 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
         title: z.string().optional().describe('Title (frontmatter)'),
         description: z.string().optional().describe('Short description (frontmatter)'),
         tags: z.array(z.string()).optional().describe('Tags (frontmatter)'),
+        version: z
+          .string()
+          .regex(/^\d+\.\d+\.\d+$/, 'version must be in semver format (e.g. 1.0.0)')
+          .optional()
+          .describe('Semver version (frontmatter). Defaults to 1.0.0'),
+        compatibility: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Compatible AI agents (frontmatter). Defaults to ["opencode", "claude-code", "cline"]'
+          ),
         overwrite: z
           .boolean()
           .optional()
@@ -31,6 +43,8 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
       title,
       description,
       tags,
+      version,
+      compatibility,
       overwrite,
     }: {
       path: string
@@ -38,15 +52,18 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
       title?: string
       description?: string
       tags?: string[]
+      version?: string
+      compatibility?: string[]
       overwrite?: boolean
     }) => {
-      const frontmatter: Record<string, unknown> = {}
-      if (title) frontmatter.title = title
-      if (description) frontmatter.description = description
-      if (tags) frontmatter.tags = tags
-
-      const merged = frontmatterSchema.parse(frontmatter)
-      const validation = validateFrontmatter(merged)
+      const frontmatter = frontmatterSchema.parse({
+        title,
+        description,
+        tags,
+        version,
+        compatibility,
+      })
+      const validation = validateFrontmatter(frontmatter)
       if (!validation.valid) {
         return {
           content: [{ type: 'text', text: validation.errors.join('\n') }],

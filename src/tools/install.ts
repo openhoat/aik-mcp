@@ -28,7 +28,7 @@ const ENTRY_FILE = 'README.md'
 const buildSkillContent = (rawContent: string, name: string): string => {
   const { raw, body } = parseFrontmatter(rawContent)
   const skillFrontmatter = { ...raw }
-  if (!skillFrontmatter.name) skillFrontmatter.name = name
+  skillFrontmatter.name = name
   const fm = serializeFrontmatterRaw(skillFrontmatter)
   return `---\n${fm}\n---\n\n${body}`
 }
