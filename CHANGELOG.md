@@ -1,3 +1,9 @@
+# [0.6.0](https://github.com/openhoat/aik-mcp/compare/v0.5.0...v0.6.0) (2026-09-21)
+
+### Features
+
+* **gating:** gate installs by project stack and mcp requirements ([fa35be6](https://github.com/openhoat/aik-mcp/commit/fa35be6a3956e0e4a19183407c70011710566205))
+
 # [0.5.0](https://github.com/openhoat/aik-mcp/compare/v0.4.0...v0.5.0) (2026-09-12)
 
 ### Bug Fixes
@@ -12,6 +18,7 @@
 * **deps-dev:** bump @biomejs/biome ([aa31554](https://github.com/openhoat/aik-mcp/commit/aa315540bec4b2355f9c45dd7c28f6c404e41b5d))
 * **deps-dev:** bump postcss from 8.5.16 to 8.5.23 ([42bbff6](https://github.com/openhoat/aik-mcp/commit/42bbff625266f1816cc9f4aa608e515b22fb09e8))
 * **deps:** bump fast-uri from 3.1.3 to 3.1.4 ([ed7f1dc](https://github.com/openhoat/aik-mcp/commit/ed7f1dc40c6d5230def4b0449f9262679c1fd593))
+* **release:** v0.5.0 ([62a4b3a](https://github.com/openhoat/aik-mcp/commit/62a4b3af31e4f4764839e81611a2ed2ee4f27332))
 
 ### Refactoring
 
