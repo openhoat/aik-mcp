@@ -4,7 +4,7 @@ description: "Guidelines for discovering, consuming, creating, and maintaining
   rules, skills, workflows, and agents via the aik system.
   Ensures content is generic, self-contained, and cross-project shareable."
 tags: [aik, meta, shareable-content, workflow]
-version: "3.0.0"
+version: "3.1.0"
 compatibility: [opencode, claude-code, cline]
 ---
 
@@ -123,6 +123,24 @@ issues with installed content.
   Cline (use the `compatibility` frontmatter field).
 - **Mandatory frontmatter** — every content item MUST include `title`,
   `description`, `tags`, `version`, and `compatibility`.
+
+### Gating metadata (optional)
+
+Two optional fields let `aik_install` refuse irrelevant installs:
+
+- **`applies-to`** — list of technology stacks the content targets
+  (e.g. `[angular]`, `[python]`, `[rust]`). `install` detects the project
+  stacks from marker files (`angular.json`, `pyproject.toml`, `Cargo.toml`,
+  `package.json`, …) and blocks installation when none match. If no stack can
+  be detected, it only warns.
+- **`requires`** — list of MCP servers the content depends on
+  (e.g. `[mcp-local-rag]`). `install` reads the project MCP configuration
+  (`.mcp.json`, `.opencode/opencode.jsonc`, …) and blocks installation when a
+  required server is missing. If no MCP configuration is found, it only warns.
+
+Both fields are best-effort and evidence-based: they never block on missing
+information. Use `force: true` on `install`/`reinstall` to bypass a block with
+a documented reason.
 
 ## Content Structure
 

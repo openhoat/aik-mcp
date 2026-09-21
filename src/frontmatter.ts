@@ -7,6 +7,8 @@ export const frontmatterSchema = z.object({
   tags: z.array(z.string()).default([]),
   version: z.string().default('1.0.0'),
   compatibility: z.array(z.string()).default(['opencode', 'claude-code', 'cline']),
+  appliesTo: z.array(z.string()).default([]),
+  requires: z.array(z.string()).default([]),
   author: z.string().default(''),
   created: z.string().default(''),
   updated: z.string().default(''),
@@ -18,6 +20,20 @@ export interface ParsedDoc {
   frontmatter: Frontmatter
   raw: Record<string, unknown>
   body: string
+}
+
+const APPLIES_TO_KEYS = ['applies-to', 'applies_to', 'appliesTo']
+
+const normalizeGatingKeys = (input: Record<string, unknown>): Record<string, unknown> => {
+  const out = { ...input }
+  if (out.appliesTo === undefined) {
+    const alias = APPLIES_TO_KEYS.find(key => out[key] !== undefined)
+    if (alias) out.appliesTo = out[alias]
+  }
+  if (out.requires === undefined && out.require !== undefined) {
+    out.requires = out.require
+  }
+  return out
 }
 
 export const parseFrontmatter = (raw: string): ParsedDoc => {
@@ -42,7 +58,7 @@ export const parseFrontmatter = (raw: string): ParsedDoc => {
     parsed = {}
   }
 
-  const frontmatter = frontmatterSchema.parse(parsed)
+  const frontmatter = frontmatterSchema.parse(normalizeGatingKeys(parsed))
   return { frontmatter, raw: parsed, body }
 }
 

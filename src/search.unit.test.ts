@@ -12,6 +12,8 @@ const makeItem = (overrides: Partial<ContentItem>): ContentItem => {
     tags: [],
     version: '1.0.0',
     compatibility: ['opencode'],
+    appliesTo: [],
+    requires: [],
     author: '',
     created: '',
     updated: '',

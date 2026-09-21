@@ -114,6 +114,38 @@ Body`
     expect(result.frontmatter.title).toBe('Custom Compatibility')
     expect(result.frontmatter.compatibility).toEqual(['opencode', 'copilot', 'unknown-agent'])
   })
+
+  test('parses applies-to and requires gating metadata', () => {
+    const raw = `---
+title: Angular
+applies-to: [angular]
+requires: [mcp-local-rag]
+---
+Body`
+    const result = parseFrontmatter(raw)
+    expect(result.frontmatter.appliesTo).toEqual(['angular'])
+    expect(result.frontmatter.requires).toEqual(['mcp-local-rag'])
+    expect(result.raw['applies-to']).toEqual(['angular'])
+  })
+
+  test('accepts the camelCase appliesTo alias', () => {
+    const raw = `---
+title: Python
+appliesTo: [python]
+---
+Body`
+    expect(parseFrontmatter(raw).frontmatter.appliesTo).toEqual(['python'])
+  })
+
+  test('defaults gating metadata to empty arrays', () => {
+    const raw = `---
+title: Plain
+---
+Body`
+    const result = parseFrontmatter(raw)
+    expect(result.frontmatter.appliesTo).toEqual([])
+    expect(result.frontmatter.requires).toEqual([])
+  })
 })
 
 describe('serializeFrontmatter', () => {

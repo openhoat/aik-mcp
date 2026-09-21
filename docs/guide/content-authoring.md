@@ -23,9 +23,25 @@ compatibility: [opencode, claude-code, cline]
 | `tags` | Yes | Lowercase kebab-case tags |
 | `version` | No | Semver for update tracking |
 | `compatibility` | No | Target agents (defaults to all) |
+| `applies-to` | No | Technology stacks this content targets (install gating) |
+| `requires` | No | MCP servers this content depends on (install gating) |
 | `author` | No | Creator identifier |
 | `created` | No | ISO date |
 | `updated` | No | ISO date |
+
+### Gating
+
+`applies-to` and `requires` make `install` refuse irrelevant installations:
+
+- `applies-to: [angular]` — blocked in a project whose detected stack does not
+  include `angular` (detection is based on marker files such as `angular.json`,
+  `pyproject.toml`, `Cargo.toml`, `package.json`).
+- `requires: [mcp-local-rag]` — blocked when the project's MCP configuration is
+  found and does not declare that server.
+
+Gating is evidence-based: when the project stack or MCP configuration cannot be
+determined, `install` emits a warning instead of blocking. Use `force: true` to
+bypass a block.
 
 ## Principles
 

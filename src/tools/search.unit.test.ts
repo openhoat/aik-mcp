@@ -21,6 +21,8 @@ const createItem = (overrides: Partial<ContentItem> = {}): ContentItem => {
     tags: ['test', 'typescript'],
     version: '1.0.0',
     compatibility: ['opencode'],
+    appliesTo: [],
+    requires: [],
     author: 'test',
     created: '2026-01-01',
     updated: '2026-07-04',

@@ -30,6 +30,18 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
           .describe(
             'Compatible AI agents (frontmatter). Defaults to ["opencode", "claude-code", "cline"]'
           ),
+        appliesTo: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Technology stacks this content applies to (frontmatter, e.g. ["angular"], ["python"]). Used to gate installation.'
+          ),
+        requires: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Required MCP servers (frontmatter, e.g. ["mcp-local-rag"]). Used to gate installation.'
+          ),
         overwrite: z
           .boolean()
           .optional()
@@ -45,6 +57,8 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
       tags,
       version,
       compatibility,
+      appliesTo,
+      requires,
       overwrite,
     }: {
       path: string
@@ -54,6 +68,8 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
       tags?: string[]
       version?: string
       compatibility?: string[]
+      appliesTo?: string[]
+      requires?: string[]
       overwrite?: boolean
     }) => {
       const frontmatter = frontmatterSchema.parse({
@@ -62,6 +78,8 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
         tags,
         version,
         compatibility,
+        appliesTo,
+        requires,
       })
       const validation = validateFrontmatter(frontmatter)
       if (!validation.valid) {

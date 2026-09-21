@@ -22,6 +22,8 @@ export interface ContentItem {
   tags: string[]
   version: string
   compatibility: string[]
+  appliesTo: string[]
+  requires: string[]
   author: string
   created: string
   updated: string

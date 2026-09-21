@@ -13,6 +13,7 @@ import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
 import { logger } from '../logger.js'
+import { evaluateGate } from '../project-stack.js'
 import { getInstallSpecForScope } from './agents/factory.js'
 import type { Agent, OpenCodeConfig, Scope } from './shared.js'
 import { findExistingConfig, resolveGlobalDir } from './shared.js'
@@ -147,6 +148,13 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           .describe(
             'Installation scope (project or global). Requires explicit agent for global scope.'
           ),
+        force: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe(
+            'Install even when gating fails (applies-to/requires). Use only with a documented reason.'
+          ),
       },
     },
     async ({
@@ -154,11 +162,13 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
       projectDir,
       agent,
       scope,
+      force,
     }: {
       path: string
       projectDir?: string
       agent: Agent
       scope?: Scope
+      force?: boolean
     }) => {
       logger.trace({ path, projectDir, agent, scope }, 'reinstall called')
       const effectiveScope = scope ?? 'project'
@@ -222,6 +232,33 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
+
+      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, targetDir, {
+        force: force ?? false,
+      })
+      if (gate.blocked) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  blocked: true,
+                  path,
+                  reasons: gate.errors,
+                  warnings: gate.warnings,
+                  projectStacks: gate.projectStacks,
+                  mcpServers: gate.mcpServers,
+                  hint: 'Re-run with force: true to bypass gating.',
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        }
+      }
       const existing = findExistingConfig(targetDir)
 
       if (!existing) {
@@ -260,7 +297,13 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           {
             type: 'text',
             text: JSON.stringify(
-              { reinstalled: path, agent, hadPreviousInstall: uninstalled, config: result.path },
+              {
+                reinstalled: path,
+                agent,
+                hadPreviousInstall: uninstalled,
+                config: result.path,
+                warnings: gate.warnings,
+              },
               null,
               2
             ),
@@ -294,6 +337,13 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
           .describe(
             'Installation scope (project or global). Requires explicit agent for global scope.'
           ),
+        force: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe(
+            'Install even when gating fails (applies-to/requires). Use only with a documented reason.'
+          ),
       },
     },
     async ({
@@ -301,11 +351,13 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
       projectDir,
       agent,
       scope,
+      force,
     }: {
       path: string
       projectDir?: string
       agent: Agent
       scope?: Scope
+      force?: boolean
     }) => {
       logger.trace({ path, projectDir, agent, scope }, 'install called')
       const effectiveScope = scope ?? 'project'
@@ -371,6 +423,33 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
+
+      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, targetDir, {
+        force: force ?? false,
+      })
+      if (gate.blocked) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  blocked: true,
+                  path,
+                  reasons: gate.errors,
+                  warnings: gate.warnings,
+                  projectStacks: gate.projectStacks,
+                  mcpServers: gate.mcpServers,
+                  hint: 'Re-run with force: true to bypass gating.',
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        }
+      }
       const existing = findExistingConfig(targetDir)
       const configPath = existing && existing.agent === agent ? existing.path : null
 
@@ -403,7 +482,13 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
           {
             type: 'text',
             text: JSON.stringify(
-              { installed: path, agent, file: item.fullPath, config: result.path },
+              {
+                installed: path,
+                agent,
+                file: item.fullPath,
+                config: result.path,
+                warnings: gate.warnings,
+              },
               null,
               2
             ),
