@@ -13,6 +13,7 @@ import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { getInstallSpecForScope } from './agents/factory.js'
+import { globalOpencodeConfigPath, opencodeInstructionsEntry } from './opencode-config.js'
 import type { Agent, OpenCodeConfig, Scope } from './shared.js'
 import { findExistingConfig, resolveGlobalDir } from './shared.js'
 
@@ -62,6 +63,7 @@ const isDirectory = (path: string): boolean => {
 }
 
 const removeFromOpencodeInstructions = (configPath: string, entry: string): boolean => {
+  if (!existsSync(configPath)) return false
   const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
   const instructions = (config.instructions ?? []).filter(e => e !== entry)
 
@@ -88,9 +90,12 @@ export const uninstallContent = (
     case 'file': {
       let removed = false
 
-      if (scope === 'project' && spec.configUpdate === 'opencode-instructions') {
-        const opencodeConfig = configPath ?? resolve(targetDir, '.opencode', 'opencode.jsonc')
-        const entry = `.opencode/${category}/${name}.md`
+      if (spec.configUpdate === 'opencode-instructions') {
+        const entry = opencodeInstructionsEntry(scope, targetFile, category, name)
+        const opencodeConfig =
+          scope === 'global'
+            ? globalOpencodeConfigPath(targetDir)
+            : (configPath ?? resolve(targetDir, '.opencode', 'opencode.jsonc'))
         removed = removeFromOpencodeInstructions(opencodeConfig, entry)
       }
 

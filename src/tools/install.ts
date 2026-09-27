@@ -15,6 +15,7 @@ import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import { evaluateGate } from '../project-stack.js'
 import { getInstallSpecForScope } from './agents/factory.js'
+import { globalOpencodeConfigPath, opencodeInstructionsEntry } from './opencode-config.js'
 import type { Agent, OpenCodeConfig, Scope } from './shared.js'
 import { findExistingConfig, resolveGlobalDir } from './shared.js'
 import { uninstallContent } from './uninstall.js'
@@ -80,11 +81,20 @@ export const installContent = (
   switch (spec.format) {
     case 'file': {
       mkdirSync(dirname(targetFile), { recursive: true })
-      writeFileSync(targetFile, rawContent, 'utf-8')
+      // Instructions files (opencode rules/workflows) are plain markdown: drop the
+      // aik frontmatter. Agents keep it — opencode reads it as agent metadata.
+      const fileContent =
+        spec.configUpdate === 'opencode-instructions'
+          ? parseFrontmatter(rawContent).body
+          : rawContent
+      writeFileSync(targetFile, fileContent, 'utf-8')
 
-      if (scope === 'project' && spec.configUpdate === 'opencode-instructions') {
-        const opencodeConfig = openCodeConfigPath(targetDir, configPath)
-        const entry = `.opencode/${category}/${name}.md`
+      if (spec.configUpdate === 'opencode-instructions') {
+        const entry = opencodeInstructionsEntry(scope, targetFile, category, name)
+        const opencodeConfig =
+          scope === 'global'
+            ? globalOpencodeConfigPath(targetDir)
+            : openCodeConfigPath(targetDir, configPath)
         const wasAdded = updateOpencodeInstructions(opencodeConfig, entry)
         return { path: opencodeConfig, alreadyInstalled: !wasAdded }
       }

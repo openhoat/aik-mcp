@@ -30,6 +30,10 @@ vi.mock('node:fs', () => ({
   readdirSync: mockReaddirSync,
 }))
 
+vi.mock('node:os', () => ({
+  homedir: () => '/home/user',
+}))
+
 vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn() },
 }))
@@ -567,8 +571,9 @@ describe('registerReinstallTool', () => {
   })
 })
 
-describe('installContent - opencode global rules (section format)', () => {
-  test('should append section to AGENTS.md for global scope', () => {
+describe('installContent - opencode global rules (file + instructions)', () => {
+  test('should write the rule file and add it to the global instructions', () => {
+    mockReadFileSync.mockReturnValue(JSON.stringify({ instructions: [] }))
     mockExistsSync.mockReturnValue(false)
 
     const result = installContent(
@@ -583,17 +588,24 @@ describe('installContent - opencode global rules (section format)', () => {
       'global'
     )
 
-    expect(mockAppendFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('AGENTS.md'),
-      expect.stringContaining('<source>rules/my-rule</source>'),
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('/rules/my-rule.md'),
+      '# My Rule',
+      'utf-8'
+    )
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('opencode.json'),
+      expect.stringContaining('~/.config/opencode/rules/my-rule.md'),
       'utf-8'
     )
     expect(result.alreadyInstalled).toBe(false)
   })
 
-  test('should detect already installed section in AGENTS.md', () => {
+  test('should detect already installed via global instructions', () => {
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({ instructions: ['~/.config/opencode/rules/my-rule.md'] })
+    )
     mockExistsSync.mockReturnValue(true)
-    mockReadFileSync.mockReturnValue('<source>rules/my-rule</source>')
 
     const result = installContent(
       'opencode',
@@ -607,7 +619,6 @@ describe('installContent - opencode global rules (section format)', () => {
       'global'
     )
 
-    expect(mockAppendFileSync).not.toHaveBeenCalled()
     expect(result.alreadyInstalled).toBe(true)
   })
 })

@@ -36,9 +36,9 @@ export const OPENCODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
 
 export const OPENCODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
   rules: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'none',
+    format: 'file',
+    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
+    configUpdate: 'opencode-instructions',
   },
   skills: {
     format: 'directory-skill',
@@ -51,9 +51,9 @@ export const OPENCODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
     configUpdate: 'none',
   },
   workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'none',
+    format: 'file',
+    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
+    configUpdate: 'opencode-instructions',
   },
 }
 

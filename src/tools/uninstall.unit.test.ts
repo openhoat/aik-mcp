@@ -29,6 +29,10 @@ vi.mock('node:fs', () => ({
   readdirSync: mockReaddirSync,
 }))
 
+vi.mock('node:os', () => ({
+  homedir: () => '/home/user',
+}))
+
 vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn() },
 }))
@@ -497,21 +501,11 @@ describe('registerUninstallTool', () => {
   })
 })
 
-describe('uninstallContent - opencode global rules (section format)', () => {
-  test('should remove section with source tag from AGENTS.md', () => {
-    const content = [
-      '# Agents',
-      '',
-      '## My Rule',
-      '',
-      '<source>rules/my-rule</source>',
-      '',
-      '## Other',
-      '',
-      'stuff',
-      '',
-    ].join('\n')
-    mockReadFileSync.mockReturnValue(content)
+describe('uninstallContent - opencode global rules (file + instructions)', () => {
+  test('should remove the rule file and the global instructions entry', () => {
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({ instructions: ['~/.config/opencode/rules/my-rule.md', 'other.md'] })
+    )
     mockExistsSync.mockReturnValue(true)
 
     const result = uninstallContent(
@@ -525,16 +519,17 @@ describe('uninstallContent - opencode global rules (section format)', () => {
     )
 
     expect(result).toBe(true)
+    expect(mockUnlinkSync).toHaveBeenCalledWith(expect.stringContaining('/rules/my-rule.md'))
     expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('AGENTS.md'),
-      expect.not.stringContaining('rules/my-rule'),
+      expect.stringContaining('opencode.json'),
+      expect.not.stringContaining('my-rule.md'),
       'utf-8'
     )
   })
 
-  test('should return false when source tag not found globally', () => {
-    mockReadFileSync.mockReturnValue('# Agents\n\n')
-    mockExistsSync.mockReturnValue(true)
+  test('should return false when not installed globally', () => {
+    mockReadFileSync.mockReturnValue(JSON.stringify({ instructions: [] }))
+    mockExistsSync.mockReturnValue(false)
 
     const result = uninstallContent(
       'opencode',
@@ -554,7 +549,7 @@ describe('registerUninstallTool - global scope', () => {
   test('should uninstall globally with opencode agent', async () => {
     const { server, getInstallHandler } = createMockServer()
     const store = {} as ContentStore // Safe: test mock type limitation
-    const content = '# Agents\n\n## My Rule\n\n<source>rules/my-rule</source>\n'
+    const content = JSON.stringify({ instructions: ['~/.config/opencode/rules/my-rule.md'] })
     mockReadFileSync.mockReturnValue(content)
     mockExistsSync.mockReturnValue(true)
 
