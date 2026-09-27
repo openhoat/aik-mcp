@@ -1,4 +1,18 @@
+# [0.7.0](https://github.com/openhoat/aik-mcp/compare/v0.6.0...v0.7.0) (2026-09-27)
+
+### Bug Fixes
+
+* **release:** prefix version tags with v to trigger publish workflow ([0333c82](https://github.com/openhoat/aik-mcp/commit/0333c8292fa8c4d4e1d65acc6039c1f06924417f))
+
+### Features
+
+* **opencode:** reference global rules from instructions ([669f5ba](https://github.com/openhoat/aik-mcp/commit/669f5bab2c53e0e7c5a2946a05141a0aa44d8671))
+
 # [0.6.0](https://github.com/openhoat/aik-mcp/compare/v0.5.0...v0.6.0) (2026-09-21)
+
+### Chores
+
+* **release:** v0.6.0 ([b428dd1](https://github.com/openhoat/aik-mcp/commit/b428dd1499dd6caafe0df014045b90a7f06348fd))
 
 ### Features
 
