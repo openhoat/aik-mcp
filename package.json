@@ -212,7 +212,7 @@
     "typescript": "7.0.2",
     "vitepress": "1.6.4",
     "vitepress-plugin-mermaid": "2.0.17",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "wireit": "0.14.13"
   }
 }
