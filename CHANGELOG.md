@@ -1,4 +1,26 @@
+## [0.7.1](https://github.com/openhoat/aik-mcp/compare/v0.7.0...v0.7.1) (2026-09-28)
+
+### Bug Fixes
+
+* **deps:** declare conventional-commits dev deps and expose lock diff ([6df7244](https://github.com/openhoat/aik-mcp/commit/6df7244344b94681bb32d40b59da35ec3666162a))
+* **deps:** resolve transitive security advisories ([574b8e9](https://github.com/openhoat/aik-mcp/commit/574b8e9038962e64bc01a5bd796f63addd1b9c35))
+
+### Chores
+
+* **ci:** drop develop target branch from dependabot config ([2d302af](https://github.com/openhoat/aik-mcp/commit/2d302af605beea11b1ece09989561cc28c307182))
+* **ci:** upgrade toolchain to node 24 and npm 11 ([c523eaf](https://github.com/openhoat/aik-mcp/commit/c523eaff9fc9d08e1060d091eb1e66c1a426f29c))
+* **config:** migrate biome schema to 2.5.14 ([b34fd68](https://github.com/openhoat/aik-mcp/commit/b34fd685033462e3cb72586936a735e124638b7f))
+* **deps-dev:** bump vitest and @vitest/coverage-v8 to 5.0.1 ([ed9761a](https://github.com/openhoat/aik-mcp/commit/ed9761ae7f9bbba694327f55187084a1e65df1e5))
+* **deps:** bump the minor-patch group across 1 directory with 10 updates ([b49d48a](https://github.com/openhoat/aik-mcp/commit/b49d48a0bd64e1bc90c029f4ff7de05487f69b2e))
+* **deps:** sync package-lock.json for grouped minor-patch bump ([88c1426](https://github.com/openhoat/aik-mcp/commit/88c14264faf683b995da49bdff0f24b5e6366c31))
+
+### Documentation
+
+* **kanban:** add backlog items for tooling and architecture improvements ([fe53624](https://github.com/openhoat/aik-mcp/commit/fe53624bcafdd32b2e5f4b016015c0fe103b7e55))
+
 # [0.7.0](https://github.com/openhoat/aik-mcp/compare/v0.6.0...v0.7.0) (2026-09-27)
+
+* 0.7.0 ([undefined](https://github.com/openhoat/aik-mcp/commit/7a6ea66c125779b8336e57c6179088c7dcac282f))
 
 ### Bug Fixes
 
@@ -131,7 +153,7 @@
 ### Chores
 
 * **deps-dev:** bump the minor-patch group with 8 updates ([e3c02a9](https://github.com/openhoat/aik-mcp/commit/e3c02a9033eea6e947454b8623c130b73b42ec27))
-* **deps:** bump the actions group with 6 updates ([08733ac](https://github.com/openhoat/aik-mcp/commit/08733ac4b1ac81a258a1554c976d95a6aa476329))
+* **deps:** bump the actions group with 6 updates ([08733ac](https://github.com/openhoat/aik-mcp/commit/08733ac4b1ac81a258a1554c976d95a6aa476329)), closes [softprops/action-gh-release](https://github.com/softprops/action-/issues/release)
 * **release:** v0.2.2 ([a0f43e8](https://github.com/openhoat/aik-mcp/commit/a0f43e8617c1e6dc8ecf69aa9b46390bbe3b2cb4))
 
 ### Refactoring
