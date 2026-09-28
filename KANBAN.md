@@ -2,22 +2,6 @@
 
 ## Backlog
 
-### #5 [DEVOPS] Wireit CI caching — speed up CI with incremental build cache (P1)
-
-- [ ] Add `google/wireit@setup-github-actions-caching/v2` to `ci.yml`
-- [ ] Replace the discrete validate steps with a single `npm run validate`
-
-### #6 [TEST] Coverage thresholds — enforce minimum line/branch coverage (P1)
-
-- [ ] Add thresholds to `vitest.config.ts` (lines 75, functions 60, branches 65, statements 75)
-- [ ] Set `reportsDirectory: 'dist/coverage'` to align with rag-hub-mcp
-
-### #7 [ARCHITECTURE] Architecture linting with dependency-cruiser (P1)
-
-- [ ] Add the `dependency-cruiser` devDependency
-- [ ] Create `.dependency-cruiser.mjs` (no-circular + layer rules: resources/tools/transports/shared)
-- [ ] Add a `qa:arch` wireit script and include it in `validate`
-
 ### #1 [ARCHITECTURE] Remote content sources — support GitHub/Git/HTTP URLs (single source, local + remote) (P2)
 
 - [ ] Implementation
@@ -80,3 +64,25 @@
 - [ ] Replace `softprops/action-gh-release@v3` in `publish.yml`
 
 ## In Progress
+
+### #6 [TEST] Coverage thresholds — enforce minimum line/branch coverage
+
+[//]: # 28/09/2026 08:11:14
+
+- [ ] Add thresholds to `vitest.config.ts` (lines 75, functions 60, branches 65, statements 75)
+- [ ] Set `reportsDirectory: 'dist/coverage'` to align with rag-hub-mcp
+
+### #5 [DEVOPS] Wireit CI caching — speed up CI with incremental build cache
+
+[//]: # 28/09/2026 08:11:14
+
+- [ ] Add `google/wireit@setup-github-actions-caching/v2` to `ci.yml`
+- [ ] Replace the discrete validate steps with a single `npm run validate`
+
+### #7 [ARCHITECTURE] Architecture linting with dependency-cruiser
+
+[//]: # 28/09/2026 08:11:14
+
+- [ ] Add the `dependency-cruiser` devDependency
+- [ ] Create `.dependency-cruiser.mjs` (no-circular + layer rules: resources/tools/transports/shared)
+- [ ] Add a `qa:arch` wireit script and include it in `validate`
