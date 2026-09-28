@@ -8,4 +8,3 @@
 *.cjs text
 *.sh text
 Dockerfile text
-package-lock.json -diff
