@@ -20,7 +20,13 @@ npm run qa:fix
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage
+# Run unit tests only (fast)
+npm run test:unit
+
+# Run e2e tests only (spawns the built server)
+npm run test:e2e
+
+# Run unit tests with coverage
 npm run test:coverage
 ```
 

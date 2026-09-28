@@ -34,7 +34,7 @@
     "build:changelog": "tsx scripts/changelog.ts",
     "build:docs": "vitepress build docs",
     "build:test": "wireit",
-    "clean": "npm run clean:test:coverage && rimraf build dist .wireit",
+    "clean": "npm run clean:test:coverage && npm run clean:wireit && rimraf build dist",
     "clean:test:coverage": "rimraf dist/coverage",
     "clean:wireit": "rimraf .wireit",
     "postversion": "git push --follow-tags",
@@ -110,8 +110,10 @@
     },
     "qa": {
       "dependencies": [
+        "qa:arch",
         "qa:biome",
-        "qa:markdown"
+        "qa:markdown",
+        "qa:markdown:rag"
       ]
     },
     "qa:biome": {
@@ -153,23 +155,12 @@
       "output": []
     },
     "test": {
-      "command": "vitest run",
       "dependencies": [
-        "build"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "vitest.config.ts",
-        "vitest.setup.ts",
-        "tsconfig.json"
-      ],
-      "output": []
+        "test:unit"
+      ]
     },
     "test:coverage": {
-      "command": "vitest run --coverage",
-      "dependencies": [
-        "build"
-      ],
+      "command": "vitest run --project unit --coverage",
       "files": [
         "src/**/*.ts",
         "vitest.config.ts",
@@ -215,12 +206,11 @@
     },
     "validate": {
       "dependencies": [
-        "qa",
-        "qa:markdown:rag",
-        "qa:arch",
-        "typecheck",
         "build",
-        "test:coverage"
+        "qa",
+        "test:coverage",
+        "test:e2e",
+        "typecheck"
       ]
     }
   },
