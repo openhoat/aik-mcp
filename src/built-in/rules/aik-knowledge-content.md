@@ -27,7 +27,7 @@ controlled). Installing content copies it into the project's agent config
 ### Content Types
 
 | Type     | Path prefix  | Purpose                                                                                   |
-|----------|--------------|-------------------------------------------------------------------------------------------|
+| -------- | ------------ | ----------------------------------------------------------------------------------------- |
 | Rule     | `rules/`     | A standard to respect — coding conventions, quality gates, security policies              |
 | Skill    | `skills/`    | A reusable instruction block — a prompt, recipe, or procedure the agent invokes on demand |
 | Workflow | `workflows/` | A multi-step process — release, deployment, onboarding, review                            |
@@ -196,7 +196,7 @@ skills/generate-changelog/
 
 - Use lowercase, kebab-case tags: `typescript`, `error-handling`, `git-flow`.
 - Include the domain and the concern: `[typescript, testing]`, `[git,
-  workflow]`.
+workflow]`.
 - Tags drive `aik_list` filtering and `aik_search` relevance.
 
 ### Versioning

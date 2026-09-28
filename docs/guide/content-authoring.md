@@ -16,18 +16,18 @@ compatibility: [opencode, claude-code, cline]
 ---
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `title` | Yes | Human-readable name |
-| `description` | Yes | One-line summary |
-| `tags` | Yes | Lowercase kebab-case tags |
-| `version` | No | Semver for update tracking |
-| `compatibility` | No | Target agents (defaults to all) |
-| `applies-to` | No | Technology stacks this content targets (install gating) |
-| `requires` | No | MCP servers this content depends on (install gating) |
-| `author` | No | Creator identifier |
-| `created` | No | ISO date |
-| `updated` | No | ISO date |
+| Field           | Required | Description                                             |
+| --------------- | -------- | ------------------------------------------------------- |
+| `title`         | Yes      | Human-readable name                                     |
+| `description`   | Yes      | One-line summary                                        |
+| `tags`          | Yes      | Lowercase kebab-case tags                               |
+| `version`       | No       | Semver for update tracking                              |
+| `compatibility` | No       | Target agents (defaults to all)                         |
+| `applies-to`    | No       | Technology stacks this content targets (install gating) |
+| `requires`      | No       | MCP servers this content depends on (install gating)    |
+| `author`        | No       | Creator identifier                                      |
+| `created`       | No       | ISO date                                                |
+| `updated`       | No       | ISO date                                                |
 
 ### Gating
 
@@ -51,12 +51,12 @@ bypass a block.
 
 ## Content types
 
-| Type | Purpose | Path prefix |
-|------|---------|-------------|
-| Rule | Coding standards, quality gates, security policies | `rules/` |
-| Skill | Reusable prompts, recipes, procedures | `skills/` |
-| Workflow | Multi-step processes (release, deployment) | `workflows/` |
-| Agent | Specialized agent configurations | `agents/` |
+| Type     | Purpose                                            | Path prefix  |
+| -------- | -------------------------------------------------- | ------------ |
+| Rule     | Coding standards, quality gates, security policies | `rules/`     |
+| Skill    | Reusable prompts, recipes, procedures              | `skills/`    |
+| Workflow | Multi-step processes (release, deployment)         | `workflows/` |
+| Agent    | Specialized agent configurations                   | `agents/`    |
 
 ## Bundle structure
 

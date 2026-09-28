@@ -1,0 +1,14 @@
+node_modules/
+.git/
+.opencode/
+.claude/
+.clinerules/
+.vscode/
+.idea/
+build/
+dist/
+.wireit/
+coverage/
+rag/
+docs/.vitepress/
+CHANGELOG.md

@@ -124,7 +124,7 @@ sequenceDiagram
 ## Components
 
 | Component     | File                      | Responsibility                                                                   |
-|---------------|---------------------------|----------------------------------------------------------------------------------|
+| ------------- | ------------------------- | -------------------------------------------------------------------------------- |
 | Entry point   | `src/index.ts`            | CLI bootstrap, flag parsing, server start                                        |
 | Config        | `src/config.ts`           | Parse CLI flags + env vars into `AikConfig`                                      |
 | Logger        | `src/logger.ts`           | Pino structured JSON logger                                                      |

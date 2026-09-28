@@ -29,13 +29,13 @@ No database. No API to build. Just Markdown.
 ## Features
 
 | Icon | Feature                   | Why it matters                                                                                 |
-|------|---------------------------|------------------------------------------------------------------------------------------------|
+| ---- | ------------------------- | ---------------------------------------------------------------------------------------------- |
 | 📝   | **Knowledge as Markdown** | Plain `.md` files with frontmatter. Version them with git. Review them in PRs.                 |
-| ⚡    | **Zero config**           | `npx aik-mcp` runs immediately. Point it at a folder of Markdown files. Done.                  |
+| ⚡   | **Zero config**           | `npx aik-mcp` runs immediately. Point it at a folder of Markdown files. Done.                  |
 | 🔎   | **Full-text search**      | Fuzzy search across every rule, skill, and template — powered by [Fuse.js](https://fusejs.io). |
 | 📦   | **Install on demand**     | Push knowledge directly into your agent's runtime config with a single tool call.              |
 | 👀   | **Live sync**             | A file watcher detects changes instantly. No restart. No downtime.                             |
-| 🔌   | **Universal MCP**         | Works with opencode, Claude Code, Cline, Codex, Copilot, and any MCP-compatible client. |
+| 🔌   | **Universal MCP**         | Works with opencode, Claude Code, Cline, Codex, Copilot, and any MCP-compatible client.        |
 
 ## Quick start
 
@@ -107,10 +107,10 @@ Add to `opencode.jsonc` or `.opencode/opencode.jsonc` in your project:
       "enabled": true,
       "environment": {
         "AIK_CONTENT_DIR": "/path/to/your/knowledge",
-        "LOG_LEVEL": "info"
-      }
-    }
-  }
+        "LOG_LEVEL": "info",
+      },
+    },
+  },
 }
 ```
 
@@ -179,7 +179,7 @@ Content items are organized by category as **bundles** — a directory with a
 `README.md` entry file plus optional supporting assets:
 
 | Directory    | Purpose                                        |
-|--------------|------------------------------------------------|
+| ------------ | ---------------------------------------------- |
 | `rules/`     | Coding standards, conventions, quality gates   |
 | `skills/`    | Reusable instruction blocks (prompts, recipes) |
 | `workflows/` | Multi-step process definitions                 |
@@ -214,7 +214,7 @@ When a skill is installed, its assets are copied alongside `SKILL.md`.
 ## MCP tools
 
 | Tool                 | Description                                                |
-|----------------------|------------------------------------------------------------|
+| -------------------- | ---------------------------------------------------------- |
 | `aik_list`           | List content items, optionally filtered by category or tag |
 | `aik_get`            | Retrieve a specific item by path (e.g. `rules/typescript`) |
 | `aik_search`         | Full-text fuzzy search across all content                  |
@@ -229,14 +229,14 @@ When a skill is installed, its assets are copied alongside `SKILL.md`.
 ## Resources
 
 | URI                  | Description                                       |
-|----------------------|---------------------------------------------------|
+| -------------------- | ------------------------------------------------- |
 | `aik://{category}`   | List all items in a category (e.g. `aik://rules`) |
 | `aik://search?q=...` | Search items by keyword                           |
 
 ## CLI options
 
 | Flag         | Default | Description                             |
-|--------------|---------|-----------------------------------------|
+| ------------ | ------- | --------------------------------------- |
 | `--http`     | —       | Start in HTTP/SSE mode instead of stdio |
 | `--port <n>` | `3456`  | HTTP server port (only with `--http`)   |
 | `--no-watch` | —       | Disable file watching                   |
@@ -244,7 +244,7 @@ When a skill is installed, its assets are copied alongside `SKILL.md`.
 ## Environment variables
 
 | Variable          | Default | Description                                                    |
-|-------------------|---------|----------------------------------------------------------------|
+| ----------------- | ------- | -------------------------------------------------------------- |
 | `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
 | `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
 
@@ -259,16 +259,16 @@ npm run qa
 
 ### Scripts
 
-| Script              | Description                                       |
-|---------------------|---------------------------------------------------|
-| `npm run build`     | Compile TypeScript to `build/`                    |
-| `npm test`          | Run the unit test suite (Vitest)                  |
-| `npm run test:unit` | Run the unit tests only (`--project unit`)        |
-| `npm run test:e2e`  | Run the e2e tests only (`--project e2e`)          |
-| `npm run qa`        | Lint, format, architecture and docs checks        |
-| `npm run qa:fix`    | Auto-fix lint and formatting issues               |
-| `npm run typecheck` | TypeScript type checking (`tsc --noEmit`)         |
-| `npm run validate`  | Full pipeline: qa → typecheck → build → tests     |
+| Script              | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `npm run build`     | Compile TypeScript to `build/`                |
+| `npm test`          | Run the unit test suite (Vitest)              |
+| `npm run test:unit` | Run the unit tests only (`--project unit`)    |
+| `npm run test:e2e`  | Run the e2e tests only (`--project e2e`)      |
+| `npm run qa`        | Lint, format, architecture and docs checks    |
+| `npm run qa:fix`    | Auto-fix lint and formatting issues           |
+| `npm run typecheck` | TypeScript type checking (`tsc --noEmit`)     |
+| `npm run validate`  | Full pipeline: qa → typecheck → build → tests |
 
 ## Contributing
 

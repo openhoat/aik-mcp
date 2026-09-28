@@ -99,10 +99,10 @@ Point `mcp-local-rag` at the `rag/agents` directory to make the documentation qu
       "enabled": true,
       "timeout": 120000,
       "environment": {
-        "BASE_DIR": "./rag"
-      }
-    }
-  }
+        "BASE_DIR": "./rag",
+      },
+    },
+  },
 }
 ```
 
@@ -116,13 +116,13 @@ Once configured, agents can query the RAG index to understand native formats. Fo
 
 ### Pages by Agent
 
-| Agent       | Pages                                                                                                         |
-|-------------|---------------------------------------------------------------------------------------------------------------|
-| opencode    | intro, overview, rules, skills, agents, commands, config, mcp-servers, permissions, tools                     |
-| claude-code | overview, memory, skills, hooks, sub-agents, settings, mcp, permissions, best-practices, common-workflows     |
-| cline       | overview, rules, skills, plugins, config, using-commands, subagents, mcp-overview, memory-bank, cli-reference |
+| Agent       | Pages                                                                                                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| opencode    | intro, overview, rules, skills, agents, commands, config, mcp-servers, permissions, tools                                                                                                                                      |
+| claude-code | overview, memory, skills, hooks, sub-agents, settings, mcp, permissions, best-practices, common-workflows                                                                                                                      |
+| cline       | overview, rules, skills, plugins, config, using-commands, subagents, mcp-overview, memory-bank, cli-reference                                                                                                                  |
 | codex       | overview, quickstart, prompting, customization, memories, sandboxing, subagents, workflows, app, ide, cli, config, permissions, rules, hooks, agents-md, mcp, plugins, skills, best-practices, enterprise, and more (43 pages) |
-| copilot     | custom-instructions, repository-instructions, agent-instructions                                              |
+| copilot     | custom-instructions, repository-instructions, agent-instructions                                                                                                                                                               |
 
 ### Output Structure
 

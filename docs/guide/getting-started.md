@@ -58,7 +58,7 @@ Content items are organized by category as **bundles** — a directory with a
 `README.md` entry file plus optional supporting assets:
 
 | Directory    | Purpose                                        |
-|--------------|------------------------------------------------|
+| ------------ | ---------------------------------------------- |
 | `rules/`     | Coding standards, conventions, quality gates   |
 | `skills/`    | Reusable instruction blocks (prompts, recipes) |
 | `workflows/` | Multi-step process definitions                 |

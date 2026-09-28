@@ -16,10 +16,10 @@ Add to `opencode.jsonc` or `.opencode/opencode.jsonc` in your project:
       "enabled": true,
       "environment": {
         "AIK_CONTENT_DIR": "/path/to/your/knowledge",
-        "LOG_LEVEL": "info"
-      }
-    }
-  }
+        "LOG_LEVEL": "info",
+      },
+    },
+  },
 }
 ```
 
@@ -85,7 +85,7 @@ aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, 
 ## CLI options
 
 | Flag         | Default | Description                             |
-|--------------|---------|-----------------------------------------|
+| ------------ | ------- | --------------------------------------- |
 | `--http`     | —       | Start in HTTP/SSE mode instead of stdio |
 | `--port <n>` | `3456`  | HTTP server port (only with `--http`)   |
 | `--no-watch` | —       | Disable file watching                   |
@@ -93,6 +93,6 @@ aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, 
 ## Environment variables
 
 | Variable          | Default | Description                                                    |
-|-------------------|---------|----------------------------------------------------------------|
+| ----------------- | ------- | -------------------------------------------------------------- |
 | `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
 | `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |

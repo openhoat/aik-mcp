@@ -1,7 +1,7 @@
 # MCP Tools
 
 | Tool                 | Description                                                |
-|----------------------|------------------------------------------------------------|
+| -------------------- | ---------------------------------------------------------- |
 | `aik_list`           | List content items, optionally filtered by category or tag |
 | `aik_get`            | Retrieve a specific item by path (e.g. `rules/typescript`) |
 | `aik_search`         | Full-text fuzzy search across all content                  |
@@ -16,7 +16,7 @@
 ## Resources
 
 | URI                  | Description                                       |
-|----------------------|---------------------------------------------------|
+| -------------------- | ------------------------------------------------- |
 | `aik://{category}`   | List all items in a category (e.g. `aik://rules`) |
 | `aik://search?q=...` | Search items by keyword                           |
 

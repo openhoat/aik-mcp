@@ -45,10 +45,12 @@
     "qa:arch": "wireit",
     "qa:biome": "wireit",
     "qa:biome:fix": "biome check --write --unsafe .",
-    "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
+    "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix && npm run qa:prettier:fix",
     "qa:markdown": "wireit",
     "qa:markdown:fix": "markdownlint-cli2 --fix",
     "qa:markdown:rag": "wireit",
+    "qa:prettier": "wireit",
+    "qa:prettier:fix": "prettier --write \"**/*.md\"",
     "start": "node build/index.js",
     "start:docs": "vitepress dev docs",
     "start:docs:preview": "vitepress preview docs",
@@ -72,6 +74,8 @@
   },
   "files": [
     "build",
+    "!build/**/*.test.js",
+    "!build/**/*.test.d.ts",
     "LICENSE",
     "README.md"
   ],
@@ -113,7 +117,8 @@
         "qa:arch",
         "qa:biome",
         "qa:markdown",
-        "qa:markdown:rag"
+        "qa:markdown:rag",
+        "qa:prettier"
       ]
     },
     "qa:biome": {
@@ -151,6 +156,19 @@
       "files": [
         "rag/**/*.md",
         "rag/.markdownlint-cli2.yaml"
+      ],
+      "output": []
+    },
+    "qa:prettier": {
+      "command": "prettier --check \"**/*.md\"",
+      "files": [
+        "**/*.md",
+        "!CHANGELOG.md",
+        "!build",
+        "!dist",
+        "!.wireit",
+        "!rag",
+        ".prettierignore"
       ],
       "output": []
     },
@@ -239,6 +257,7 @@
     "husky": "9.1.7",
     "markdownlint-cli2": "0.23.3",
     "open-cli": "9.0.0",
+    "prettier": "3.9.9",
     "rimraf": "6.1.3",
     "tsx": "4.23.15",
     "turndown": "7.2.4",
