@@ -56,6 +56,8 @@
     "test": "wireit",
     "test:coverage": "wireit",
     "test:coverage:open": "open-cli dist/coverage/lcov-report/index.html",
+    "test:e2e": "wireit",
+    "test:unit": "wireit",
     "test:watch": "vitest",
     "typecheck": "wireit",
     "validate": "wireit",
@@ -88,6 +90,7 @@
       "files": [
         "src/**/*.ts",
         "!src/**/*.test.ts",
+        "!src/test/**",
         "src/built-in/**/*",
         "tsconfig.build.json",
         "tsconfig.json"
@@ -117,6 +120,7 @@
         "src/**/*.ts",
         "scripts/**/*.mjs",
         "*.{cjs,mjs,json}",
+        "*.ts",
         "biome.json"
       ],
       "output": []
@@ -156,6 +160,7 @@
       "files": [
         "src/**/*.ts",
         "vitest.config.ts",
+        "vitest.setup.ts",
         "tsconfig.json"
       ],
       "output": []
@@ -168,11 +173,35 @@
       "files": [
         "src/**/*.ts",
         "vitest.config.ts",
+        "vitest.setup.ts",
         "tsconfig.json"
       ],
       "output": [
         "dist/coverage/**"
       ]
+    },
+    "test:e2e": {
+      "command": "vitest run --project e2e",
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "vitest.config.ts",
+        "vitest.setup.ts",
+        "tsconfig.json"
+      ],
+      "output": []
+    },
+    "test:unit": {
+      "command": "vitest run --project unit",
+      "files": [
+        "src/**/*.ts",
+        "vitest.config.ts",
+        "vitest.setup.ts",
+        "tsconfig.json"
+      ],
+      "output": []
     },
     "typecheck": {
       "command": "tsc -p tsconfig.typecheck.json --noEmit",

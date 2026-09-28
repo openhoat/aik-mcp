@@ -91,7 +91,7 @@
       }
     },
     {
-      "includes": ["**/*.test.ts", "**/*.test.tsx"],
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/test/**/*.ts"],
       "linter": {
         "rules": {
           "style": {

@@ -15,12 +15,6 @@
 - [ ] Create `.github/workflows/docker.yml` (trigger on tag `v*`)
 - [ ] Push to `ghcr.io/openhoat/aik-mcp` (version + sha tags)
 
-### #9 [TEST] vitest setup file — centralized test env initialization (P2)
-
-- [ ] Create `vitest.setup.ts` (LOG_LEVEL, NODE_ENV, temp dir if needed)
-- [ ] Reference it in `vitest.config.ts` via `setupFiles`
-- [ ] Remove the inline `env: { LOG_LEVEL: 'silent' }` from the config
-
 ### #10 [DEPENDENCIES] Upgrade Node 22 → 24 (P2)
 
 - [ ] Update the `volta` field in `package.json` (node 24.21.0, npm 11.19.1)
@@ -46,12 +40,6 @@
 ### #4 [ARCHITECTURE] Add Antigravity CLI (agy) agent support — Google's AI coding agent, investigate skill/extension format (P3)
 
 - [ ] Implementation
-
-### #13 [ARCHITECTURE] Separate unit/e2e test projects (P3)
-
-- [ ] Split the vitest config into `unit` and `e2e` projects
-- [ ] Move `src/e2e.e2e.test.ts` to `src/test/e2e/`
-- [ ] Add `test:unit` and `test:e2e` wireit scripts
 
 ### #14 [CONFIG] Stricter npm `files` field — exclude test artifacts (P3)
 

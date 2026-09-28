@@ -60,7 +60,7 @@ export default {
   ],
   options: {
     doNotFollow: { path: ['node_modules'] },
-    exclude: { path: ['\\.(unit|e2e)\\.test\\.ts$'] },
+    exclude: { path: ['\\.(unit|e2e)\\.test\\.ts$', '^src/test/'] },
     parser: 'swc',
   },
 }
