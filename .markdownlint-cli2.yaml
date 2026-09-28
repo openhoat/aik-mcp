@@ -29,6 +29,7 @@ globs:
 
 ignores:
   - "node_modules"
+  - ".npm"
   - ".git"
   - ".opencode"
   - "build"
