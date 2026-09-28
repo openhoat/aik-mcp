@@ -35,13 +35,14 @@
     "build:docs": "vitepress build docs",
     "build:test": "wireit",
     "clean": "npm run clean:test:coverage && rimraf build dist .wireit",
-    "clean:test:coverage": "rimraf coverage",
+    "clean:test:coverage": "rimraf dist/coverage",
     "clean:wireit": "rimraf .wireit",
     "postversion": "git push --follow-tags",
     "prepare": "husky",
     "prepublishOnly": "npm run validate",
     "preversion": "npm run validate",
     "qa": "wireit",
+    "qa:arch": "wireit",
     "qa:biome": "wireit",
     "qa:biome:fix": "biome check --write --unsafe .",
     "qa:fix": "npm run qa:biome:fix && npm run qa:markdown:fix",
@@ -54,7 +55,7 @@
     "start:mcp:inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts",
     "test": "wireit",
     "test:coverage": "wireit",
-    "test:coverage:open": "open-cli coverage/lcov-report/index.html",
+    "test:coverage:open": "open-cli dist/coverage/lcov-report/index.html",
     "test:watch": "vitest",
     "typecheck": "wireit",
     "validate": "wireit",
@@ -115,8 +116,16 @@
       "files": [
         "src/**/*.ts",
         "scripts/**/*.mjs",
-        "*.{cjs,json}",
+        "*.{cjs,mjs,json}",
         "biome.json"
+      ],
+      "output": []
+    },
+    "qa:arch": {
+      "command": "depcruise src",
+      "files": [
+        "src/**/*.ts",
+        ".dependency-cruiser.mjs"
       ],
       "output": []
     },
@@ -162,7 +171,7 @@
         "tsconfig.json"
       ],
       "output": [
-        "coverage/**"
+        "dist/coverage/**"
       ]
     },
     "typecheck": {
@@ -179,9 +188,10 @@
       "dependencies": [
         "qa",
         "qa:markdown:rag",
+        "qa:arch",
         "typecheck",
         "build",
-        "test"
+        "test:coverage"
       ]
     }
   },
@@ -198,6 +208,7 @@
     "@biomejs/biome": "2.5.14",
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
+    "@swc/core": "1.16.2",
     "@types/node": "26.6.2",
     "@types/turndown": "5.0.6",
     "@vitest/coverage-v8": "5.0.1",
@@ -205,6 +216,7 @@
     "conventional-changelog-cli": "5.0.0",
     "conventional-commits-filter": "6.0.1",
     "conventional-commits-parser": "7.1.2",
+    "dependency-cruiser": "18.4.0",
     "husky": "9.1.7",
     "markdownlint-cli2": "0.23.3",
     "open-cli": "9.0.0",

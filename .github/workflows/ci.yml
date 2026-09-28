@@ -8,17 +8,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
+          cache: npm
+      - uses: google/wireit@setup-github-actions-caching/v2
       - run: npm ci
-      - name: QA
-        run: npm run qa
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Build
-        run: npm run build
-      - name: Tests with coverage
-        run: npx vitest run --coverage
+      - name: Validate
+        run: npm run validate
       - uses: codecov/codecov-action@v7
         with:
-          files: ./coverage/lcov.info
+          files: ./dist/coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
