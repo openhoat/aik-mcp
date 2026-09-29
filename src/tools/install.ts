@@ -9,6 +9,7 @@ import {
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
@@ -48,7 +49,7 @@ const copyBundleAssets = (sourceDir: string, targetDir: string): void => {
 const updateOpencodeInstructions = (configPath: string, instructionsEntry: string): boolean => {
   let config: OpenCodeConfig
   if (existsSync(configPath)) {
-    config = JSON.parse(readFileSync(configPath, 'utf-8'))
+    config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig
   } else {
     config = {}
   }
@@ -59,7 +60,7 @@ const updateOpencodeInstructions = (configPath: string, instructionsEntry: strin
   instructions.push(instructionsEntry)
   config.instructions = instructions
   mkdirSync(dirname(configPath), { recursive: true })
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
+  writeFileSync(configPath, `${stringifyJsonc(config, null, 2)}\n`, 'utf-8')
   return true
 }
 

@@ -9,6 +9,7 @@ import {
 } from 'node:fs'
 import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
@@ -64,13 +65,13 @@ const isDirectory = (path: string): boolean => {
 
 const removeFromOpencodeInstructions = (configPath: string, entry: string): boolean => {
   if (!existsSync(configPath)) return false
-  const config: OpenCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
+  const config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig
   const instructions = (config.instructions ?? []).filter(e => e !== entry)
 
   if (instructions.length === (config.instructions ?? []).length) return false
 
   config.instructions = instructions
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
+  writeFileSync(configPath, `${stringifyJsonc(config, null, 2)}\n`, 'utf-8')
   return true
 }
 
