@@ -47,6 +47,56 @@ const resolveUpdateContext = (
   return resolveProjectContext(agent, projectDir)?.context ?? null
 }
 
+interface UpdateInfo {
+  path: string
+  installedVersion: string | null
+  storeVersion: string
+}
+
+const collectUpdates = (
+  agent: Agent,
+  effectiveScope: Scope,
+  context: EngineContext,
+  store: ContentStore
+): UpdateInfo[] => {
+  const updates: UpdateInfo[] = []
+
+  for (const category of getSupportedCategories(agent, effectiveScope)) {
+    for (const storeItem of store.getByCategory(category)) {
+      const installedVersion = engineReadVersion(
+        agent,
+        itemFor(category, storeItem.name, storeItem.path),
+        context
+      )
+      if (installedVersion === null) continue
+      if (isNewer(storeItem.version, installedVersion)) {
+        updates.push({ path: storeItem.path, installedVersion, storeVersion: storeItem.version })
+      }
+    }
+  }
+  return updates
+}
+
+interface CheckContext {
+  context: EngineContext
+  configLabel: string
+}
+
+const resolveCheckContext = (
+  agent: Agent,
+  effectiveScope: Scope,
+  projectDir?: string
+): CheckContext | null => {
+  if (effectiveScope === 'global') {
+    const baseDir = getGlobalBaseDir(agent)
+    return { context: contextFor('global', baseDir, null), configLabel: baseDir }
+  }
+
+  const project = resolveProjectContext(agent, projectDir)
+  if (!project) return null
+  return { context: project.context, configLabel: project.detectedPath }
+}
+
 export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
     'check_updates',
@@ -75,48 +125,15 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
       const globalBlocked = globalUnsupported(agent, effectiveScope)
       if (globalBlocked) return globalBlocked
 
-      let context: EngineContext
-      let configLabel: string
+      const resolved = resolveCheckContext(agent, effectiveScope, projectDir)
+      if (!resolved) return errorResult('No config file found for the detected agent')
 
-      if (effectiveScope === 'global') {
-        const baseDir = getGlobalBaseDir(agent)
-        context = contextFor('global', baseDir, null)
-        configLabel = baseDir
-      } else {
-        const project = resolveProjectContext(agent, projectDir)
-        if (!project) return errorResult('No config file found for the detected agent')
-        context = project.context
-        configLabel = project.detectedPath
-      }
-
-      const updates: Array<{
-        path: string
-        installedVersion: string | null
-        storeVersion: string
-      }> = []
-
-      for (const category of getSupportedCategories(agent, effectiveScope)) {
-        for (const storeItem of store.getByCategory(category)) {
-          const installedVersion = engineReadVersion(
-            agent,
-            itemFor(category, storeItem.name, storeItem.path),
-            context
-          )
-          if (installedVersion === null) continue
-          if (isNewer(storeItem.version, installedVersion)) {
-            updates.push({
-              path: storeItem.path,
-              installedVersion,
-              storeVersion: storeItem.version,
-            })
-          }
-        }
-      }
+      const updates = collectUpdates(agent, effectiveScope, resolved.context, store)
 
       return jsonResult({
         agent,
         scope: effectiveScope,
-        config: configLabel,
+        config: resolved.configLabel,
         updateCount: updates.length,
         updates: updates.map(u => ({
           path: u.path,

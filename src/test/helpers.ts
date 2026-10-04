@@ -66,12 +66,16 @@ export const connect = async (server: ChildProcess): Promise<void> => {
   server.stdin!.write(`${JSON.stringify(notif)}\n`)
 }
 
+// Start above the ids reserved by connect() (1 = initialize, 2 = initialized) to
+// avoid matching a late response from the handshake.
+let requestCounter = 100
+
 export const request = async (
   server: ChildProcess,
   method: string,
   params?: Record<string, unknown>
 ): Promise<unknown> => {
-  const id = Math.floor(Math.random() * 1000000)
+  const id = ++requestCounter
   const req: JsonRpcRequest = {
     jsonrpc: '2.0',
     method,
@@ -104,7 +108,7 @@ export const request = async (
           /* partial line, keep waiting */
         }
       }
-      buffer = lines[lines.length - 1] ?? ''
+      buffer = lines.at(-1) ?? ''
     }
     server.stdout!.on('data', onData)
   })

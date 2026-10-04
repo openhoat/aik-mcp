@@ -46,7 +46,7 @@ const MCP_CONFIG_SOURCES: McpConfigSource[] = [
 ]
 
 const stripJsonComments = (raw: string): string =>
-  raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  raw.replace(/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
 
 const parseJsonc = (raw: string): Record<string, unknown> | null => {
   try {
@@ -58,6 +58,24 @@ const parseJsonc = (raw: string): Record<string, unknown> | null => {
       return null
     }
   }
+}
+
+const addSectionServers = (
+  parsed: Record<string, unknown>,
+  keys: string[],
+  servers: Set<string>
+): boolean => {
+  let found = false
+  for (const key of keys) {
+    const section = parsed[key]
+    if (section && typeof section === 'object' && !Array.isArray(section)) {
+      found = true
+      for (const name of Object.keys(section as Record<string, unknown>)) {
+        servers.add(name)
+      }
+    }
+  }
+  return found
 }
 
 /**
@@ -76,15 +94,7 @@ export const detectMcpServers = (projectDir: string): string[] | null => {
     const parsed = parseJsonc(readFileSync(fullPath, 'utf-8'))
     if (!parsed) continue
 
-    for (const key of source.keys) {
-      const section = parsed[key]
-      if (section && typeof section === 'object' && !Array.isArray(section)) {
-        foundConfig = true
-        for (const name of Object.keys(section as Record<string, unknown>)) {
-          servers.add(name)
-        }
-      }
-    }
+    if (addSectionServers(parsed, source.keys, servers)) foundConfig = true
   }
 
   return foundConfig ? [...servers] : null
@@ -117,6 +127,52 @@ export interface GateResult {
  * - `requires` blocks only when the MCP configuration was found and none matches.
  * When the information is missing, a warning is emitted instead of a block.
  */
+const evaluateStacks = (
+  appliesTo: string[],
+  projectStacks: string[]
+): { errors: string[]; warnings: string[] } => {
+  const errors: string[] = []
+  const warnings: string[] = []
+  if (appliesTo.length === 0) return { errors, warnings }
+
+  if (projectStacks.length === 0) {
+    warnings.push(
+      `Could not detect the project stack; this content applies to: ${appliesTo.join(', ')}.`
+    )
+  } else if (!appliesTo.some(stack => projectStacks.includes(stack))) {
+    errors.push(
+      `This content applies to [${appliesTo.join(', ')}] but the project stack is [${projectStacks.join(', ')}].`
+    )
+  }
+  return { errors, warnings }
+}
+
+const evaluateRequires = (
+  requires: string[],
+  mcpServers: string[] | null
+): { errors: string[]; warnings: string[] } => {
+  const errors: string[] = []
+  const warnings: string[] = []
+  if (requires.length === 0) return { errors, warnings }
+
+  if (mcpServers === null) {
+    warnings.push(
+      `Could not verify the required MCP server(s): ${requires.join(', ')} (no MCP configuration found).`
+    )
+    return { errors, warnings }
+  }
+
+  const missing = requires.filter(
+    req => !mcpServers.some(server => normalizeServerName(server) === normalizeServerName(req))
+  )
+  if (missing.length > 0) {
+    errors.push(
+      `Missing required MCP server(s): ${missing.join(', ')} (configured: ${mcpServers.length > 0 ? mcpServers.join(', ') : 'none'}).`
+    )
+  }
+  return { errors, warnings }
+}
+
 export const evaluateGate = (
   metadata: GatingMetadata,
   projectDir: string,
@@ -124,39 +180,11 @@ export const evaluateGate = (
 ): GateResult => {
   const projectStacks = detectStacks(projectDir)
   const mcpServers = detectMcpServers(projectDir)
-  const errors: string[] = []
-  const warnings: string[] = []
 
-  const appliesTo = metadata.appliesTo ?? []
-  if (appliesTo.length > 0) {
-    if (projectStacks.length === 0) {
-      warnings.push(
-        `Could not detect the project stack; this content applies to: ${appliesTo.join(', ')}.`
-      )
-    } else if (!appliesTo.some(stack => projectStacks.includes(stack))) {
-      errors.push(
-        `This content applies to [${appliesTo.join(', ')}] but the project stack is [${projectStacks.join(', ')}].`
-      )
-    }
-  }
-
-  const requires = metadata.requires ?? []
-  if (requires.length > 0) {
-    if (mcpServers === null) {
-      warnings.push(
-        `Could not verify the required MCP server(s): ${requires.join(', ')} (no MCP configuration found).`
-      )
-    } else {
-      const missing = requires.filter(
-        req => !mcpServers.some(server => normalizeServerName(server) === normalizeServerName(req))
-      )
-      if (missing.length > 0) {
-        errors.push(
-          `Missing required MCP server(s): ${missing.join(', ')} (configured: ${mcpServers.length > 0 ? mcpServers.join(', ') : 'none'}).`
-        )
-      }
-    }
-  }
+  const stacks = evaluateStacks(metadata.appliesTo ?? [], projectStacks)
+  const requires = evaluateRequires(metadata.requires ?? [], mcpServers)
+  const errors = [...stacks.errors, ...requires.errors]
+  const warnings = [...stacks.warnings, ...requires.warnings]
 
   const blocked = errors.length > 0 && !options.force
   return { blocked, errors, warnings, projectStacks, mcpServers }

@@ -51,12 +51,12 @@ const listAssets = (bundleDir: string): string[] => {
     }
   }
   walk(bundleDir)
-  return assets.sort()
+  return assets.sort((a, b) => a.localeCompare(b))
 }
 
 export class ContentStore {
   private items: ContentItem[] = []
-  private config: AikConfig
+  private readonly config: AikConfig
   private watcher: ReturnType<typeof watch> | null = null
 
   constructor(config: AikConfig) {
