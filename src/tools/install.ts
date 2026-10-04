@@ -1,39 +1,18 @@
-import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { evaluateGate } from '../project-stack.js'
-import { type EngineContext, type EngineItem, install as engineInstall } from './agents/engine.js'
-import { getGlobalBaseDir } from './agents/factory.js'
-import type { Agent, Scope } from './shared.js'
-import { findExistingConfig } from './shared.js'
-import { uninstallContent } from './uninstall.js'
-
-// Thin adapter over the engine, kept while update still calls it directly.
-export const installContent = (
-  agent: Agent,
-  category: Category,
-  name: string,
-  itemPath: string,
-  title: string,
-  rawContent: string,
-  targetDir: string,
-  configPath: string | null,
-  scope: Scope = 'project',
-  sourceDir: string | null = null
-): { path: string; alreadyInstalled: boolean } => {
-  return engineInstall(
-    agent,
-    { path: itemPath, category, name, title, rawContent, sourceDir },
-    {
-      scope,
-      baseDir: targetDir,
-      configPath,
-    }
-  )
-}
+import { findAgentConfig } from './agents/detection.js'
+import {
+  type EngineContext,
+  type EngineItem,
+  install as engineInstall,
+  uninstall as engineUninstall,
+} from './agents/engine.js'
+import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import type { Scope } from './agents/types.js'
 
 const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
   scope,
@@ -106,6 +85,16 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
         }
       }
 
+      const rawContent = store.readContent(item.path) ?? item.content
+      const engineItem = itemFor(
+        item.category,
+        item.name,
+        item.path,
+        item.title,
+        rawContent,
+        dirname(item.fullPath)
+      )
+
       if (effectiveScope === 'global') {
         if (agent === 'copilot') {
           return {
@@ -114,28 +103,9 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           }
         }
         const globalDir = getGlobalBaseDir(agent)
-        const uninstalled = uninstallContent(
-          agent,
-          item.category,
-          item.name,
-          path,
-          globalDir,
-          null,
-          'global'
-        )
-        const rawContent = readFileSync(item.fullPath, 'utf-8')
-        const result = engineInstall(
-          agent,
-          itemFor(
-            item.category,
-            item.name,
-            item.path,
-            item.title,
-            rawContent,
-            dirname(item.fullPath)
-          ),
-          contextFor('global', globalDir, null)
-        )
+        const context = contextFor('global', globalDir, null)
+        const uninstalled = engineUninstall(agent, engineItem, context)
+        const result = engineInstall(agent, engineItem, context)
         return {
           content: [
             {
@@ -184,7 +154,7 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           isError: true,
         }
       }
-      const existing = findExistingConfig(targetDir)
+      const existing = findAgentConfig(targetDir)
 
       if (!existing) {
         return {
@@ -194,28 +164,9 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
       }
 
       const configPath = existing.agent === agent ? existing.path : null
-      const uninstalled = uninstallContent(
-        agent,
-        item.category,
-        item.name,
-        path,
-        targetDir,
-        configPath
-      )
-
-      const rawContent = readFileSync(item.fullPath, 'utf-8')
-      const result = engineInstall(
-        agent,
-        itemFor(
-          item.category,
-          item.name,
-          item.path,
-          item.title,
-          rawContent,
-          dirname(item.fullPath)
-        ),
-        contextFor('project', targetDir, configPath)
-      )
+      const context = contextFor('project', targetDir, configPath)
+      const uninstalled = engineUninstall(agent, engineItem, context)
+      const result = engineInstall(agent, engineItem, context)
 
       return {
         content: [
@@ -295,7 +246,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         }
       }
 
-      const rawContent = readFileSync(item.fullPath, 'utf-8')
+      const rawContent = store.readContent(item.path) ?? item.content
       const engineItem = itemFor(
         item.category,
         item.name,
@@ -372,7 +323,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
           isError: true,
         }
       }
-      const existing = findExistingConfig(targetDir)
+      const existing = findAgentConfig(targetDir)
       const configPath = existing && existing.agent === agent ? existing.path : null
 
       const result = engineInstall(agent, engineItem, contextFor('project', targetDir, configPath))

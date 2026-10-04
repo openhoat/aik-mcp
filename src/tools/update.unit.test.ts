@@ -31,10 +31,8 @@ vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn() },
 }))
 
-vi.mock('./shared.js', () => ({
-  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
-  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
-  AGENTS: ['opencode', 'claude-code', 'cline'],
+vi.mock('./agents/detection.js', () => ({
+  findAgentConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
 }))
 
 vi.mock('../frontmatter.js', () => ({
@@ -43,13 +41,14 @@ vi.mock('../frontmatter.js', () => ({
     body: '# Content',
   })),
   serializeFrontmatter: vi.fn((_fm: unknown) => 'name: test\ndescription: test'),
+  serializeFrontmatterRaw: vi.fn((_fm: unknown) => 'name: test'),
 }))
 
 const { parseSemver, isNewer, registerCheckUpdatesTool, registerUpdateTool } = await import(
   './update.js'
 )
 
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
+const mockFindExistingConfig = (await import('./agents/detection.js')).findAgentConfig as Mock
 const mockParseFrontmatter = (await import('../frontmatter.js')).parseFrontmatter as Mock
 
 beforeEach(() => {
@@ -218,6 +217,7 @@ describe('registerUpdateTool', () => {
   test('should update opencode item when store version is newer', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
+      readContent: vi.fn(() => '# Content'),
       getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/rules/typescript.md',
@@ -342,6 +342,7 @@ describe('registerUpdateTool', () => {
   test('should handle update when installed version is null (fresh install)', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
+      readContent: vi.fn(() => '# Content'),
       getByPath: vi.fn(() => ({
         version: '1.0.0',
         fullPath: '/store/rules/typescript.md',
@@ -404,6 +405,7 @@ describe('registerUpdateTool - global scope', () => {
   test('should update globally for opencode', async () => {
     const { server, getUpdateHandler } = createMockServer()
     const store = {
+      readContent: vi.fn(() => '# Content'),
       getByPath: vi.fn(() => ({
         version: '2.0.0',
         fullPath: '/store/agents/reviewer.md',

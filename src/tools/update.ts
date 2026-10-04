@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
+import { findAgentConfig } from './agents/detection.js'
 import {
   type EngineContext,
   type EngineItem,
@@ -11,9 +11,8 @@ import {
   readVersion as engineReadVersion,
   uninstall as engineUninstall,
 } from './agents/engine.js'
-import { getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
-import type { Agent, Scope } from './shared.js'
-import { findExistingConfig } from './shared.js'
+import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
+import type { Scope } from './agents/types.js'
 
 export const parseSemver = (version: string): number[] => {
   return version.split('.').map(Number)
@@ -86,7 +85,7 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
         configLabel = baseDir
       } else {
         const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-        const existing = findExistingConfig(targetDir)
+        const existing = findAgentConfig(targetDir)
         if (!existing) {
           return {
             content: [{ type: 'text', text: 'No config file found for the detected agent' }],
@@ -206,7 +205,7 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
         context = contextFor('global', getGlobalBaseDir(agent), null)
       } else {
         const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-        const existing = findExistingConfig(targetDir)
+        const existing = findAgentConfig(targetDir)
         if (!existing) {
           return {
             content: [{ type: 'text', text: 'No config file found for the detected agent' }],
@@ -244,7 +243,7 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
         }
       }
 
-      const rawContent = readFileSync(storeItem.fullPath, 'utf-8')
+      const rawContent = store.readContent(storeItem.path) ?? storeItem.content
       const uninstalled = engineUninstall(
         agent,
         versionItem(path, storeItem.category, storeItem.name),

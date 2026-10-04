@@ -3,9 +3,6 @@ import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const OPENCODE_AGENT: AgentSpec = {
-  name: 'opencode',
-  displayName: 'OpenCode',
-  configPath: dir => join(dir, '.opencode', 'opencode.jsonc'),
   globalBaseDir: () => join(homedir(), '.config', 'opencode'),
   detectionPatterns: [
     { path: '.opencode/opencode.jsonc', kind: 'file' },

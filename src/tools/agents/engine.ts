@@ -13,13 +13,18 @@ import {
 import { dirname, resolve } from 'node:path'
 import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
 import { parseFrontmatter, serializeFrontmatterRaw } from '../../frontmatter.js'
-import { getLayoutEntry, getSupportedCategories, resolveContentFile } from './factory.js'
+import {
+  type Agent,
+  getLayoutEntry,
+  getSupportedCategories,
+  resolveContentFile,
+} from './factory.js'
 import {
   globalOpencodeConfigPath,
   type OpenCodeConfig,
   opencodeInstructionsEntry,
 } from './opencode-config.js'
-import type { Agent, Category, Scope } from './types.js'
+import type { Category, Scope } from './types.js'
 import { CATEGORIES } from './types.js'
 
 const ENTRY_FILE = 'README.md'

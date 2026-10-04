@@ -18,6 +18,8 @@ const mockReaddirSync =
       opts?: { withFileTypes?: boolean }
     ) => Array<{ name: string; isDirectory: () => boolean }>
   >()
+const mockUnlinkSync = vi.fn<(path: string) => void>()
+const mockRmSync = vi.fn<(path: string, opts?: { recursive?: boolean; force?: boolean }) => void>()
 
 vi.mock('node:fs', () => ({
   existsSync: mockExistsSync,
@@ -27,6 +29,8 @@ vi.mock('node:fs', () => ({
   appendFileSync: mockAppendFileSync,
   cpSync: mockCpSync,
   readdirSync: mockReaddirSync,
+  unlinkSync: mockUnlinkSync,
+  rmSync: mockRmSync,
 }))
 
 vi.mock('node:os', () => ({
@@ -37,20 +41,13 @@ vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn() },
 }))
 
-vi.mock('./shared.js', () => ({
-  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
-  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
-  AGENTS: ['opencode', 'claude-code', 'cline'],
+vi.mock('./agents/detection.js', () => ({
+  findAgentConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
 }))
 
-vi.mock('./uninstall.js', () => ({
-  uninstallContent: vi.fn(),
-}))
+const { registerInstallTool, registerReinstallTool } = await import('./install.js')
 
-const { installContent, registerInstallTool, registerReinstallTool } = await import('./install.js')
-
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
-const mockUninstallContent = (await import('./uninstall.js')).uninstallContent as Mock
+const mockFindExistingConfig = (await import('./agents/detection.js')).findAgentConfig as Mock
 
 beforeEach(() => {
   mockExistsSync.mockReset()
@@ -60,308 +57,9 @@ beforeEach(() => {
   mockAppendFileSync.mockReset()
   mockCpSync.mockReset()
   mockReaddirSync.mockReset()
+  mockUnlinkSync.mockReset()
+  mockRmSync.mockReset()
   mockFindExistingConfig.mockReset()
-  mockUninstallContent.mockReset()
-})
-
-describe('installContent - opencode rules (file format)', () => {
-  test('should install rule file and update instructions', () => {
-    mockReadFileSync.mockReturnValue(JSON.stringify({}))
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'opencode',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# My Rule',
-      '/project',
-      '/project/.opencode/opencode.jsonc'
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.opencode/rules/my-rule.md'),
-      '# My Rule',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should detect already installed via instructions', () => {
-    const config = { instructions: ['.opencode/rules/my-rule.md'] }
-    mockReadFileSync.mockReturnValue(JSON.stringify(config))
-    mockExistsSync.mockReturnValue(true)
-
-    const result = installContent(
-      'opencode',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# My Rule',
-      '/project',
-      '/project/.opencode/opencode.jsonc'
-    )
-
-    expect(result.alreadyInstalled).toBe(true)
-  })
-})
-
-describe('installContent - opencode skills (directory-skill format)', () => {
-  test('should create SKILL.md in skill directory', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'opencode',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A test skill\n---\n# My Skill\nbody',
-      '/project',
-      null
-    )
-
-    expect(mockMkdirSync).toHaveBeenCalledWith(
-      expect.stringContaining('.opencode/skills/my-skill'),
-      { recursive: true }
-    )
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.opencode/skills/my-skill/SKILL.md'),
-      expect.stringContaining('name: my-skill'),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should detect already installed skill', () => {
-    mockExistsSync.mockReturnValue(true)
-
-    const result = installContent(
-      'opencode',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A test skill\n---\nbody',
-      '/project',
-      null
-    )
-
-    expect(result.alreadyInstalled).toBe(true)
-    expect(mockWriteFileSync).not.toHaveBeenCalled()
-  })
-})
-
-describe('installContent - opencode agents (file, no config update)', () => {
-  test('should write agent file without updating instructions', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'opencode',
-      'agents',
-      'code-reviewer',
-      'agents/code-reviewer',
-      'Code Reviewer',
-      '# Code Reviewer',
-      '/project',
-      null
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.opencode/agents/code-reviewer.md'),
-      '# Code Reviewer',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - claude-code rules (file format)', () => {
-  test('should write rule file to .claude/rules/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'claude-code',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# Content',
-      '/project',
-      null
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.claude/rules/my-rule.md'),
-      '# Content',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - claude-code skills (directory-skill format)', () => {
-  test('should create SKILL.md in .claude/skills/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'claude-code',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A skill\n---\nbody',
-      '/project',
-      null
-    )
-
-    expect(mockMkdirSync).toHaveBeenCalledWith(expect.stringContaining('.claude/skills/my-skill'), {
-      recursive: true,
-    })
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.claude/skills/my-skill/SKILL.md'),
-      expect.stringContaining('name: my-skill'),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should copy bundle assets alongside SKILL.md', () => {
-    mockExistsSync.mockImplementation((path: string) => path.includes('/store/skills/my-skill'))
-    mockReaddirSync.mockReturnValue([
-      { name: 'README.md', isDirectory: () => false },
-      { name: 'scripts', isDirectory: () => true },
-    ])
-
-    const result = installContent(
-      'claude-code',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A skill\n---\nbody',
-      '/project',
-      null,
-      'project',
-      '/store/skills/my-skill'
-    )
-
-    expect(mockCpSync).toHaveBeenCalledWith(
-      '/store/skills/my-skill/scripts',
-      expect.stringContaining('.claude/skills/my-skill/scripts'),
-      { recursive: true }
-    )
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.claude/skills/my-skill/SKILL.md'),
-      expect.any(String),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - claude-code agents (file format)', () => {
-  test('should write agent file to .claude/agents/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'claude-code',
-      'agents',
-      'code-reviewer',
-      'agents/code-reviewer',
-      'Code Reviewer',
-      '# Code Reviewer',
-      '/project',
-      null
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.claude/agents/code-reviewer.md'),
-      '# Code Reviewer',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - claude-code workflows (file format)', () => {
-  test('should write workflow file to .claude/commands/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'claude-code',
-      'workflows',
-      'release',
-      'workflows/release',
-      'Release',
-      '# Release',
-      '/project',
-      null
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.claude/commands/release.md'),
-      '# Release',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - cline rules (file format)', () => {
-  test('should write rule file to .clinerules/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'cline',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# My Rule',
-      '/project',
-      null
-    )
-
-    expect(mockMkdirSync).toHaveBeenCalledWith(expect.stringContaining('.clinerules'), {
-      recursive: true,
-    })
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.clinerules/my-rule.md'),
-      '# My Rule',
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-})
-
-describe('installContent - cline skills (directory-skill format)', () => {
-  test('should create SKILL.md in .cline/skills/', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'cline',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A skill\n---\nbody',
-      '/project',
-      null
-    )
-
-    expect(mockMkdirSync).toHaveBeenCalledWith(expect.stringContaining('.cline/skills/my-skill'), {
-      recursive: true,
-    })
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('.cline/skills/my-skill/SKILL.md'),
-      expect.stringContaining('name: my-skill'),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
 })
 
 const createMockStore = (): ContentStore => {
@@ -382,6 +80,7 @@ const createMockStore = (): ContentStore => {
   }
   return {
     getByPath: vi.fn<() => typeof item | null>().mockReturnValue(item),
+    readContent: vi.fn(() => '# My Rule\ncontent'),
   } as unknown as ContentStore // Safe: test mock type limitation
 }
 
@@ -521,11 +220,12 @@ describe('registerReinstallTool', () => {
       path: '/project/.opencode/opencode.jsonc',
       agent: 'opencode',
     })
-    mockUninstallContent.mockReturnValue(true)
     mockReadFileSync.mockImplementation((path: string) =>
-      path.includes('opencode.jsonc') ? JSON.stringify({}) : '# My Rule\ncontent'
+      path.includes('opencode.jsonc')
+        ? JSON.stringify({ instructions: ['.opencode/rules/test-rule.md'] })
+        : '# My Rule\ncontent'
     )
-    mockExistsSync.mockReturnValue(false)
+    mockExistsSync.mockReturnValue(true)
 
     registerReinstallTool(server, store)
     const handler = getHandler()
@@ -538,7 +238,6 @@ describe('registerReinstallTool', () => {
     expect(parsed.reinstalled).toBe('rules/test-rule')
     expect(parsed.agent).toBe('opencode')
     expect(parsed.hadPreviousInstall).toBe(true)
-    expect(mockUninstallContent).toHaveBeenCalled()
   })
 
   test('should return error when no config found', async () => {
@@ -555,101 +254,6 @@ describe('registerReinstallTool', () => {
     })) as ToolResult
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toContain('No config file found')
-  })
-})
-
-describe('installContent - opencode global rules (file + instructions)', () => {
-  test('should write the rule file and add it to the global instructions', () => {
-    mockReadFileSync.mockReturnValue(JSON.stringify({ instructions: [] }))
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'opencode',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# My Rule',
-      '/home/user/.config/opencode',
-      null,
-      'global'
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('/rules/my-rule.md'),
-      '# My Rule',
-      'utf-8'
-    )
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('opencode.json'),
-      expect.stringContaining('~/.config/opencode/rules/my-rule.md'),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should detect already installed via global instructions', () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({ instructions: ['~/.config/opencode/rules/my-rule.md'] })
-    )
-    mockExistsSync.mockReturnValue(true)
-
-    const result = installContent(
-      'opencode',
-      'rules',
-      'my-rule',
-      'rules/my-rule',
-      'My Rule',
-      '# My Rule',
-      '/home/user/.config/opencode',
-      null,
-      'global'
-    )
-
-    expect(result.alreadyInstalled).toBe(true)
-  })
-})
-
-describe('installContent - opencode global skills (directory-skill format)', () => {
-  test('should create SKILL.md directly in skills/ under global dir', () => {
-    mockExistsSync.mockReturnValue(false)
-
-    const result = installContent(
-      'opencode',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A test skill\n---\n# My Skill\nbody',
-      '/home/user/.config/opencode',
-      null,
-      'global'
-    )
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('/skills/my-skill/SKILL.md'),
-      expect.any(String),
-      'utf-8'
-    )
-    expect(result.alreadyInstalled).toBe(false)
-  })
-
-  test('should detect already installed skill in global dir', () => {
-    mockExistsSync.mockReturnValue(true)
-
-    const result = installContent(
-      'opencode',
-      'skills',
-      'my-skill',
-      'skills/my-skill',
-      'My Skill',
-      '---\ndescription: A test skill\n---\nbody',
-      '/home/user/.config/opencode',
-      null,
-      'global'
-    )
-
-    expect(result.alreadyInstalled).toBe(true)
   })
 })
 
@@ -693,9 +297,10 @@ describe('registerReinstallTool - global scope', () => {
   test('should reinstall globally with opencode agent', async () => {
     const store = createMockStore()
     const { server, getHandler } = createMockServer()
-    mockUninstallContent.mockReturnValue(true)
-    mockReadFileSync.mockReturnValue('# My Rule\ncontent')
-    mockExistsSync.mockReturnValue(false)
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({ instructions: ['~/.config/opencode/rules/test-rule.md'] })
+    )
+    mockExistsSync.mockReturnValue(true)
 
     registerReinstallTool(server, store)
     const handler = getHandler()

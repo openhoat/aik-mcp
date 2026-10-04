@@ -27,15 +27,13 @@ vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn() },
 }))
 
-vi.mock('./shared.js', () => ({
-  findExistingConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
-  resolveGlobalDir: vi.fn<(agent: string) => string>(() => '/home/user/.config/opencode'),
-  AGENTS: ['opencode', 'claude-code', 'cline'],
+vi.mock('./agents/detection.js', () => ({
+  findAgentConfig: vi.fn<(dir: string) => { path: string; agent: string } | null>(),
 }))
 
 const { registerListInstalledTool } = await import('./list-installed.js')
 
-const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
+const mockFindExistingConfig = (await import('./agents/detection.js')).findAgentConfig as Mock
 
 beforeEach(() => {
   mockReadFileSync.mockReset()

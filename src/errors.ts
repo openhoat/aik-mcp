@@ -9,18 +9,3 @@ export class AikError extends Error {
 }
 
 export class ContentError extends AikError {}
-
-export class ValidationError extends AikError {
-  readonly errors: string[]
-
-  constructor(errors: string[]) {
-    super('VALIDATION_ERROR', 'Validation failed', { cause: errors })
-    this.errors = errors
-  }
-}
-
-export class NotFoundError extends AikError {
-  constructor(resource: string, id: string) {
-    super('NOT_FOUND', `${resource} not found: ${id}`)
-  }
-}

@@ -4,9 +4,6 @@ import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, Layout, LayoutEntry } from './types.js'
 
 export const CLINE_AGENT: AgentSpec = {
-  name: 'cline',
-  displayName: 'Cline',
-  configPath: dir => join(dir, '.cline'),
   globalBaseDir: () => {
     const primary = join(homedir(), 'Documents', 'Cline', 'Rules')
     const fallback = join(homedir(), 'Cline', 'Rules')

@@ -3,10 +3,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
+import { findAgentConfig } from './agents/detection.js'
 import { list as engineList } from './agents/engine.js'
-import { getGlobalBaseDir } from './agents/factory.js'
-import type { Agent, Scope } from './shared.js'
-import { findExistingConfig } from './shared.js'
+import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import type { Scope } from './agents/types.js'
 
 const toOutput = (items: Array<{ path: string; title: string | null }>) =>
   items.map(item => ({ path: item.path, ...(item.title ? { title: item.title } : {}) }))
@@ -72,7 +72,7 @@ export const registerListInstalledTool = (server: McpServer, _store: ContentStor
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findExistingConfig(targetDir)
+      const existing = findAgentConfig(targetDir)
 
       if (!existing) {
         return {

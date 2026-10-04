@@ -1,7 +1,7 @@
 import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { getAgentConfig, getAllAgents } from './factory.js'
-import type { Agent, DetectionPattern } from './types.js'
+import { type Agent, getAgentConfig, getAllAgents } from './factory.js'
+import type { DetectionPattern } from './types.js'
 
 export interface AgentDetection {
   agent: Agent

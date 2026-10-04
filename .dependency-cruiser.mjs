@@ -57,6 +57,14 @@ export default {
       from: { path: '^src/tools/agents/' },
       to: { path: '^src/tools/[^/]+\\.ts$' },
     },
+    {
+      name: 'tools-use-the-engine-not-fs',
+      severity: 'error',
+      comment:
+        'Root tool modules must not touch the filesystem directly; the content store and the install engine own file access.',
+      from: { path: '^src/tools/[^/]+\\.ts$' },
+      to: { path: '^(node:)?fs$' },
+    },
   ],
   options: {
     doNotFollow: { path: ['node_modules'] },

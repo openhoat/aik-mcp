@@ -3,17 +3,15 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
+import { findAgentConfig } from './agents/detection.js'
 import {
   type EngineContext,
   type EngineItem,
   uninstall as engineUninstall,
   uninstallAll as engineUninstallAll,
 } from './agents/engine.js'
-import { getGlobalBaseDir } from './agents/factory.js'
-import type { Agent, Scope } from './shared.js'
-import { findExistingConfig } from './shared.js'
-
-export { removeSections } from './agents/engine.js'
+import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import type { Scope } from './agents/types.js'
 
 const validCategories: Category[] = ['rules', 'skills', 'workflows', 'agents']
 
@@ -30,23 +28,6 @@ const itemFor = (category: Category, name: string, itemPath: string): EngineItem
   title: '',
   rawContent: '',
 })
-
-// Thin adapter over the engine, kept while update still calls it directly.
-export const uninstallContent = (
-  agent: Agent,
-  category: Category,
-  name: string,
-  itemPath: string,
-  targetDir: string,
-  configPath: string | null,
-  scope: Scope = 'project'
-): boolean => {
-  return engineUninstall(
-    agent,
-    itemFor(category, name, itemPath),
-    contextFor(scope, targetDir, configPath)
-  )
-}
 
 export const registerUninstallTool = (server: McpServer, _store: ContentStore): void => {
   server.registerTool(
@@ -125,7 +106,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findExistingConfig(targetDir)
+      const existing = findAgentConfig(targetDir)
 
       if (!existing) {
         return {
@@ -221,7 +202,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       }
 
       const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findExistingConfig(targetDir)
+      const existing = findAgentConfig(targetDir)
 
       if (!existing) {
         return {
