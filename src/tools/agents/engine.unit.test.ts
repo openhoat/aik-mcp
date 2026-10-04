@@ -102,31 +102,17 @@ describe('engine contract matrix', () => {
 })
 
 describe('engine install is idempotent', () => {
-  test('file format reports already installed on the second install', () => {
+  test.each<[string, Agent, Category]>([
+    ['file', 'opencode', 'rules'],
+    ['directory-skill', 'claude-code', 'skills'],
+    ['section', 'codex', 'rules'],
+  ])('%s format reports already installed on the second install', (_format, agent, category) => {
     const baseDir = makeBaseDir()
     const context = contextFor('project', baseDir)
-    const item = itemFor('rules')
+    const item = itemFor(category)
 
-    expect(install('opencode', item, context).alreadyInstalled).toBe(false)
-    expect(install('opencode', item, context).alreadyInstalled).toBe(true)
-  })
-
-  test('directory-skill reports already installed on the second install', () => {
-    const baseDir = makeBaseDir()
-    const context = contextFor('project', baseDir)
-    const item = itemFor('skills')
-
-    expect(install('claude-code', item, context).alreadyInstalled).toBe(false)
-    expect(install('claude-code', item, context).alreadyInstalled).toBe(true)
-  })
-
-  test('section reports already installed on the second install', () => {
-    const baseDir = makeBaseDir()
-    const context = contextFor('project', baseDir)
-    const item = itemFor('rules')
-
-    expect(install('codex', item, context).alreadyInstalled).toBe(false)
-    expect(install('codex', item, context).alreadyInstalled).toBe(true)
+    expect(install(agent, item, context).alreadyInstalled).toBe(false)
+    expect(install(agent, item, context).alreadyInstalled).toBe(true)
   })
 })
 
@@ -153,7 +139,7 @@ describe('engine uninstallAll', () => {
 
     install('codex', itemFor('rules', 'one'), context)
     install('codex', itemFor('rules', 'two'), context)
-    expect(list('codex', context).length).toBe(2)
+    expect(list('codex', context)).toHaveLength(2)
 
     expect(uninstallAll('codex', context)).toBe(2)
     expect(list('codex', context)).toEqual([])

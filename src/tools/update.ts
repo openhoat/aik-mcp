@@ -1,17 +1,23 @@
-import { dirname, resolve } from 'node:path'
+import { dirname } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { Category, ContentStore } from '../content-store.js'
+import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { findAgentConfig } from './agents/detection.js'
 import {
   type EngineContext,
-  type EngineItem,
   install as engineInstall,
   readVersion as engineReadVersion,
   uninstall as engineUninstall,
 } from './agents/engine.js'
 import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
+import {
+  contextFor,
+  errorResult,
+  globalUnsupported,
+  itemFor,
+  jsonResult,
+  resolveProjectContext,
+} from './agents/toolkit.js'
 import type { Scope } from './agents/types.js'
 
 export const parseSemver = (version: string): number[] => {
@@ -30,19 +36,16 @@ export const isNewer = (storeVersion: string, installedVersion: string): boolean
   return false
 }
 
-const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
-  scope,
-  baseDir,
-  configPath,
-})
-
-const versionItem = (path: string, category: Category, name: string): EngineItem => ({
-  path,
-  category,
-  name,
-  title: '',
-  rawContent: '',
-})
+const resolveUpdateContext = (
+  agent: Agent,
+  effectiveScope: Scope,
+  projectDir?: string
+): EngineContext | null => {
+  if (effectiveScope === 'global') {
+    return contextFor('global', getGlobalBaseDir(agent), null)
+  }
+  return resolveProjectContext(agent, projectDir)?.context ?? null
+}
 
 export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
@@ -69,32 +72,21 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
     async ({ projectDir, agent, scope }: { projectDir?: string; agent: Agent; scope?: Scope }) => {
       logger.trace({ projectDir, agent, scope }, 'check_updates called')
       const effectiveScope = scope ?? 'project'
+      const globalBlocked = globalUnsupported(agent, effectiveScope)
+      if (globalBlocked) return globalBlocked
 
       let context: EngineContext
       let configLabel: string
 
       if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
-        }
         const baseDir = getGlobalBaseDir(agent)
         context = contextFor('global', baseDir, null)
         configLabel = baseDir
       } else {
-        const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-        const existing = findAgentConfig(targetDir)
-        if (!existing) {
-          return {
-            content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-            isError: true,
-          }
-        }
-        const configPath = existing.agent === agent ? existing.path : null
-        context = contextFor('project', targetDir, configPath)
-        configLabel = existing.path
+        const project = resolveProjectContext(agent, projectDir)
+        if (!project) return errorResult('No config file found for the detected agent')
+        context = project.context
+        configLabel = project.detectedPath
       }
 
       const updates: Array<{
@@ -107,7 +99,7 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
         for (const storeItem of store.getByCategory(category)) {
           const installedVersion = engineReadVersion(
             agent,
-            versionItem(storeItem.path, category, storeItem.name),
+            itemFor(category, storeItem.name, storeItem.path),
             context
           )
           if (installedVersion === null) continue
@@ -121,28 +113,17 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
         }
       }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                agent,
-                scope: effectiveScope,
-                config: configLabel,
-                updateCount: updates.length,
-                updates: updates.map(u => ({
-                  path: u.path,
-                  installedVersion: u.installedVersion ?? '(unknown)',
-                  storeVersion: u.storeVersion,
-                })),
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      }
+      return jsonResult({
+        agent,
+        scope: effectiveScope,
+        config: configLabel,
+        updateCount: updates.length,
+        updates: updates.map(u => ({
+          path: u.path,
+          installedVersion: u.installedVersion ?? '(unknown)',
+          storeVersion: u.storeVersion,
+        })),
+      })
     }
   )
 }
@@ -183,106 +164,46 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
     }) => {
       logger.trace({ path, projectDir, agent, scope }, 'update called')
       const effectiveScope = scope ?? 'project'
-
-      if (effectiveScope === 'global' && agent === 'copilot') {
-        return {
-          content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-          isError: true,
-        }
-      }
+      const globalBlocked = globalUnsupported(agent, effectiveScope)
+      if (globalBlocked) return globalBlocked
 
       const storeItem = store.getByPath(path)
-      if (!storeItem) {
-        return {
-          content: [{ type: 'text', text: `Content not found: ${path}` }],
-          isError: true,
-        }
-      }
+      if (!storeItem) return errorResult(`Content not found: ${path}`)
 
-      let context: EngineContext
+      const context = resolveUpdateContext(agent, effectiveScope, projectDir)
+      if (!context) return errorResult('No config file found for the detected agent')
 
-      if (effectiveScope === 'global') {
-        context = contextFor('global', getGlobalBaseDir(agent), null)
-      } else {
-        const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-        const existing = findAgentConfig(targetDir)
-        if (!existing) {
-          return {
-            content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-            isError: true,
-          }
-        }
-        const configPath = existing.agent === agent ? existing.path : null
-        context = contextFor('project', targetDir, configPath)
-      }
-
-      const installedVersion = engineReadVersion(
-        agent,
-        versionItem(path, storeItem.category, storeItem.name),
-        context
-      )
+      const item = itemFor(storeItem.category, storeItem.name, storeItem.path)
+      const installedVersion = engineReadVersion(agent, item, context)
 
       if (installedVersion && !isNewer(storeItem.version, installedVersion)) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  path,
-                  status: 'already-up-to-date',
-                  scope: effectiveScope,
-                  installedVersion,
-                  storeVersion: storeItem.version,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        }
+        return jsonResult({
+          path,
+          status: 'already-up-to-date',
+          scope: effectiveScope,
+          installedVersion,
+          storeVersion: storeItem.version,
+        })
       }
 
       const rawContent = store.readContent(storeItem.path) ?? storeItem.content
-      const uninstalled = engineUninstall(
-        agent,
-        versionItem(path, storeItem.category, storeItem.name),
-        context
-      )
+      const uninstalled = engineUninstall(agent, item, context)
 
       engineInstall(
         agent,
-        {
-          path: storeItem.path,
-          category: storeItem.category,
-          name: storeItem.name,
-          title: storeItem.title,
-          rawContent,
-          sourceDir: dirname(storeItem.fullPath),
-        },
+        { ...item, title: storeItem.title, rawContent, sourceDir: dirname(storeItem.fullPath) },
         context
       )
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                updated: path,
-                agent,
-                scope: effectiveScope,
-                previousVersion: installedVersion ?? '(unknown)',
-                newVersion: storeItem.version,
-                hadPreviousInstall: uninstalled,
-                config: context.configPath ?? context.baseDir,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      }
+      return jsonResult({
+        updated: path,
+        agent,
+        scope: effectiveScope,
+        previousVersion: installedVersion ?? '(unknown)',
+        newVersion: storeItem.version,
+        hadPreviousInstall: uninstalled,
+        config: context.configPath ?? context.baseDir,
+      })
     }
   )
 }

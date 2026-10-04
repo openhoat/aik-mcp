@@ -24,7 +24,7 @@ import {
   type OpenCodeConfig,
   opencodeInstructionsEntry,
 } from './opencode-config.js'
-import type { Category, Scope } from './types.js'
+import type { Category, LayoutEntry, Scope } from './types.js'
 import { CATEGORIES } from './types.js'
 
 const ENTRY_FILE = 'README.md'
@@ -140,6 +140,67 @@ export const removeSections = (
   return { result: kept.join('\n'), count }
 }
 
+const installFile = (
+  entry: LayoutEntry,
+  item: EngineItem,
+  context: EngineContext,
+  targetFile: string
+): { path: string; alreadyInstalled: boolean } => {
+  mkdirSync(dirname(targetFile), { recursive: true })
+  // Instructions files (opencode rules/workflows) are plain markdown: drop the
+  // aik frontmatter. Agents keep it — opencode reads it as agent metadata.
+  const fileContent =
+    entry.configUpdate === 'opencode-instructions'
+      ? parseFrontmatter(item.rawContent).body
+      : item.rawContent
+  writeFileSync(targetFile, fileContent, 'utf-8')
+
+  if (entry.configUpdate !== 'opencode-instructions') {
+    return { path: targetFile, alreadyInstalled: false }
+  }
+
+  const configPath = opencodeConfigPath(context)
+  const entryValue = opencodeInstructionsEntry(context.scope, targetFile, item.category, item.name)
+  const wasAdded = updateOpencodeInstructions(configPath, entryValue)
+  return { path: configPath, alreadyInstalled: !wasAdded }
+}
+
+const installSkill = (
+  item: EngineItem,
+  targetFile: string
+): { path: string; alreadyInstalled: boolean } => {
+  if (existsSync(targetFile)) {
+    return { path: targetFile, alreadyInstalled: true }
+  }
+
+  const skillDir = dirname(targetFile)
+  mkdirSync(skillDir, { recursive: true })
+  if (item.sourceDir && existsSync(item.sourceDir)) {
+    copyBundleAssets(item.sourceDir, skillDir)
+  }
+  writeFileSync(targetFile, buildSkillContent(item.rawContent, item.name), 'utf-8')
+  return { path: targetFile, alreadyInstalled: false }
+}
+
+const installSection = (
+  item: EngineItem,
+  context: EngineContext,
+  targetFile: string
+): { path: string; alreadyInstalled: boolean } => {
+  const mdPath = context.configPath ?? targetFile
+  const sourceTag = `<source>${item.path}</source>`
+
+  const { body } = parseFrontmatter(item.rawContent)
+  const section = `\n## ${item.title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
+
+  if (existsSync(mdPath) && readFileSync(mdPath, 'utf-8').includes(sourceTag)) {
+    return { path: mdPath, alreadyInstalled: true }
+  }
+
+  appendFileSync(mdPath, section, 'utf-8')
+  return { path: mdPath, alreadyInstalled: false }
+}
+
 export const install = (
   agent: Agent,
   item: EngineItem,
@@ -149,58 +210,63 @@ export const install = (
   const targetFile = resolveContentFile(entry, context.baseDir, item.name)
 
   switch (entry.format) {
-    case 'file': {
-      mkdirSync(dirname(targetFile), { recursive: true })
-      // Instructions files (opencode rules/workflows) are plain markdown: drop the
-      // aik frontmatter. Agents keep it — opencode reads it as agent metadata.
-      const fileContent =
-        entry.configUpdate === 'opencode-instructions'
-          ? parseFrontmatter(item.rawContent).body
-          : item.rawContent
-      writeFileSync(targetFile, fileContent, 'utf-8')
-
-      if (entry.configUpdate === 'opencode-instructions') {
-        const configPath = opencodeConfigPath(context)
-        const entryValue = opencodeInstructionsEntry(
-          context.scope,
-          targetFile,
-          item.category,
-          item.name
-        )
-        const wasAdded = updateOpencodeInstructions(configPath, entryValue)
-        return { path: configPath, alreadyInstalled: !wasAdded }
-      }
-      return { path: targetFile, alreadyInstalled: false }
-    }
-
-    case 'directory-skill': {
-      if (existsSync(targetFile)) {
-        return { path: targetFile, alreadyInstalled: true }
-      }
-      const skillDir = dirname(targetFile)
-      mkdirSync(skillDir, { recursive: true })
-      if (item.sourceDir && existsSync(item.sourceDir)) {
-        copyBundleAssets(item.sourceDir, skillDir)
-      }
-      writeFileSync(targetFile, buildSkillContent(item.rawContent, item.name), 'utf-8')
-      return { path: targetFile, alreadyInstalled: false }
-    }
-
-    case 'section': {
-      const mdPath = context.configPath ?? targetFile
-      const sourceTag = `<source>${item.path}</source>`
-
-      const { body } = parseFrontmatter(item.rawContent)
-      const section = `\n## ${item.title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
-
-      if (existsSync(mdPath) && readFileSync(mdPath, 'utf-8').includes(sourceTag)) {
-        return { path: mdPath, alreadyInstalled: true }
-      }
-
-      appendFileSync(mdPath, section, 'utf-8')
-      return { path: mdPath, alreadyInstalled: false }
-    }
+    case 'file':
+      return installFile(entry, item, context, targetFile)
+    case 'directory-skill':
+      return installSkill(item, targetFile)
+    case 'section':
+      return installSection(item, context, targetFile)
   }
+}
+
+const uninstallFile = (
+  entry: LayoutEntry,
+  item: EngineItem,
+  context: EngineContext,
+  targetFile: string
+): boolean => {
+  let removed = false
+
+  if (entry.configUpdate === 'opencode-instructions') {
+    const entryValue = opencodeInstructionsEntry(
+      context.scope,
+      targetFile,
+      item.category,
+      item.name
+    )
+    removed = removeFromOpencodeInstructions(opencodeConfigPath(context), entryValue)
+  }
+
+  if (existsSync(targetFile)) {
+    unlinkSync(targetFile)
+    removed = true
+  }
+  return removed
+}
+
+const uninstallSkill = (targetFile: string): boolean => {
+  const skillDir = dirname(targetFile)
+  if (!existsSync(skillDir)) return false
+  rmSync(skillDir, { recursive: true, force: true })
+  return true
+}
+
+const uninstallSection = (
+  item: EngineItem,
+  context: EngineContext,
+  targetFile: string
+): boolean => {
+  const mdPath = context.configPath ?? targetFile
+  if (!existsSync(mdPath)) return false
+
+  const content = readFileSync(mdPath, 'utf-8')
+  const sourceTag = `<source>${item.path}</source>`
+  if (!content.includes(sourceTag)) return false
+
+  const { result, count } = removeSections(content, text => text.includes(sourceTag))
+  if (count === 0) return false
+  writeFileSync(mdPath, result, 'utf-8')
+  return true
 }
 
 export const uninstall = (agent: Agent, item: EngineItem, context: EngineContext): boolean => {
@@ -208,48 +274,12 @@ export const uninstall = (agent: Agent, item: EngineItem, context: EngineContext
   const targetFile = resolveContentFile(entry, context.baseDir, item.name)
 
   switch (entry.format) {
-    case 'file': {
-      let removed = false
-
-      if (entry.configUpdate === 'opencode-instructions') {
-        const entryValue = opencodeInstructionsEntry(
-          context.scope,
-          targetFile,
-          item.category,
-          item.name
-        )
-        removed = removeFromOpencodeInstructions(opencodeConfigPath(context), entryValue)
-      }
-
-      if (existsSync(targetFile)) {
-        unlinkSync(targetFile)
-        removed = true
-      }
-      return removed
-    }
-
-    case 'directory-skill': {
-      const skillDir = dirname(targetFile)
-      if (existsSync(skillDir)) {
-        rmSync(skillDir, { recursive: true, force: true })
-        return true
-      }
-      return false
-    }
-
-    case 'section': {
-      const mdPath = context.configPath ?? targetFile
-      if (!existsSync(mdPath)) return false
-
-      const content = readFileSync(mdPath, 'utf-8')
-      const sourceTag = `<source>${item.path}</source>`
-      if (!content.includes(sourceTag)) return false
-
-      const { result, count } = removeSections(content, text => text.includes(sourceTag))
-      if (count === 0) return false
-      writeFileSync(mdPath, result, 'utf-8')
-      return true
-    }
+    case 'file':
+      return uninstallFile(entry, item, context, targetFile)
+    case 'directory-skill':
+      return uninstallSkill(targetFile)
+    case 'section':
+      return uninstallSection(item, context, targetFile)
   }
 }
 
@@ -265,6 +295,18 @@ const listFromFileDir = (baseDir: string, category: Category): InstalledItem[] =
   return results
 }
 
+const readSkillTitle = (skillFile: string): string | null => {
+  try {
+    const { raw } = parseFrontmatter(readFileSync(skillFile, 'utf-8'))
+    const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+    const description = typeof raw.description === 'string' ? raw.description.trim() : ''
+    return name || description || null
+  } catch {
+    // ignore read errors
+    return null
+  }
+}
+
 const listFromSkillDir = (baseDir: string, category: Category): InstalledItem[] => {
   if (!isDirectory(baseDir)) return []
   const results: InstalledItem[] = []
@@ -273,19 +315,7 @@ const listFromSkillDir = (baseDir: string, category: Category): InstalledItem[] 
     if (!entry.isDirectory()) continue
     const skillFile = resolve(baseDir, entry.name, 'SKILL.md')
     if (!existsSync(skillFile)) continue
-    let title: string | null = null
-    try {
-      const content = readFileSync(skillFile, 'utf-8')
-      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/)
-      if (fmMatch) {
-        const nameMatch = fmMatch[1].match(/^name:\s*(.+)$/m)
-        const descMatch = fmMatch[1].match(/^description:\s*(.+)$/m)
-        title = nameMatch?.[1]?.trim() || descMatch?.[1]?.trim() || null
-      }
-    } catch {
-      // ignore read errors
-    }
-    results.push({ path: `${category}/${entry.name}`, title, category })
+    results.push({ path: `${category}/${entry.name}`, title: readSkillTitle(skillFile), category })
   }
   return results
 }

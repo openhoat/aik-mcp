@@ -1,33 +1,51 @@
-import { dirname, resolve } from 'node:path'
+import { dirname } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { Category, ContentStore } from '../content-store.js'
+import type { ContentItem, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { evaluateGate } from '../project-stack.js'
 import { findAgentConfig } from './agents/detection.js'
 import {
-  type EngineContext,
   type EngineItem,
   install as engineInstall,
   uninstall as engineUninstall,
 } from './agents/engine.js'
-import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
+import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import {
+  contextFor,
+  errorResult,
+  itemFor,
+  jsonResult,
+  projectBaseDir,
+  resolveProjectContext,
+  textResult,
+  unsupportedCategory,
+} from './agents/toolkit.js'
 import type { Scope } from './agents/types.js'
 
-const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
-  scope,
-  baseDir,
-  configPath,
-})
+const engineItemFor = (store: ContentStore, item: ContentItem): EngineItem =>
+  itemFor(item.category, item.name, item.path, {
+    title: item.title,
+    rawContent: store.readContent(item.path) ?? item.content,
+    sourceDir: dirname(item.fullPath),
+  })
 
-const itemFor = (
-  category: Category,
-  name: string,
-  itemPath: string,
-  title: string,
-  rawContent: string,
-  sourceDir: string | null
-): EngineItem => ({ path: itemPath, category, name, title, rawContent, sourceDir })
+const blockedResult = (path: string, gate: ReturnType<typeof evaluateGate>) =>
+  errorResult(
+    JSON.stringify(
+      {
+        blocked: true,
+        path,
+        reasons: gate.errors,
+        warnings: gate.warnings,
+        projectStacks: gate.projectStacks,
+        mcpServers: gate.mcpServers,
+        hint: 'Re-run with force: true to bypass gating.',
+      },
+      null,
+      2
+    )
+  )
 
 export const registerReinstallTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
@@ -78,120 +96,48 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
       const effectiveScope = scope ?? 'project'
 
       const item = store.getByPath(path)
-      if (!item) {
-        return {
-          content: [{ type: 'text', text: `Content not found: ${path}` }],
-          isError: true,
-        }
-      }
+      if (!item) return errorResult(`Content not found: ${path}`)
 
-      const rawContent = store.readContent(item.path) ?? item.content
-      const engineItem = itemFor(
-        item.category,
-        item.name,
-        item.path,
-        item.title,
-        rawContent,
-        dirname(item.fullPath)
-      )
+      const unsupported = unsupportedCategory(agent, effectiveScope, item.category)
+      if (unsupported) return unsupported
 
-      if (!getSupportedCategories(agent, effectiveScope).includes(item.category)) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Category "${item.category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
-            },
-          ],
-          isError: true,
-        }
-      }
+      const engineItem = engineItemFor(store, item)
 
       if (effectiveScope === 'global') {
-        const globalDir = getGlobalBaseDir(agent)
-        const context = contextFor('global', globalDir, null)
+        const context = contextFor('global', getGlobalBaseDir(agent), null)
         const uninstalled = engineUninstall(agent, engineItem, context)
         const result = engineInstall(agent, engineItem, context)
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  reinstalled: path,
-                  agent,
-                  scope: 'global',
-                  hadPreviousInstall: uninstalled,
-                  config: result.path,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        }
+        return jsonResult({
+          reinstalled: path,
+          agent,
+          scope: 'global',
+          hadPreviousInstall: uninstalled,
+          config: result.path,
+        })
       }
 
-      const targetDir = projectDir ? resolve(projectDir) : process.cwd()
+      const project = resolveProjectContext(agent, projectDir)
+      if (!project) return errorResult('No config file found for the detected agent')
 
-      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, targetDir, {
-        force: force ?? false,
+      const gate = evaluateGate(
+        { appliesTo: item.appliesTo, requires: item.requires },
+        project.baseDir,
+        {
+          force: force ?? false,
+        }
+      )
+      if (gate.blocked) return blockedResult(path, gate)
+
+      const uninstalled = engineUninstall(agent, engineItem, project.context)
+      const result = engineInstall(agent, engineItem, project.context)
+
+      return jsonResult({
+        reinstalled: path,
+        agent,
+        hadPreviousInstall: uninstalled,
+        config: result.path,
+        warnings: gate.warnings,
       })
-      if (gate.blocked) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  blocked: true,
-                  path,
-                  reasons: gate.errors,
-                  warnings: gate.warnings,
-                  projectStacks: gate.projectStacks,
-                  mcpServers: gate.mcpServers,
-                  hint: 'Re-run with force: true to bypass gating.',
-                },
-                null,
-                2
-              ),
-            },
-          ],
-          isError: true,
-        }
-      }
-      const existing = findAgentConfig(targetDir)
-
-      if (!existing) {
-        return {
-          content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-          isError: true,
-        }
-      }
-
-      const configPath = existing.agent === agent ? existing.path : null
-      const context = contextFor('project', targetDir, configPath)
-      const uninstalled = engineUninstall(agent, engineItem, context)
-      const result = engineInstall(agent, engineItem, context)
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                reinstalled: path,
-                agent,
-                hadPreviousInstall: uninstalled,
-                config: result.path,
-                warnings: gate.warnings,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      }
     }
   )
 }
@@ -245,130 +191,50 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
       const effectiveScope = scope ?? 'project'
 
       const item = store.getByPath(path)
-      if (!item) {
-        return {
-          content: [{ type: 'text', text: `Content not found: ${path}` }],
-          isError: true,
-        }
-      }
+      if (!item) return errorResult(`Content not found: ${path}`)
 
-      const rawContent = store.readContent(item.path) ?? item.content
-      const engineItem = itemFor(
-        item.category,
-        item.name,
-        item.path,
-        item.title,
-        rawContent,
-        dirname(item.fullPath)
-      )
+      const unsupported = unsupportedCategory(agent, effectiveScope, item.category)
+      if (unsupported) return unsupported
 
-      if (!getSupportedCategories(agent, effectiveScope).includes(item.category)) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Category "${item.category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
-            },
-          ],
-          isError: true,
-        }
-      }
+      const engineItem = engineItemFor(store, item)
 
       if (effectiveScope === 'global') {
-        const globalDir = getGlobalBaseDir(agent)
-        const result = engineInstall(agent, engineItem, contextFor('global', globalDir, null))
+        const context = contextFor('global', getGlobalBaseDir(agent), null)
+        const result = engineInstall(agent, engineItem, context)
         if (result.alreadyInstalled) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `Already installed globally: ${path} in ${agent} (${result.path})`,
-              },
-            ],
-          }
+          return textResult(`Already installed globally: ${path} in ${agent} (${result.path})`)
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  installed: path,
-                  agent,
-                  scope: 'global',
-                  file: item.fullPath,
-                  config: result.path,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        }
+        return jsonResult({
+          installed: path,
+          agent,
+          scope: 'global',
+          file: item.fullPath,
+          config: result.path,
+        })
       }
 
-      const targetDir = projectDir ? resolve(projectDir) : process.cwd()
+      const baseDir = projectBaseDir(projectDir)
+      const existing = findAgentConfig(baseDir)
+      const configPath = existing?.agent === agent ? existing.path : null
 
-      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, targetDir, {
+      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, baseDir, {
         force: force ?? false,
       })
-      if (gate.blocked) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  blocked: true,
-                  path,
-                  reasons: gate.errors,
-                  warnings: gate.warnings,
-                  projectStacks: gate.projectStacks,
-                  mcpServers: gate.mcpServers,
-                  hint: 'Re-run with force: true to bypass gating.',
-                },
-                null,
-                2
-              ),
-            },
-          ],
-          isError: true,
-        }
-      }
-      const existing = findAgentConfig(targetDir)
-      const configPath = existing && existing.agent === agent ? existing.path : null
+      if (gate.blocked) return blockedResult(path, gate)
 
-      const result = engineInstall(agent, engineItem, contextFor('project', targetDir, configPath))
+      const result = engineInstall(agent, engineItem, contextFor('project', baseDir, configPath))
 
       if (result.alreadyInstalled) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Already installed: ${path} in ${agent} config (${result.path})`,
-            },
-          ],
-        }
+        return textResult(`Already installed: ${path} in ${agent} config (${result.path})`)
       }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                installed: path,
-                agent,
-                file: item.fullPath,
-                config: result.path,
-                warnings: gate.warnings,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      }
+      return jsonResult({
+        installed: path,
+        agent,
+        file: item.fullPath,
+        config: result.path,
+        warnings: gate.warnings,
+      })
     }
   )
 }

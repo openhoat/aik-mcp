@@ -31,17 +31,23 @@ const detectionOrder = (): Agent[] =>
         getAgentConfig(a).agent.detectionPriority - getAgentConfig(b).agent.detectionPriority
     )
 
+const findInDirectory = (dir: string): AgentDetection | null => {
+  for (const agent of detectionOrder()) {
+    for (const pattern of getAgentConfig(agent).agent.detectionPatterns) {
+      if (matches(dir, pattern)) {
+        return { agent, path: resolve(dir, pattern.report ?? pattern.path) }
+      }
+    }
+  }
+  return null
+}
+
 export const findAgentConfig = (dir: string): AgentDetection | null => {
   let current = resolve(dir)
 
   for (let i = 0; i < 10; i++) {
-    for (const agent of detectionOrder()) {
-      for (const pattern of getAgentConfig(agent).agent.detectionPatterns) {
-        if (matches(current, pattern)) {
-          return { agent, path: resolve(current, pattern.report ?? pattern.path) }
-        }
-      }
-    }
+    const found = findInDirectory(current)
+    if (found) return found
 
     // Move up the directory tree
     const parent = resolve(current, '..')
