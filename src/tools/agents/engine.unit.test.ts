@@ -153,6 +153,7 @@ describe('engine uninstallAll', () => {
 
     install('codex', itemFor('rules', 'one'), context)
     install('codex', itemFor('rules', 'two'), context)
+    expect(list('codex', context).length).toBe(2)
 
     expect(uninstallAll('codex', context)).toBe(2)
     expect(list('codex', context)).toEqual([])

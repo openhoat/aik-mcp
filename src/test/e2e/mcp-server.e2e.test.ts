@@ -1,7 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { createFile, createTempDir, runValidate, withServer } from '../helpers.js'
+
+// Safe: MCP tool results always carry an array of text content blocks.
+type ToolResult = { content: Array<{ text: string }>; isError?: boolean }
 
 let tempDir: string
 
@@ -51,7 +54,7 @@ test('aik_list filters by category', async () => {
     const result = (await req('tools/call', {
       name: 'list',
       arguments: { category: 'rules' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const text = result.content[0].text
     expect(text).toContain('test-rule')
     expect(text).not.toContain('test-skill')
@@ -65,7 +68,7 @@ test('aik_get retrieves a specific item', async () => {
     const result = (await req('tools/call', {
       name: 'get',
       arguments: { path: 'rules/test-rule' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const text = result.content[0].text
     expect(text).toContain('Hello World')
   })
@@ -76,7 +79,7 @@ test('aik_get returns error for missing path', async () => {
     const result = (await req('tools/call', {
       name: 'get',
       arguments: { path: 'nonexistent' },
-    })) as { content: Array<{ text: string }>; isError?: boolean }
+    })) as ToolResult
     expect(result.isError).toBeTruthy()
   })
 })
@@ -88,7 +91,7 @@ test('aik_search finds items by content', async () => {
     const result = (await req('tools/call', {
       name: 'search',
       arguments: { query: 'UniqueSearchPhrase' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const text = result.content[0].text
     expect(text).toContain('test-rule')
   })
@@ -110,7 +113,7 @@ test('aik_write creates a new item', async () => {
     const result = (await req('tools/call', {
       name: 'get',
       arguments: { path: 'rules/new-rule' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(result.content[0].text).toContain('Fresh Rule')
   })
 })
@@ -138,7 +141,7 @@ test('aik_write overwrites existing item', async () => {
     const result = (await req('tools/call', {
       name: 'get',
       arguments: { path: 'rules/existing' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(result.content[0].text).toContain('Updated Content')
     expect(result.content[0].text).not.toContain('Old Content')
   })
@@ -153,7 +156,7 @@ test('aik_delete removes an item', async () => {
     const result = (await req('tools/call', {
       name: 'search',
       arguments: { query: 'Delete' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(result.content[0].text).not.toContain('to-delete')
   })
 })
@@ -168,7 +171,7 @@ test('aik_get_asset reads a bundle asset', async () => {
     const result = (await req('tools/call', {
       name: 'get_asset',
       arguments: { path: 'skills/my-skill', asset: 'assets/script.mjs' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const text = result.content[0].text
     expect(text).toContain('"asset": "assets/script.mjs"')
     expect(text).toContain('hello')
@@ -182,7 +185,7 @@ test('aik_get_asset returns error for unknown asset', async () => {
     const result = (await req('tools/call', {
       name: 'get_asset',
       arguments: { path: 'skills/my-skill', asset: 'nope.mjs' },
-    })) as { isError?: boolean; content: Array<{ text: string }> }
+    })) as ToolResult
     expect(result.isError).toBeTruthy()
     expect(result.content[0].text).toContain('Asset not found')
   })
@@ -211,7 +214,7 @@ test('aik_install skill copies assets into SKILL.md bundle', async () => {
     const result = (await req('tools/call', {
       name: 'install',
       arguments: { path: 'skills/my-skill', projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(JSON.parse(result.content[0].text).installed).toBe('skills/my-skill')
 
     const skillFile = join(tempDir, '.opencode', 'skills', 'my-skill', 'SKILL.md')
@@ -255,7 +258,7 @@ test('aik_list_installed returns installed items for opencode', async () => {
     const result = (await req('tools/call', {
       name: 'list_installed',
       arguments: { projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
 
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.agent).toBe('opencode')
@@ -282,7 +285,7 @@ test('aik_list_installed returns empty when nothing installed', async () => {
     const result = (await req('tools/call', {
       name: 'list_installed',
       arguments: { projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
 
     expect(result.content[0].text).toContain('No aik-installed items found')
   })
@@ -293,7 +296,7 @@ test('aik_list_installed returns error when no config found', async () => {
     const result = (await req('tools/call', {
       name: 'list_installed',
       arguments: { projectDir: tempDir, agent: 'opencode' },
-    })) as { isError?: boolean; content?: Array<{ text: string }> }
+    })) as { isError?: boolean; content?: Array<{ text: string }> } // Safe: result may omit content
 
     if (result.content) {
       expect(result.content[0].text).toContain('No config file')
@@ -325,7 +328,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
     const result = (await req('tools/call', {
       name: 'reinstall',
       arguments: { path: 'rules/test-rule', projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
 
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.reinstalled).toBe('rules/test-rule')
@@ -335,7 +338,7 @@ test('aik_reinstall reinstalls an item via opencode', async () => {
     const listResult = (await req('tools/call', {
       name: 'list_installed',
       arguments: { projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const listed = JSON.parse(listResult.content[0].text)
     expect(listed.count).toBe(1)
     expect(listed.items).toContainEqual({ path: 'rules/test-rule' })
@@ -355,7 +358,7 @@ test('aik_reinstall returns error for missing content', async () => {
     const result = (await req('tools/call', {
       name: 'reinstall',
       arguments: { path: 'rules/nonexistent', projectDir: tempDir, agent: 'opencode' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
 
     expect(result.content[0].text).toContain('Content not found')
   })
@@ -376,7 +379,7 @@ test('aik_install/uninstall reaches global scope for codex', async () => {
       const installResult = (await req('tools/call', {
         name: 'install',
         arguments: { path: 'rules/global-rule', agent: 'codex', scope: 'global' },
-      })) as { content: Array<{ text: string }> }
+      })) as ToolResult
       const installed = JSON.parse(installResult.content[0].text)
       expect(installed.agent).toBe('codex')
       expect(installed.scope).toBe('global')
@@ -387,18 +390,59 @@ test('aik_install/uninstall reaches global scope for codex', async () => {
       const listResult = (await req('tools/call', {
         name: 'list_installed',
         arguments: { agent: 'codex', scope: 'global' },
-      })) as { content: Array<{ text: string }> }
+      })) as ToolResult
       const listed = JSON.parse(listResult.content[0].text)
       expect(listed.items).toContainEqual(expect.objectContaining({ path: 'rules/global-rule' }))
 
       const uninstallResult = (await req('tools/call', {
         name: 'uninstall',
         arguments: { path: 'rules/global-rule', agent: 'codex', scope: 'global' },
-      })) as { content: Array<{ text: string }> }
+      })) as ToolResult
       expect(JSON.parse(uninstallResult.content[0].text).uninstalled).toBe('rules/global-rule')
       expect(readFileSync(agentsFile, 'utf-8')).not.toContain('<source>rules/global-rule</source>')
     },
     { CODEX_HOME: codexHome }
+  )
+})
+
+test('aik_install/uninstall global rules for the default opencode agent', async () => {
+  await createFile(
+    tempDir,
+    'rules/default-global',
+    '---\ntitle: Default Global\n---\n# Default Global\ncontent'
+  )
+  const home = join(tempDir, 'home')
+  await mkdir(home, { recursive: true })
+
+  await withServer(
+    tempDir,
+    async req => {
+      const installResult = (await req('tools/call', {
+        name: 'install',
+        arguments: { path: 'rules/default-global', agent: 'opencode', scope: 'global' },
+      })) as ToolResult
+      expect(JSON.parse(installResult.content[0].text).scope).toBe('global')
+
+      const ruleFile = join(home, '.config', 'opencode', 'rules', 'default-global.md')
+      const configFile = join(home, '.config', 'opencode', 'opencode.json')
+      expect(readFileSync(ruleFile, 'utf-8')).toContain('Default Global')
+      expect(readFileSync(configFile, 'utf-8')).toContain('rules/default-global.md')
+
+      const listResult = (await req('tools/call', {
+        name: 'list_installed',
+        arguments: { agent: 'opencode', scope: 'global' },
+      })) as ToolResult
+      const listed = JSON.parse(listResult.content[0].text)
+      expect(listed.items).toContainEqual(expect.objectContaining({ path: 'rules/default-global' }))
+
+      const uninstallResult = (await req('tools/call', {
+        name: 'uninstall',
+        arguments: { path: 'rules/default-global', agent: 'opencode', scope: 'global' },
+      })) as ToolResult
+      expect(JSON.parse(uninstallResult.content[0].text).uninstalled).toBe('rules/default-global')
+      expect(existsSync(ruleFile)).toBe(false)
+    },
+    { HOME: home }
   )
 })
 
@@ -413,7 +457,7 @@ test('aik_install/uninstall keeps a shared-section agent file in sync', async ()
     const installResult = (await req('tools/call', {
       name: 'install',
       arguments: { path: 'rules/section-rule', projectDir: tempDir, agent: 'codex' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(JSON.parse(installResult.content[0].text).agent).toBe('codex')
 
     const agentsFile = join(tempDir, 'AGENTS.md')
@@ -424,14 +468,14 @@ test('aik_install/uninstall keeps a shared-section agent file in sync', async ()
     const listResult = (await req('tools/call', {
       name: 'list_installed',
       arguments: { projectDir: tempDir, agent: 'codex' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     const listed = JSON.parse(listResult.content[0].text)
     expect(listed.items).toContainEqual(expect.objectContaining({ path: 'rules/section-rule' }))
 
     const uninstallResult = (await req('tools/call', {
       name: 'uninstall',
       arguments: { path: 'rules/section-rule', projectDir: tempDir, agent: 'codex' },
-    })) as { content: Array<{ text: string }> }
+    })) as ToolResult
     expect(JSON.parse(uninstallResult.content[0].text).uninstalled).toBe('rules/section-rule')
     expect(readFileSync(agentsFile, 'utf-8')).not.toContain('<source>rules/section-rule</source>')
   })

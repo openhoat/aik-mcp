@@ -24,6 +24,7 @@ export const getAgentConfig = (agent: Agent): AgentConfig => {
 }
 
 export const getAllAgents = (): Agent[] => {
+  // Safe: every key of AGENT_CONFIGS is an Agent by construction.
   return Object.keys(AGENT_CONFIGS) as Agent[]
 }
 
