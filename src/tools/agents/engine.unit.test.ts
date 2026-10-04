@@ -4,12 +4,13 @@ import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 import { install, list, readVersion, uninstall, uninstallAll } from './engine.js'
 import {
+  type Agent,
   getAllAgents,
   getLayoutEntry,
   getSupportedCategories,
   resolveContentFile,
 } from './factory.js'
-import { type Agent, CATEGORIES, type Category, type Scope } from './types.js'
+import { CATEGORIES, type Category, type Scope } from './types.js'
 
 const RAW = `---
 title: Sample

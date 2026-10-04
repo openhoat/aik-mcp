@@ -3,9 +3,6 @@ import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const CLAUDE_CODE_AGENT: AgentSpec = {
-  name: 'claude-code',
-  displayName: 'Claude Code',
-  configPath: dir => join(dir, '.claude'),
   globalBaseDir: () => join(homedir(), '.claude'),
   detectionPatterns: [
     { path: 'CLAUDE.md', kind: 'file' },

@@ -184,6 +184,35 @@ tags: [test]
     })
   })
 
+  describe('readContent and readAsset', () => {
+    test('reads the raw entry file, frontmatter included', async () => {
+      const dir = createTempDir()
+      await createBundle(dir, 'rules/my-rule', '---\ntitle: My Rule\n---\nBody')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.readContent('rules/my-rule')).toBe('---\ntitle: My Rule\n---\nBody')
+      expect(store.readContent('rules/nope')).toBeNull()
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('reads a bundled asset and rejects unknown ones', async () => {
+      const dir = createTempDir()
+      await createBundle(dir, 'skills/my-skill', '---\ntitle: My Skill\n---\nBody')
+      await createAsset(dir, 'skills/my-skill/scripts/run.sh', '#!/bin/sh')
+
+      store = new ContentStore(config(dir))
+      await store.init()
+
+      expect(store.readAsset('skills/my-skill', 'scripts/run.sh')).toBe('#!/bin/sh')
+      expect(store.readAsset('skills/my-skill', 'missing.sh')).toBeNull()
+
+      await rm(dir, { recursive: true, force: true })
+    })
+  })
+
   describe('writeContent', () => {
     test('creates a new content bundle', async () => {
       const dir = createTempDir()

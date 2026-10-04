@@ -3,9 +3,6 @@ import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const COPILOT_AGENT: AgentSpec = {
-  name: 'copilot',
-  displayName: 'GitHub Copilot',
-  configPath: dir => join(dir, '.github', 'copilot-instructions.md'),
   globalBaseDir: () => join(homedir(), '.github'),
   detectionPatterns: [{ path: '.github/copilot-instructions.md', kind: 'file' }],
   detectionPriority: 12,

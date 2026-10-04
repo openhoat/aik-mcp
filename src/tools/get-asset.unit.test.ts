@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { describe, expect, type Mock, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
 
 type ToolContent = { content: Array<{ type: string; text: string }> }
@@ -9,17 +9,13 @@ vi.mock('../logger.js', () => ({
   logger: { trace: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('node:fs', () => ({
-  readFileSync: vi.fn<(path: string, encoding?: string) => string>(),
-}))
-
 const { registerGetAssetTool } = await import('./get-asset.js')
 
-const mockReadFileSync = (await import('node:fs')).readFileSync as Mock
-
-const createMockStore = (item: unknown): ContentStore => {
-  return { getByPath: vi.fn().mockReturnValue(item) } as unknown as ContentStore // Safe: test mock type limitation
-}
+const createMockStore = (item: unknown, assetContent: string | null = null): ContentStore =>
+  ({
+    getByPath: vi.fn().mockReturnValue(item),
+    readAsset: vi.fn().mockReturnValue(assetContent),
+  }) as unknown as ContentStore // Safe: test mock type limitation
 
 const createMockServer = () => {
   let handler: ((args: Record<string, unknown>) => Promise<unknown>) | null = null
@@ -74,9 +70,8 @@ describe('registerGetAssetTool', () => {
   })
 
   test('should read an asset from the bundle', async () => {
-    mockReadFileSync.mockReturnValue('import x from "y"\n')
     const { server, getHandler } = createMockServer()
-    registerGetAssetTool(server, createMockStore(item))
+    registerGetAssetTool(server, createMockStore(item, 'import x from "y"\n'))
 
     const result = (await getHandler()({
       path: 'skills/generate-changelog',
@@ -86,9 +81,17 @@ describe('registerGetAssetTool', () => {
     expect(parsed.path).toBe('skills/generate-changelog')
     expect(parsed.asset).toBe('scripts/changelog.mjs')
     expect(parsed.content).toContain('import x')
-    expect(mockReadFileSync).toHaveBeenCalledWith(
-      '/store/skills/generate-changelog/scripts/changelog.mjs',
-      'utf-8'
-    )
+  })
+
+  test('should return error when the asset cannot be read', async () => {
+    const { server, getHandler } = createMockServer()
+    registerGetAssetTool(server, createMockStore(item, null))
+
+    const result = (await getHandler()({
+      path: 'skills/generate-changelog',
+      asset: 'scripts/changelog.mjs',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('Failed to read asset')
   })
 })

@@ -3,9 +3,6 @@ import { join } from 'node:path'
 import type { AgentConfig, AgentSpec, Category, Layout, LayoutEntry } from './types.js'
 
 export const CODEX_AGENT: AgentSpec = {
-  name: 'codex',
-  displayName: 'Codex',
-  configPath: dir => join(dir, '.codex'),
   globalBaseDir: () => process.env.CODEX_HOME || join(homedir(), '.codex'),
   detectionPatterns: [
     { path: 'AGENTS.md', kind: 'file' },

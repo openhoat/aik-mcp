@@ -4,32 +4,27 @@ import { CLINE_CONFIG } from './cline.js'
 import { CODEX_CONFIG } from './codex.js'
 import { COPILOT_CONFIG } from './copilot.js'
 import { OPENCODE_CONFIG } from './opencode.js'
-import type {
-  Agent,
-  AgentConfig,
-  Category,
-  InstallSpec,
-  Layout,
-  LayoutEntry,
-  Scope,
-} from './types.js'
+import type { AgentConfig, Category, Layout, LayoutEntry, Scope } from './types.js'
 import { CATEGORIES } from './types.js'
 
-// Centralized registry of agent configurations
-const AGENT_CONFIGS: Record<Agent, AgentConfig> = {
+// Centralized registry of agent configurations. The Agent type is derived from
+// it, so adding an agent here is the single change that widens the type.
+export const AGENT_CONFIGS = {
   opencode: OPENCODE_CONFIG,
   'claude-code': CLAUDE_CODE_CONFIG,
   cline: CLINE_CONFIG,
   codex: CODEX_CONFIG,
   copilot: COPILOT_CONFIG,
-}
+} satisfies Record<string, AgentConfig>
+
+export type Agent = keyof typeof AGENT_CONFIGS
 
 export const getAgentConfig = (agent: Agent): AgentConfig => {
   return AGENT_CONFIGS[agent]
 }
 
 export const getAllAgents = (): Agent[] => {
-  return Object.keys(AGENT_CONFIGS) as Agent[] // Safe: AGENT_CONFIGS keys match Agent type
+  return Object.keys(AGENT_CONFIGS) as Agent[]
 }
 
 const layoutFor = (agent: Agent, scope: Scope): Layout =>
@@ -59,40 +54,4 @@ export const resolveContentFile = (entry: LayoutEntry, baseDir: string, name: st
 
 export const getGlobalBaseDir = (agent: Agent): string => {
   return AGENT_CONFIGS[agent].agent.globalBaseDir()
-}
-
-// --- Compatibility shims ---------------------------------------------------
-// Kept only while the tools still call the pre-engine helpers. Removed once
-// every tool goes through the engine.
-
-const toInstallSpec = (entry: LayoutEntry): InstallSpec => ({
-  format: entry.format,
-  contentPath: (baseDir, _category, name) => resolveContentFile(entry, baseDir, name),
-  configUpdate: entry.configUpdate,
-})
-
-export const getInstallSpec = (agent: Agent, category: Category): InstallSpec => {
-  return toInstallSpec(getLayoutEntry(agent, category, 'project'))
-}
-
-export const getInstallSpecForScope = (
-  agent: Agent,
-  category: Category,
-  scope: Scope
-): InstallSpec => {
-  return toInstallSpec(getLayoutEntry(agent, category, scope))
-}
-
-export const validateGlobalSupported = (agent: Agent, category: Category): void => {
-  getLayoutEntry(agent, category, 'global')
-}
-
-export const getGlobalSupportedCategories = (agent: Agent): Category[] => {
-  return getSupportedCategories(agent, 'global')
-}
-
-export const getInstructionsCategories = (agent: Agent): Category[] => {
-  return CATEGORIES.filter(
-    category => AGENT_CONFIGS[agent].project[category]?.configUpdate === 'opencode-instructions'
-  )
 }

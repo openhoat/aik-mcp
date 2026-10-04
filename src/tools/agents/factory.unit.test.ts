@@ -9,15 +9,12 @@ import {
 } from './factory.js'
 
 describe('getAgentConfig', () => {
-  test.each([
-    ['opencode', 'OpenCode'],
-    ['claude-code', 'Claude Code'],
-    ['cline', 'Cline'],
-    ['codex', 'Codex'],
-    ['copilot', 'GitHub Copilot'],
-  ] as const)('returns the %s display name', (agent, displayName) => {
-    expect(getAgentConfig(agent).agent.name).toBe(agent)
-    expect(getAgentConfig(agent).agent.displayName).toBe(displayName)
+  test('every registered agent has detection metadata and a global base dir', () => {
+    for (const agent of getAllAgents()) {
+      const config = getAgentConfig(agent)
+      expect(config.agent.detectionPatterns.length).toBeGreaterThan(0)
+      expect(typeof config.agent.globalBaseDir).toBe('function')
+    }
   })
 })
 

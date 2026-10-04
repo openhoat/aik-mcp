@@ -1,6 +1,3 @@
-// Supported agent types
-export type Agent = 'opencode' | 'claude-code' | 'cline' | 'codex' | 'copilot'
-
 // Content category types
 export type Category = 'rules' | 'skills' | 'workflows' | 'agents'
 
@@ -38,21 +35,12 @@ export interface DetectionPattern {
   report?: string
 }
 
-// Agent-specific configuration
+// Agent detection metadata. The agent identity is the registry key, so it is
+// not repeated here.
 export interface AgentSpec {
-  name: Agent
-  displayName: string
-  configPath: (projectDir: string) => string
   globalBaseDir: () => string
   detectionPatterns: DetectionPattern[]
-  detectionPriority: number // Higher priority = detected first
-}
-
-// Installation specification for a category
-export interface InstallSpec {
-  format: InstallFormat
-  contentPath: (baseDir: string, category: string, name: string) => string
-  configUpdate: ConfigUpdate
+  detectionPriority: number // Lower priority = detected first
 }
 
 // Complete agent configuration: a project layout and an optional global layout.

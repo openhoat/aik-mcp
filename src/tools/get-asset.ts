@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
@@ -36,23 +34,17 @@ export const registerGetAssetTool = (server: McpServer, store: ContentStore): vo
         }
       }
 
-      const assetPath = join(item.fullPath, '..', asset)
-      try {
-        const content = readFileSync(assetPath, 'utf-8')
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ path, asset, content }, null, 2),
-            },
-          ],
-        }
-      } catch (err) {
-        logger.error({ err, path, asset }, 'get_asset read error')
+      const content = store.readAsset(path, asset)
+      if (content === null) {
+        logger.error({ path, asset }, 'get_asset read error')
         return {
           content: [{ type: 'text', text: `Failed to read asset: ${asset}` }],
           isError: true,
         }
+      }
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ path, asset, content }, null, 2) }],
       }
     }
   )

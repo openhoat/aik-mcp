@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative } from 'node:path'
 import { watch } from 'chokidar'
@@ -156,6 +156,28 @@ export class ContentStore {
 
   getByCategory(category: Category): ContentItem[] {
     return this.items.filter(i => i.category === category)
+  }
+
+  // Read the raw entry file (frontmatter included) of a content bundle.
+  readContent(path: string): string | null {
+    const item = this.getByPath(path)
+    if (!item) return null
+    try {
+      return readFileSync(item.fullPath, 'utf-8')
+    } catch {
+      return null
+    }
+  }
+
+  // Read a supporting asset bundled with a content item.
+  readAsset(path: string, asset: string): string | null {
+    const item = this.getByPath(path)
+    if (!item?.assets.includes(asset)) return null
+    try {
+      return readFileSync(join(dirname(item.fullPath), asset), 'utf-8')
+    } catch {
+      return null
+    }
   }
 
   async writeContent(
