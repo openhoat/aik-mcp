@@ -1,6 +1,6 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { AgentConfig, AgentSpec, Category, InstallSpec } from './types.js'
+import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const CLAUDE_CODE_AGENT: AgentSpec = {
   name: 'claude-code',
@@ -11,55 +11,38 @@ export const CLAUDE_CODE_AGENT: AgentSpec = {
   detectionPriority: 2,
 }
 
-export const CLAUDE_CODE_INSTALL_SPECS: Record<Category, InstallSpec> = {
-  rules: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'rules', `${name}.md`),
-    configUpdate: 'none',
-  },
+export const CLAUDE_CODE_PROJECT_LAYOUT: Record<Category, LayoutEntry> = {
+  rules: { format: 'file', dir: '.claude/rules', file: '{name}.md', configUpdate: 'none' },
   skills: {
     format: 'directory-skill',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'skills', name, 'SKILL.md'),
+    dir: '.claude/skills',
+    file: '{name}/SKILL.md',
     configUpdate: 'none',
   },
-  agents: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'agents', `${name}.md`),
-    configUpdate: 'none',
-  },
+  agents: { format: 'file', dir: '.claude/agents', file: '{name}.md', configUpdate: 'none' },
   workflows: {
     format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.claude', 'commands', `${name}.md`),
+    dir: '.claude/commands',
+    file: '{name}.md',
     configUpdate: 'none',
   },
 }
 
-// Global: same as project but uses ~/.claude base
-export const CLAUDE_CODE_GLOBAL_INSTALL_SPECS: Record<Category, InstallSpec> = {
-  rules: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, 'rules', `${name}.md`),
-    configUpdate: 'none',
-  },
+// Global: same shape but relative to ~/.claude
+export const CLAUDE_CODE_GLOBAL_LAYOUT: Record<Category, LayoutEntry> = {
+  rules: { format: 'file', dir: 'rules', file: '{name}.md', configUpdate: 'none' },
   skills: {
     format: 'directory-skill',
-    contentPath: (dir, _cat, name) => join(dir, 'skills', name, 'SKILL.md'),
+    dir: 'skills',
+    file: '{name}/SKILL.md',
     configUpdate: 'none',
   },
-  agents: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, cat, `${name}.md`),
-    configUpdate: 'none',
-  },
-  workflows: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, 'commands', `${name}.md`),
-    configUpdate: 'none',
-  },
+  agents: { format: 'file', dir: 'agents', file: '{name}.md', configUpdate: 'none' },
+  workflows: { format: 'file', dir: 'commands', file: '{name}.md', configUpdate: 'none' },
 }
 
 export const CLAUDE_CODE_CONFIG: AgentConfig = {
   agent: CLAUDE_CODE_AGENT,
-  installSpecs: CLAUDE_CODE_INSTALL_SPECS,
-  globalInstallSpecs: CLAUDE_CODE_GLOBAL_INSTALL_SPECS,
+  project: CLAUDE_CODE_PROJECT_LAYOUT,
+  global: CLAUDE_CODE_GLOBAL_LAYOUT,
 }

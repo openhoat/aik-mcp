@@ -1,6 +1,6 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { AgentConfig, AgentSpec, Category, InstallSpec } from './types.js'
+import type { AgentConfig, AgentSpec, Category, Layout, LayoutEntry } from './types.js'
 
 export const CODEX_AGENT: AgentSpec = {
   name: 'codex',
@@ -11,45 +11,26 @@ export const CODEX_AGENT: AgentSpec = {
   detectionPriority: 7,
 }
 
-export const CODEX_INSTALL_SPECS: Record<Category, InstallSpec> = {
-  rules: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'codex-agents-md',
-  },
+export const CODEX_PROJECT_LAYOUT: Record<Category, LayoutEntry> = {
+  rules: { format: 'section', dir: '', file: 'AGENTS.md', configUpdate: 'none' },
   skills: {
     format: 'directory-skill',
-    contentPath: (dir, _cat, name) => join(dir, '.codex', 'skills', name, 'SKILL.md'),
+    dir: '.codex/skills',
+    file: '{name}/SKILL.md',
     configUpdate: 'none',
   },
-  agents: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.codex', cat, `${name}.md`),
-    configUpdate: 'none',
-  },
-  workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'codex-agents-md',
-  },
+  agents: { format: 'file', dir: '.codex/agents', file: '{name}.md', configUpdate: 'none' },
+  workflows: { format: 'section', dir: '', file: 'AGENTS.md', configUpdate: 'none' },
 }
 
 // Codex global only supports rules and workflows (appended to AGENTS.md)
-export const CODEX_GLOBAL_INSTALL_SPECS: Partial<Record<Category, InstallSpec>> = {
-  rules: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'none',
-  },
-  workflows: {
-    format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, 'AGENTS.md'),
-    configUpdate: 'none',
-  },
+export const CODEX_GLOBAL_LAYOUT: Layout = {
+  rules: { format: 'section', dir: '', file: 'AGENTS.md', configUpdate: 'none' },
+  workflows: { format: 'section', dir: '', file: 'AGENTS.md', configUpdate: 'none' },
 }
 
 export const CODEX_CONFIG: AgentConfig = {
   agent: CODEX_AGENT,
-  installSpecs: CODEX_INSTALL_SPECS,
-  globalInstallSpecs: CODEX_GLOBAL_INSTALL_SPECS,
+  project: CODEX_PROJECT_LAYOUT,
+  global: CODEX_GLOBAL_LAYOUT,
 }

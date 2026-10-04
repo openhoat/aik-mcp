@@ -11,7 +11,23 @@ export type Scope = 'project' | 'global'
 export type InstallFormat = 'file' | 'directory-skill' | 'section'
 
 // Config update strategy per agent
-export type ConfigUpdate = 'none' | 'opencode-instructions' | 'codex-agents-md'
+export type ConfigUpdate = 'none' | 'opencode-instructions'
+
+export const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents']
+
+// A declarative description of where one category's content lives in one scope.
+export interface LayoutEntry {
+  format: InstallFormat
+  // Directory relative to the scope base directory. Empty string means the base
+  // directory itself (used by shared-section files and flat rule directories).
+  dir: string
+  // Filename template. `{name}` is interpolated per item; a literal is a shared file.
+  file: string
+  configUpdate: ConfigUpdate
+}
+
+// Per-scope layout: a category absent from the map is unsupported in that scope.
+export type Layout = Partial<Record<Category, LayoutEntry>>
 
 // Agent-specific configuration
 export interface AgentSpec {
@@ -30,12 +46,12 @@ export interface InstallSpec {
   configUpdate: ConfigUpdate
 }
 
-// Complete agent configuration
+// Complete agent configuration: a project layout and an optional global layout.
+// Every agent defines all four categories for the project scope.
 export interface AgentConfig {
   agent: AgentSpec
-  installSpecs: Record<Category, InstallSpec>
-  globalInstallSpecs?: Partial<Record<Category, InstallSpec>>
-  instructionsCategories?: Category[] // For opencode.jsonc
+  project: Record<Category, LayoutEntry>
+  global?: Layout
 }
 
 // Agent detection result and found configuration
@@ -44,5 +60,3 @@ export interface AgentDetection {
   path: string
   priority: number
 }
-
-export const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents']

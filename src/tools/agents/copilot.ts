@@ -1,6 +1,6 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { AgentConfig, AgentSpec, Category, InstallSpec } from './types.js'
+import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const COPILOT_AGENT: AgentSpec = {
   name: 'copilot',
@@ -11,25 +11,19 @@ export const COPILOT_AGENT: AgentSpec = {
   detectionPriority: 12,
 }
 
-export const COPILOT_INSTALL_SPECS: Record<Category, InstallSpec> = {
+export const COPILOT_PROJECT_LAYOUT: Record<Category, LayoutEntry> = {
   rules: {
     format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, '.github', 'copilot-instructions.md'),
+    dir: '.github',
+    file: 'copilot-instructions.md',
     configUpdate: 'none',
   },
-  skills: {
-    format: 'file',
-    contentPath: (dir, _cat, name) => join(dir, '.github', 'skills', `${name}.md`),
-    configUpdate: 'none',
-  },
-  agents: {
-    format: 'file',
-    contentPath: (dir, cat, name) => join(dir, '.github', cat, `${name}.md`),
-    configUpdate: 'none',
-  },
+  skills: { format: 'file', dir: '.github/skills', file: '{name}.md', configUpdate: 'none' },
+  agents: { format: 'file', dir: '.github/agents', file: '{name}.md', configUpdate: 'none' },
   workflows: {
     format: 'section',
-    contentPath: (dir, _cat, _name) => join(dir, '.github', 'copilot-instructions.md'),
+    dir: '.github',
+    file: 'copilot-instructions.md',
     configUpdate: 'none',
   },
 }
@@ -37,5 +31,5 @@ export const COPILOT_INSTALL_SPECS: Record<Category, InstallSpec> = {
 // Copilot does not support global scope
 export const COPILOT_CONFIG: AgentConfig = {
   agent: COPILOT_AGENT,
-  installSpecs: COPILOT_INSTALL_SPECS,
+  project: COPILOT_PROJECT_LAYOUT,
 }

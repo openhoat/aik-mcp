@@ -2,6 +2,12 @@ import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
+// The shape of the opencode configuration file the engine updates.
+export interface OpenCodeConfig {
+  instructions?: string[]
+  [key: string]: unknown
+}
+
 // Resolve the opencode config file to update for the global scope.
 // Prefers an existing opencode.json, then opencode.jsonc, defaulting to opencode.json.
 export const globalOpencodeConfigPath = (globalDir: string): string => {
