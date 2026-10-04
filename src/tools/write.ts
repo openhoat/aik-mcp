@@ -3,6 +3,63 @@ import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { frontmatterSchema, validateFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
+import { errorResult, jsonResult, type ToolResult } from './agents/toolkit.js'
+
+interface WriteArgs {
+  path: string
+  content: string
+  title?: string
+  description?: string
+  tags?: string[]
+  version?: string
+  compatibility?: string[]
+  appliesTo?: string[]
+  requires?: string[]
+  overwrite?: boolean
+}
+
+const runWrite = async (store: ContentStore, args: WriteArgs): Promise<ToolResult> => {
+  const {
+    path,
+    content,
+    title,
+    description,
+    tags,
+    version,
+    compatibility,
+    appliesTo,
+    requires,
+    overwrite,
+  } = args
+
+  const frontmatter = frontmatterSchema.parse({
+    title,
+    description,
+    tags,
+    version,
+    compatibility,
+    appliesTo,
+    requires,
+  })
+  const validation = validateFrontmatter(frontmatter)
+  if (!validation.valid) return errorResult(validation.errors.join('\n'))
+
+  logger.trace({ path, overwrite }, 'write called')
+
+  try {
+    const item = await store.writeContent(path, content, frontmatter, overwrite ?? false)
+    return jsonResult({
+      success: true,
+      path: item.path,
+      title: item.title,
+      description: item.description,
+      tags: item.tags,
+    })
+  } catch (err) {
+    logger.error({ err, path }, 'write tool error')
+    return errorResult(err instanceof Error ? err.message : String(err))
+  }
+}
 
 export const registerWriteTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
@@ -49,75 +106,6 @@ export const registerWriteTool = (server: McpServer, store: ContentStore): void 
           .describe('Set to true to overwrite an existing file'),
       },
     },
-    async ({
-      path,
-      content,
-      title,
-      description,
-      tags,
-      version,
-      compatibility,
-      appliesTo,
-      requires,
-      overwrite,
-    }: {
-      path: string
-      content: string
-      title?: string
-      description?: string
-      tags?: string[]
-      version?: string
-      compatibility?: string[]
-      appliesTo?: string[]
-      requires?: string[]
-      overwrite?: boolean
-    }) => {
-      const frontmatter = frontmatterSchema.parse({
-        title,
-        description,
-        tags,
-        version,
-        compatibility,
-        appliesTo,
-        requires,
-      })
-      const validation = validateFrontmatter(frontmatter)
-      if (!validation.valid) {
-        return {
-          content: [{ type: 'text', text: validation.errors.join('\n') }],
-          isError: true,
-        }
-      }
-
-      logger.trace({ path, overwrite }, 'write called')
-
-      try {
-        const item = await store.writeContent(path, content, frontmatter, overwrite ?? false)
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  path: item.path,
-                  title: item.title,
-                  description: item.description,
-                  tags: item.tags,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        }
-      } catch (err) {
-        logger.error({ err, path }, 'write tool error')
-        return {
-          content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],
-          isError: true,
-        }
-      }
-    }
+    args => runWrite(store, args)
   )
 }

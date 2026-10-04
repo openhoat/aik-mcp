@@ -70,7 +70,7 @@ tags: [test]
       await store.init()
 
       const all = store.getAll()
-      expect(all.length).toBe(1)
+      expect(all).toHaveLength(1)
       expect(all[0].category).toBe('rules')
       expect(all[0].path).toBe('rules/test-rule')
       expect(all[0].title).toBe('Test Rule')
@@ -89,9 +89,9 @@ tags: [test]
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getByCategory('rules').length).toBe(1)
-      expect(store.getByCategory('skills').length).toBe(1)
-      expect(store.getAll().length).toBe(2)
+      expect(store.getByCategory('rules')).toHaveLength(1)
+      expect(store.getByCategory('skills')).toHaveLength(1)
+      expect(store.getAll()).toHaveLength(2)
 
       await rm(dir, { recursive: true, force: true })
     })
@@ -104,7 +104,7 @@ tags: [test]
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()).toHaveLength(1)
       expect(store.getByPath('rules/flat')).toBeUndefined()
 
       await rm(dir, { recursive: true, force: true })
@@ -277,11 +277,11 @@ tags: [test]
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()).toHaveLength(1)
 
       const deleted = await store.deleteContent('rules/to-delete')
       expect(deleted).toBe(true)
-      expect(store.getAll().length).toBe(0)
+      expect(store.getAll()).toHaveLength(0)
       expect(existsSync(join(dir, 'rules/to-delete'))).toBe(false)
 
       await rm(dir, { recursive: true, force: true })
@@ -313,7 +313,7 @@ Original content`
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()).toHaveLength(1)
       expect(store.getAll()[0].title).toBe('Original')
 
       await store.writeContent(
@@ -325,7 +325,7 @@ Original content`
 
       await store.init()
 
-      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()).toHaveLength(1)
       expect(store.getAll()[0].title).toBe('Updated')
       expect(store.getAll()[0].description).toBe('Updated description')
 
@@ -340,7 +340,7 @@ Original content`
       store = new ContentStore({ ...config(dir), watch: true })
       await store.init()
 
-      expect(store.getAll().length).toBe(0)
+      expect(store.getAll()).toHaveLength(0)
 
       await rm(dir, { recursive: true, force: true })
     })
@@ -352,7 +352,7 @@ Original content`
       await store.init()
       store.destroy()
 
-      expect(store.getAll().length).toBe(0)
+      expect(store.getAll()).toHaveLength(0)
 
       await rm(dir, { recursive: true, force: true })
     })
@@ -368,7 +368,7 @@ Original content`
       await rm(dir, { recursive: true, force: true })
     })
 
-    test('destroy stops watcher', async () => {
+    test('destroy closes the watcher', async () => {
       const dir = createTempDir()
 
       store = new ContentStore({ ...config(dir), watch: true })
@@ -403,7 +403,7 @@ Original content`
       await allHandler!()
 
       const all = store.getAll()
-      expect(all.length).toBe(1)
+      expect(all).toHaveLength(1)
       expect(all[0].title).toBe('Test')
 
       await rm(dir, { recursive: true, force: true })
@@ -418,7 +418,7 @@ Original content`
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getAll().length).toBe(1)
+      expect(store.getAll()).toHaveLength(1)
 
       await rm(dir, { recursive: true, force: true })
     })
@@ -431,7 +431,7 @@ Original content`
       store = new ContentStore(config(dir))
       await store.init()
 
-      expect(store.getAll().length).toBe(0)
+      expect(store.getAll()).toHaveLength(0)
 
       await rm(dir, { recursive: true, force: true })
     })

@@ -181,8 +181,8 @@ describe('startHttpTransport', () => {
       await capturedHandler!(req, res)
 
       // Simulate session initialization
-      capturedOnsessioninitialized!('test-session-id')
-      // Should not throw
+      expect(capturedOnsessioninitialized).toBeTypeOf('function')
+      expect(() => capturedOnsessioninitialized!('test-session-id')).not.toThrow()
     })
 
     test('onclose removes transport from map', async () => {
@@ -192,14 +192,14 @@ describe('startHttpTransport', () => {
       await capturedHandler!(req, res)
 
       // Simulate session close
-      if (MockTransport.mock.calls.length > 0) {
-        const transport = MockTransport.mock.results[0]?.value
-        if (transport?.onclose) {
-          transport.sessionId = 'test-session-id'
-          transport.onclose()
-        }
-      }
-      // Should not throw
+      const transport = MockTransport.mock.results[0]?.value as
+        | { sessionId: string; onclose?: () => void }
+        | undefined
+      expect(transport).toBeDefined()
+      expect(transport!.onclose).toBeTypeOf('function')
+
+      transport!.sessionId = 'test-session-id'
+      expect(() => transport!.onclose!()).not.toThrow()
     })
 
     test('DELETE with valid session calls transport handleRequest', async () => {

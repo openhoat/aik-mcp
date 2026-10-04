@@ -1,7 +1,7 @@
 import type { ContentStore } from './content-store.js'
 import { validateFrontmatter } from './frontmatter.js'
 
-const VALID_CATEGORIES = ['rules', 'skills', 'workflows', 'agents']
+const VALID_CATEGORIES = new Set<string>(['rules', 'skills', 'workflows', 'agents'])
 
 export interface ValidationIssue {
   path: string
@@ -36,7 +36,7 @@ export const validateContent = (store: ContentStore): ValidationResult => {
       errors.push('body: content body is empty')
     }
 
-    if (!VALID_CATEGORIES.includes(item.category)) {
+    if (!VALID_CATEGORIES.has(item.category)) {
       errors.push(`category: "${item.category}" is not a valid category`)
     }
 
@@ -73,7 +73,6 @@ export const formatResult = (
     }
   }
 
-  lines.push('')
-  lines.push(`${result.valid} valid, ${result.invalid} invalid`)
+  lines.push('', `${result.valid} valid, ${result.invalid} invalid`)
   return lines.join('\n')
 }
