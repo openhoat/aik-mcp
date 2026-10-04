@@ -14,8 +14,12 @@ import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
 import { getInstallSpecForScope } from './agents/factory.js'
-import { globalOpencodeConfigPath, opencodeInstructionsEntry } from './opencode-config.js'
-import type { Agent, OpenCodeConfig, Scope } from './shared.js'
+import {
+  globalOpencodeConfigPath,
+  type OpenCodeConfig,
+  opencodeInstructionsEntry,
+} from './agents/opencode-config.js'
+import type { Agent, Scope } from './shared.js'
 import { findExistingConfig, resolveGlobalDir } from './shared.js'
 
 export const removeSections = (

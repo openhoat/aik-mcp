@@ -16,8 +16,12 @@ import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import { evaluateGate } from '../project-stack.js'
 import { getInstallSpecForScope } from './agents/factory.js'
-import { globalOpencodeConfigPath, opencodeInstructionsEntry } from './opencode-config.js'
-import type { Agent, OpenCodeConfig, Scope } from './shared.js'
+import {
+  globalOpencodeConfigPath,
+  type OpenCodeConfig,
+  opencodeInstructionsEntry,
+} from './agents/opencode-config.js'
+import type { Agent, Scope } from './shared.js'
 import { findExistingConfig, resolveGlobalDir } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
