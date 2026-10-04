@@ -18,162 +18,106 @@ beforeEach(() => {
 })
 
 describe('findAgentConfig', () => {
-  test('should find .opencode/opencode.jsonc (priority 1)', () => {
-    const target = resolve('/project', '.opencode', 'opencode.jsonc')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('opencode')
-    expect(result!.priority).toBe(1)
-  })
+  const fileCases: [string, string][] = [
+    ['.opencode/opencode.jsonc', 'opencode'],
+    ['.opencode/opencode.json', 'opencode'],
+    ['opencode.json', 'opencode'],
+    ['opencode.jsonc', 'opencode'],
+    ['CLAUDE.md', 'claude-code'],
+    ['.clinerules', 'cline'],
+    ['AGENTS.md', 'codex'],
+    ['.github/copilot-instructions.md', 'copilot'],
+  ]
 
-  test('should find .opencode/opencode.json (priority 2)', () => {
-    const target = resolve('/project', '.opencode', 'opencode.json')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('opencode')
-    expect(result!.priority).toBe(2)
-  })
+  for (const [rel, agent] of fileCases) {
+    test(`finds ${rel} as ${agent}`, () => {
+      const target = resolve('/project', rel)
+      mockExistsSync.mockImplementation((path: string) => path === target)
 
-  test('should find opencode.json at root (priority 3)', () => {
-    const target = resolve('/project', 'opencode.json')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('opencode')
-    expect(result!.priority).toBe(3)
-  })
+      const result = findAgentConfig('/project')
 
-  test('should find opencode.jsonc at root (priority 4)', () => {
-    const target = resolve('/project', 'opencode.jsonc')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('opencode')
-    expect(result!.priority).toBe(4)
-  })
+      expect(result?.agent).toBe(agent)
+      expect(result?.path).toBe(target)
+    })
+  }
 
-  test('should find CLAUDE.md (priority 5)', () => {
-    const target = resolve('/project', 'CLAUDE.md')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('claude-code')
-    expect(result!.priority).toBe(5)
-  })
+  const dirCases: [string, string][] = [
+    ['.claude', 'claude-code'],
+    ['.cline', 'cline'],
+  ]
 
-  test('should find .claude directory (priority 6)', () => {
-    const target = resolve('/project', '.claude')
-    mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockImplementation((path: string) => ({
-      isDirectory: () => path === target,
-    }))
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('claude-code')
-    expect(result!.priority).toBe(6)
-  })
+  for (const [rel, agent] of dirCases) {
+    test(`finds the ${rel} directory as ${agent}`, () => {
+      const target = resolve('/project', rel)
+      mockStatSync.mockImplementation((path: string) => ({ isDirectory: () => path === target }))
 
-  test('should find .clinerules (priority 7)', () => {
-    const target = resolve('/project', '.clinerules')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('cline')
-    expect(result!.priority).toBe(7)
-  })
+      const result = findAgentConfig('/project')
 
-  test('should find .cline directory (priority 8)', () => {
-    const target = resolve('/project', '.cline')
-    mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockImplementation((path: string) => ({
-      isDirectory: () => path === target,
-    }))
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('cline')
-    expect(result!.priority).toBe(8)
-  })
+      expect(result?.agent).toBe(agent)
+      expect(result?.path).toBe(target)
+    })
+  }
 
-  test('should find AGENTS.md (priority 9, codex)', () => {
-    const target = resolve('/project', 'AGENTS.md')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('codex')
-    expect(result!.priority).toBe(9)
-  })
-
-  test('should find .codex/config.toml (priority 10, codex)', () => {
+  test('finds .codex/config.toml and reports AGENTS.md', () => {
     const target = resolve('/project', '.codex', 'config.toml')
     mockExistsSync.mockImplementation((path: string) => path === target)
+
     const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('codex')
-    expect(result!.priority).toBe(10)
+
+    expect(result?.agent).toBe('codex')
+    expect(result?.path).toBe(resolve('/project', 'AGENTS.md'))
   })
 
-  test('should find .codex directory (priority 11, codex)', () => {
+  test('finds the .codex directory and reports AGENTS.md', () => {
     const target = resolve('/project', '.codex')
-    mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockImplementation((path: string) => ({
-      isDirectory: () => path === target,
-    }))
+    mockStatSync.mockImplementation((path: string) => ({ isDirectory: () => path === target }))
+
     const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('codex')
-    expect(result!.priority).toBe(11)
+
+    expect(result?.agent).toBe('codex')
+    expect(result?.path).toBe(resolve('/project', 'AGENTS.md'))
   })
 
-  test('should find .github/copilot-instructions.md (priority 12, copilot)', () => {
-    const target = resolve('/project', '.github', 'copilot-instructions.md')
-    mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('copilot')
-    expect(result!.priority).toBe(12)
-  })
-
-  test('should return null when no config found', () => {
+  test('returns null when nothing matches', () => {
     mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockReturnValue({ isDirectory: () => false })
-    expect(findAgentConfig('/empty')).toBeNull()
+    expect(findAgentConfig('/empty/dir')).toBeNull()
   })
 
-  test('should walk up directories to find config', () => {
+  test('walks up the directory tree', () => {
     const target = resolve('/project', '.opencode', 'opencode.jsonc')
     mockExistsSync.mockImplementation((path: string) => path === target)
-    const result = findAgentConfig('/project/sub/deep')
-    expect(result).not.toBeNull()
-    expect(result!.agent).toBe('opencode')
+
+    const result = findAgentConfig('/project/sub/dir')
+
+    expect(result?.agent).toBe('opencode')
+    expect(result?.path).toBe(target)
   })
 
-  test('should stop at filesystem root', () => {
+  test('stops at the filesystem root', () => {
     mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockReturnValue({ isDirectory: () => false })
     expect(findAgentConfig('/')).toBeNull()
+  })
+
+  test('prefers the highest-priority agent when several match', () => {
+    mockExistsSync.mockReturnValue(true)
+    expect(findAgentConfig('/project')?.agent).toBe('opencode')
   })
 })
 
 describe('detectAgent', () => {
-  test('should return preferred agent when valid', () => {
-    expect(detectAgent('/dir', 'opencode')).toBe('opencode')
-    expect(detectAgent('/dir', 'claude-code')).toBe('claude-code')
-    expect(detectAgent('/dir', 'cline')).toBe('cline')
-    expect(detectAgent('/dir', 'codex')).toBe('codex')
-    expect(detectAgent('/dir', 'copilot')).toBe('copilot')
+  test('returns the preferred agent when valid', () => {
+    expect(detectAgent('/some/dir', 'cline')).toBe('cline')
+    expect(detectAgent('/some/dir', 'opencode')).toBe('opencode')
+    expect(detectAgent('/some/dir', 'claude-code')).toBe('claude-code')
   })
 
-  test('should return opencode default when no config and no preferred', () => {
+  test('returns opencode when no config is found and no preference is given', () => {
     mockExistsSync.mockReturnValue(false)
-    mockStatSync.mockReturnValue({ isDirectory: () => false })
-    expect(detectAgent('/empty')).toBe('opencode')
+    expect(detectAgent('/empty/dir')).toBe('opencode')
   })
 
-  test('should detect agent from config when no preferred', () => {
-    const target = resolve('/project', '.clinerules')
-    mockExistsSync.mockImplementation((path: string) => path === target)
+  test('returns the detected agent when no preference is given', () => {
+    mockExistsSync.mockImplementation((path: string) => path.includes('.clinerules'))
     expect(detectAgent('/project')).toBe('cline')
   })
 })

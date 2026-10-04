@@ -7,7 +7,10 @@ export const CLAUDE_CODE_AGENT: AgentSpec = {
   displayName: 'Claude Code',
   configPath: dir => join(dir, '.claude'),
   globalBaseDir: () => join(homedir(), '.claude'),
-  detectionPatterns: [],
+  detectionPatterns: [
+    { path: 'CLAUDE.md', kind: 'file' },
+    { path: '.claude', kind: 'directory' },
+  ],
   detectionPriority: 2,
 }
 
