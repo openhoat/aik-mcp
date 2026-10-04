@@ -1,15 +1,19 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
-import { parseFrontmatter } from '../frontmatter.js'
 import { logger } from '../logger.js'
-import { getInstallSpecForScope } from './agents/factory.js'
-import { installContent } from './install.js'
+import {
+  type EngineContext,
+  type EngineItem,
+  install as engineInstall,
+  readVersion as engineReadVersion,
+  uninstall as engineUninstall,
+} from './agents/engine.js'
+import { getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
 import type { Agent, Scope } from './shared.js'
-import { findExistingConfig, resolveGlobalDir } from './shared.js'
-import { uninstallContent } from './uninstall.js'
+import { findExistingConfig } from './shared.js'
 
 export const parseSemver = (version: string): number[] => {
   return version.split('.').map(Number)
@@ -27,29 +31,19 @@ export const isNewer = (storeVersion: string, installedVersion: string): boolean
   return false
 }
 
-const getInstalledVersionForSpec = (
-  agent: Agent,
-  category: Category,
-  name: string,
-  baseDir: string,
-  scope: Scope = 'project'
-): string | null => {
-  const spec = getInstallSpecForScope(agent, category, scope)
-  const targetFile = spec.contentPath(baseDir, category, name)
+const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
+  scope,
+  baseDir,
+  configPath,
+})
 
-  // Only file and directory-skill formats are used after refactoring
-  if (spec.format !== 'file' && spec.format !== 'directory-skill') {
-    return null
-  }
-
-  if (!existsSync(targetFile)) return null
-  try {
-    const raw = readFileSync(targetFile, 'utf-8')
-    return parseFrontmatter(raw).frontmatter.version || null
-  } catch {
-    return null
-  }
-}
+const versionItem = (path: string, category: Category, name: string): EngineItem => ({
+  path,
+  category,
+  name,
+  title: '',
+  rawContent: '',
+})
 
 export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
@@ -77,7 +71,7 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
       logger.trace({ projectDir, agent, scope }, 'check_updates called')
       const effectiveScope = scope ?? 'project'
 
-      let baseDir: string
+      let context: EngineContext
       let configLabel: string
 
       if (effectiveScope === 'global') {
@@ -87,7 +81,8 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
             isError: true,
           }
         }
-        baseDir = resolveGlobalDir(agent)
+        const baseDir = getGlobalBaseDir(agent)
+        context = contextFor('global', baseDir, null)
         configLabel = baseDir
       } else {
         const targetDir = projectDir ? resolve(projectDir) : process.cwd()
@@ -98,26 +93,23 @@ export const registerCheckUpdatesTool = (server: McpServer, store: ContentStore)
             isError: true,
           }
         }
-        baseDir = targetDir
+        const configPath = existing.agent === agent ? existing.path : null
+        context = contextFor('project', targetDir, configPath)
         configLabel = existing.path
       }
 
-      const categories: Category[] = ['rules', 'skills', 'workflows', 'agents']
       const updates: Array<{
         path: string
         installedVersion: string | null
         storeVersion: string
       }> = []
 
-      for (const category of categories) {
-        const storeItems = store.getByCategory(category)
-        for (const storeItem of storeItems) {
-          const installedVersion = getInstalledVersionForSpec(
+      for (const category of getSupportedCategories(agent, effectiveScope)) {
+        for (const storeItem of store.getByCategory(category)) {
+          const installedVersion = engineReadVersion(
             agent,
-            category,
-            storeItem.name,
-            baseDir,
-            effectiveScope
+            versionItem(storeItem.path, category, storeItem.name),
+            context
           )
           if (installedVersion === null) continue
           if (isNewer(storeItem.version, installedVersion)) {
@@ -208,12 +200,10 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
         }
       }
 
-      let baseDir: string
-      let configPath: string | null
+      let context: EngineContext
 
       if (effectiveScope === 'global') {
-        baseDir = resolveGlobalDir(agent)
-        configPath = null
+        context = contextFor('global', getGlobalBaseDir(agent), null)
       } else {
         const targetDir = projectDir ? resolve(projectDir) : process.cwd()
         const existing = findExistingConfig(targetDir)
@@ -223,16 +213,14 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
             isError: true,
           }
         }
-        baseDir = targetDir
-        configPath = existing.agent === agent ? existing.path : null
+        const configPath = existing.agent === agent ? existing.path : null
+        context = contextFor('project', targetDir, configPath)
       }
 
-      const installedVersion = getInstalledVersionForSpec(
+      const installedVersion = engineReadVersion(
         agent,
-        storeItem.category,
-        storeItem.name,
-        baseDir,
-        effectiveScope
+        versionItem(path, storeItem.category, storeItem.name),
+        context
       )
 
       if (installedVersion && !isNewer(storeItem.version, installedVersion)) {
@@ -257,27 +245,23 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
       }
 
       const rawContent = readFileSync(storeItem.fullPath, 'utf-8')
-      const uninstalled = uninstallContent(
+      const uninstalled = engineUninstall(
         agent,
-        storeItem.category,
-        storeItem.name,
-        path,
-        baseDir,
-        configPath,
-        effectiveScope
+        versionItem(path, storeItem.category, storeItem.name),
+        context
       )
 
-      installContent(
+      engineInstall(
         agent,
-        storeItem.category,
-        storeItem.name,
-        storeItem.path,
-        storeItem.title,
-        rawContent,
-        baseDir,
-        configPath,
-        effectiveScope,
-        dirname(storeItem.fullPath)
+        {
+          path: storeItem.path,
+          category: storeItem.category,
+          name: storeItem.name,
+          title: storeItem.title,
+          rawContent,
+          sourceDir: dirname(storeItem.fullPath),
+        },
+        context
       )
 
       return {
@@ -292,7 +276,7 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
                 previousVersion: installedVersion ?? '(unknown)',
                 newVersion: storeItem.version,
                 hadPreviousInstall: uninstalled,
-                config: configPath ?? baseDir,
+                config: context.configPath ?? context.baseDir,
               },
               null,
               2
