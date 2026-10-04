@@ -45,8 +45,26 @@ const MCP_CONFIG_SOURCES: McpConfigSource[] = [
   { file: 'opencode.json', keys: ['mcp'] },
 ]
 
+// Strip // line comments without a regex that can backtrack: scan each line and
+// cut at the first "//" that is not part of a URL scheme ("://").
+const stripLineComment = (line: string): string => {
+  let index = line.indexOf('//')
+  while (index !== -1) {
+    if (line[index - 1] === ':') {
+      index = line.indexOf('//', index + 2)
+      continue
+    }
+    return line.slice(0, index)
+  }
+  return line
+}
+
 const stripJsonComments = (raw: string): string =>
-  raw.replace(/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  raw
+    .replace(/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//g, '')
+    .split('\n')
+    .map(stripLineComment)
+    .join('\n')
 
 const parseJsonc = (raw: string): Record<string, unknown> | null => {
   try {
