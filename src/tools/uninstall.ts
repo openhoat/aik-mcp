@@ -1,33 +1,25 @@
-import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { findAgentConfig } from './agents/detection.js'
 import {
-  type EngineContext,
-  type EngineItem,
   uninstall as engineUninstall,
   uninstallAll as engineUninstallAll,
 } from './agents/engine.js'
-import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
+import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import {
+  contextFor,
+  errorResult,
+  globalUnsupported,
+  itemFor,
+  jsonResult,
+  resolveProjectContext,
+  textResult,
+  unsupportedCategory,
+} from './agents/toolkit.js'
 import type { Scope } from './agents/types.js'
 
 const validCategories: Category[] = ['rules', 'skills', 'workflows', 'agents']
-
-const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
-  scope,
-  baseDir,
-  configPath,
-})
-
-const itemFor = (category: Category, name: string, itemPath: string): EngineItem => ({
-  path: itemPath,
-  category,
-  name,
-  title: '',
-  rawContent: '',
-})
 
 export const registerUninstallTool = (server: McpServer, _store: ContentStore): void => {
   server.registerTool(
@@ -69,83 +61,31 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       const [rawCategory, ...rest] = path.split('/')
       const name = rest.join('/')
       const category = validCategories.find(c => c === rawCategory)
-      if (!category) {
-        return {
-          content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
-          isError: true,
-        }
-      }
+      if (!category) return errorResult(`Invalid category: ${rawCategory}`)
 
-      if (!getSupportedCategories(agent, effectiveScope).includes(category)) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Category "${category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
-            },
-          ],
-          isError: true,
-        }
-      }
+      const unsupported = unsupportedCategory(agent, effectiveScope, category)
+      if (unsupported) return unsupported
 
       if (effectiveScope === 'global') {
-        const globalDir = getGlobalBaseDir(agent)
         const removed = engineUninstall(
           agent,
           itemFor(category, name, path),
-          contextFor('global', globalDir, null)
+          contextFor('global', getGlobalBaseDir(agent), null)
         )
         if (!removed) {
-          return {
-            content: [
-              { type: 'text', text: `Not found: ${path} is not installed globally in ${agent}` },
-            ],
-          }
+          return textResult(`Not found: ${path} is not installed globally in ${agent}`)
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ uninstalled: path, agent, scope: 'global' }, null, 2),
-            },
-          ],
-        }
+        return jsonResult({ uninstalled: path, agent, scope: 'global' })
       }
 
-      const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findAgentConfig(targetDir)
+      const project = resolveProjectContext(agent, projectDir)
+      if (!project) return errorResult('No config file found for the detected agent')
 
-      if (!existing) {
-        return {
-          content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-          isError: true,
-        }
-      }
-
-      const configPath = existing.agent === agent ? existing.path : null
-
-      const removed = engineUninstall(
-        agent,
-        itemFor(category, name, path),
-        contextFor('project', targetDir, configPath)
-      )
-
+      const removed = engineUninstall(agent, itemFor(category, name, path), project.context)
       if (!removed) {
-        return {
-          content: [
-            { type: 'text', text: `Not found: ${path} was not installed in ${agent} config` },
-          ],
-        }
+        return textResult(`Not found: ${path} was not installed in ${agent} config`)
       }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ uninstalled: path, agent, config: existing.path }, null, 2),
-          },
-        ],
-      }
+      return jsonResult({ uninstalled: path, agent, config: project.detectedPath })
     }
   )
 
@@ -173,62 +113,28 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
     async ({ projectDir, agent, scope }: { projectDir?: string; agent: Agent; scope?: Scope }) => {
       logger.trace({ projectDir, agent, scope }, 'uninstall_all called')
       const effectiveScope = scope ?? 'project'
+      const globalBlocked = globalUnsupported(agent, effectiveScope)
+      if (globalBlocked) return globalBlocked
 
       if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
-        }
-        const globalDir = getGlobalBaseDir(agent)
-        const removed = engineUninstallAll(agent, contextFor('global', globalDir, null))
+        const removed = engineUninstallAll(
+          agent,
+          contextFor('global', getGlobalBaseDir(agent), null)
+        )
         if (removed === 0) {
-          return {
-            content: [{ type: 'text', text: `No aik-managed items found globally for ${agent}` }],
-          }
+          return textResult(`No aik-managed items found globally for ${agent}`)
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ uninstalledCount: removed, agent, scope: 'global' }, null, 2),
-            },
-          ],
-        }
+        return jsonResult({ uninstalledCount: removed, agent, scope: 'global' })
       }
 
-      const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findAgentConfig(targetDir)
+      const project = resolveProjectContext(agent, projectDir)
+      if (!project) return errorResult('No config file found for the detected agent')
 
-      if (!existing) {
-        return {
-          content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-          isError: true,
-        }
-      }
-
-      const configPath = existing.agent === agent ? existing.path : null
-      const removed = engineUninstallAll(agent, contextFor('project', targetDir, configPath))
-
+      const removed = engineUninstallAll(agent, project.context)
       if (removed === 0) {
-        return {
-          content: [{ type: 'text', text: `No aik-managed items found in ${agent} config` }],
-        }
+        return textResult(`No aik-managed items found in ${agent} config`)
       }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              { uninstalledCount: removed, agent, config: existing.path },
-              null,
-              2
-            ),
-          },
-        ],
-      }
+      return jsonResult({ uninstalledCount: removed, agent, config: project.detectedPath })
     }
   )
 }

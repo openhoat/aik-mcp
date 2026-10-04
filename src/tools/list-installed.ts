@@ -1,11 +1,16 @@
-import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { ContentStore } from '../content-store.js'
 import { logger } from '../logger.js'
-import { findAgentConfig } from './agents/detection.js'
 import { list as engineList } from './agents/engine.js'
 import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import {
+  errorResult,
+  globalUnsupported,
+  jsonResult,
+  resolveProjectContext,
+  textResult,
+} from './agents/toolkit.js'
 import type { Scope } from './agents/types.js'
 
 const toOutput = (items: Array<{ path: string; title: string | null }>) =>
@@ -36,82 +41,39 @@ export const registerListInstalledTool = (server: McpServer, _store: ContentStor
     async ({ projectDir, agent, scope }: { projectDir?: string; agent: Agent; scope?: Scope }) => {
       logger.trace({ projectDir, agent, scope }, 'list_installed called')
       const effectiveScope = scope ?? 'project'
+      const globalBlocked = globalUnsupported(agent, effectiveScope)
+      if (globalBlocked) return globalBlocked
 
       if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
-        }
         const globalDir = getGlobalBaseDir(agent)
         const items = engineList(agent, { scope: 'global', baseDir: globalDir, configPath: null })
         if (items.length === 0) {
-          return {
-            content: [{ type: 'text', text: `No aik-installed items found globally for ${agent}` }],
-          }
+          return textResult(`No aik-installed items found globally for ${agent}`)
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  agent,
-                  scope: 'global',
-                  config: globalDir,
-                  count: items.length,
-                  items: toOutput(items),
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        }
+        return jsonResult({
+          agent,
+          scope: 'global',
+          config: globalDir,
+          count: items.length,
+          items: toOutput(items),
+        })
       }
 
-      const targetDir = projectDir ? resolve(projectDir) : process.cwd()
-      const existing = findAgentConfig(targetDir)
+      const project = resolveProjectContext(agent, projectDir)
+      if (!project) return errorResult('No config file found for the detected agent')
 
-      if (!existing) {
-        return {
-          content: [{ type: 'text', text: 'No config file found for the detected agent' }],
-          isError: true,
-        }
-      }
-
-      const configPath = existing && existing.agent === agent ? existing.path : null
-      const items = engineList(agent, { scope: 'project', baseDir: targetDir, configPath })
-
+      const items = engineList(agent, project.context)
       if (items.length === 0) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `No aik-installed items found in ${agent} config (${existing.path})`,
-            },
-          ],
-        }
+        return textResult(
+          `No aik-installed items found in ${agent} config (${project.detectedPath})`
+        )
       }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                agent,
-                config: existing.path,
-                count: items.length,
-                items: toOutput(items),
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      }
+      return jsonResult({
+        agent,
+        config: project.detectedPath,
+        count: items.length,
+        items: toOutput(items),
+      })
     }
   )
 }
