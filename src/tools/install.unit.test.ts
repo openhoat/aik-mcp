@@ -1,4 +1,3 @@
-import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { beforeEach, describe, expect, type Mock, test } from 'vitest'
 import type { ContentStore } from '../content-store.js'
@@ -48,8 +47,7 @@ vi.mock('./uninstall.js', () => ({
   uninstallContent: vi.fn(),
 }))
 
-const { openCodeConfigPath, installContent, registerInstallTool, registerReinstallTool } =
-  await import('./install.js')
+const { installContent, registerInstallTool, registerReinstallTool } = await import('./install.js')
 
 const mockFindExistingConfig = (await import('./shared.js')).findExistingConfig as Mock
 const mockUninstallContent = (await import('./uninstall.js')).uninstallContent as Mock
@@ -64,17 +62,6 @@ beforeEach(() => {
   mockReaddirSync.mockReset()
   mockFindExistingConfig.mockReset()
   mockUninstallContent.mockReset()
-})
-
-describe('openCodeConfigPath', () => {
-  test('should return existing path when provided', () => {
-    expect(openCodeConfigPath('/custom', '/existing/path.jsonc')).toBe('/existing/path.jsonc')
-  })
-
-  test('should default to .opencode/opencode.jsonc when no existing path', () => {
-    const result = openCodeConfigPath('/project', null)
-    expect(result).toBe(resolve('/project', '.opencode', 'opencode.jsonc'))
-  })
 })
 
 describe('installContent - opencode rules (file format)', () => {
