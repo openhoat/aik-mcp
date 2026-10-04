@@ -29,13 +29,22 @@ export interface LayoutEntry {
 // Per-scope layout: a category absent from the map is unsupported in that scope.
 export type Layout = Partial<Record<Category, LayoutEntry>>
 
+// One detection probe: a path relative to the directory being walked up.
+// A matching file or directory locates the agent; `report` is the config path
+// surfaced to callers (defaults to the probed path).
+export interface DetectionPattern {
+  path: string
+  kind: 'file' | 'directory'
+  report?: string
+}
+
 // Agent-specific configuration
 export interface AgentSpec {
   name: Agent
   displayName: string
   configPath: (projectDir: string) => string
   globalBaseDir: () => string
-  detectionPatterns: Array<(dir: string) => boolean>
+  detectionPatterns: DetectionPattern[]
   detectionPriority: number // Higher priority = detected first
 }
 
@@ -52,11 +61,4 @@ export interface AgentConfig {
   agent: AgentSpec
   project: Record<Category, LayoutEntry>
   global?: Layout
-}
-
-// Agent detection result and found configuration
-export interface AgentDetection {
-  agent: Agent
-  path: string
-  priority: number
 }

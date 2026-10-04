@@ -7,7 +7,11 @@ export const CODEX_AGENT: AgentSpec = {
   displayName: 'Codex',
   configPath: dir => join(dir, '.codex'),
   globalBaseDir: () => process.env.CODEX_HOME || join(homedir(), '.codex'),
-  detectionPatterns: [],
+  detectionPatterns: [
+    { path: 'AGENTS.md', kind: 'file' },
+    { path: '.codex/config.toml', kind: 'file', report: 'AGENTS.md' },
+    { path: '.codex', kind: 'directory', report: 'AGENTS.md' },
+  ],
   detectionPriority: 7,
 }
 

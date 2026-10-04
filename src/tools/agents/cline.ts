@@ -12,7 +12,10 @@ export const CLINE_AGENT: AgentSpec = {
     const fallback = join(homedir(), 'Cline', 'Rules')
     return existsSync(primary) ? primary : fallback
   },
-  detectionPatterns: [],
+  detectionPatterns: [
+    { path: '.clinerules', kind: 'file' },
+    { path: '.cline', kind: 'directory' },
+  ],
   detectionPriority: 3,
 }
 

@@ -7,7 +7,7 @@ export const COPILOT_AGENT: AgentSpec = {
   displayName: 'GitHub Copilot',
   configPath: dir => join(dir, '.github', 'copilot-instructions.md'),
   globalBaseDir: () => join(homedir(), '.github'),
-  detectionPatterns: [],
+  detectionPatterns: [{ path: '.github/copilot-instructions.md', kind: 'file' }],
   detectionPriority: 12,
 }
 

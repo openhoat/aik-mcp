@@ -7,7 +7,12 @@ export const OPENCODE_AGENT: AgentSpec = {
   displayName: 'OpenCode',
   configPath: dir => join(dir, '.opencode', 'opencode.jsonc'),
   globalBaseDir: () => join(homedir(), '.config', 'opencode'),
-  detectionPatterns: [],
+  detectionPatterns: [
+    { path: '.opencode/opencode.jsonc', kind: 'file' },
+    { path: '.opencode/opencode.json', kind: 'file' },
+    { path: 'opencode.json', kind: 'file' },
+    { path: 'opencode.jsonc', kind: 'file' },
+  ],
   detectionPriority: 1,
 }
 
