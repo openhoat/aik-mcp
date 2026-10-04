@@ -1,73 +1,17 @@
-import {
-  appendFileSync,
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
 import { z } from 'zod'
 import type { Category, ContentStore } from '../content-store.js'
-import { parseFrontmatter, serializeFrontmatterRaw } from '../frontmatter.js'
 import { logger } from '../logger.js'
 import { evaluateGate } from '../project-stack.js'
-import { getInstallSpecForScope } from './agents/factory.js'
-import {
-  globalOpencodeConfigPath,
-  type OpenCodeConfig,
-  opencodeInstructionsEntry,
-} from './agents/opencode-config.js'
+import { type EngineContext, type EngineItem, install as engineInstall } from './agents/engine.js'
+import { getGlobalBaseDir } from './agents/factory.js'
 import type { Agent, Scope } from './shared.js'
-import { findExistingConfig, resolveGlobalDir } from './shared.js'
+import { findExistingConfig } from './shared.js'
 import { uninstallContent } from './uninstall.js'
 
-export const openCodeConfigPath = (targetDir: string, existingPath: string | null): string => {
-  if (existingPath) return existingPath
-  return resolve(targetDir, '.opencode', 'opencode.jsonc')
-}
-
-const ENTRY_FILE = 'README.md'
-
-const buildSkillContent = (rawContent: string, name: string): string => {
-  const { raw, body } = parseFrontmatter(rawContent)
-  const skillFrontmatter = { ...raw }
-  skillFrontmatter.name = name
-  const fm = serializeFrontmatterRaw(skillFrontmatter)
-  return `---\n${fm}\n---\n\n${body}`
-}
-
-const copyBundleAssets = (sourceDir: string, targetDir: string): void => {
-  const entries = readdirSync(sourceDir, { withFileTypes: true })
-  for (const entry of entries) {
-    if (entry.name === ENTRY_FILE) continue
-    const src = join(sourceDir, entry.name)
-    const dest = join(targetDir, entry.name)
-    cpSync(src, dest, { recursive: true })
-  }
-}
-
-const updateOpencodeInstructions = (configPath: string, instructionsEntry: string): boolean => {
-  let config: OpenCodeConfig
-  if (existsSync(configPath)) {
-    config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig
-  } else {
-    config = {}
-  }
-
-  const instructions = config.instructions ?? []
-  if (instructions.includes(instructionsEntry)) return false
-
-  instructions.push(instructionsEntry)
-  config.instructions = instructions
-  mkdirSync(dirname(configPath), { recursive: true })
-  writeFileSync(configPath, `${stringifyJsonc(config, null, 2)}\n`, 'utf-8')
-  return true
-}
-
+// Thin adapter over the engine, kept while update still calls it directly.
 export const installContent = (
   agent: Agent,
   category: Category,
@@ -80,65 +24,31 @@ export const installContent = (
   scope: Scope = 'project',
   sourceDir: string | null = null
 ): { path: string; alreadyInstalled: boolean } => {
-  const spec = getInstallSpecForScope(agent, category, scope)
-  const targetFile = spec.contentPath(targetDir, category, name)
-
-  switch (spec.format) {
-    case 'file': {
-      mkdirSync(dirname(targetFile), { recursive: true })
-      // Instructions files (opencode rules/workflows) are plain markdown: drop the
-      // aik frontmatter. Agents keep it — opencode reads it as agent metadata.
-      const fileContent =
-        spec.configUpdate === 'opencode-instructions'
-          ? parseFrontmatter(rawContent).body
-          : rawContent
-      writeFileSync(targetFile, fileContent, 'utf-8')
-
-      if (spec.configUpdate === 'opencode-instructions') {
-        const entry = opencodeInstructionsEntry(scope, targetFile, category, name)
-        const opencodeConfig =
-          scope === 'global'
-            ? globalOpencodeConfigPath(targetDir)
-            : openCodeConfigPath(targetDir, configPath)
-        const wasAdded = updateOpencodeInstructions(opencodeConfig, entry)
-        return { path: opencodeConfig, alreadyInstalled: !wasAdded }
-      }
-      return { path: targetFile, alreadyInstalled: false }
+  return engineInstall(
+    agent,
+    { path: itemPath, category, name, title, rawContent, sourceDir },
+    {
+      scope,
+      baseDir: targetDir,
+      configPath,
     }
-
-    case 'directory-skill': {
-      const skillDir = dirname(targetFile)
-      if (existsSync(targetFile)) {
-        return { path: targetFile, alreadyInstalled: true }
-      }
-      mkdirSync(skillDir, { recursive: true })
-      if (sourceDir && existsSync(sourceDir)) {
-        copyBundleAssets(sourceDir, skillDir)
-      }
-      const skillContent = buildSkillContent(rawContent, name)
-      writeFileSync(targetFile, skillContent, 'utf-8')
-      return { path: targetFile, alreadyInstalled: false }
-    }
-
-    case 'section': {
-      const mdPath = configPath ?? targetFile
-      const sourceTag = `<source>${itemPath}</source>`
-
-      const { body } = parseFrontmatter(rawContent)
-      const section = `\n## ${title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
-
-      if (existsSync(mdPath)) {
-        const existing = readFileSync(mdPath, 'utf-8')
-        if (existing.includes(sourceTag)) {
-          return { path: mdPath, alreadyInstalled: true }
-        }
-      }
-
-      appendFileSync(mdPath, section, 'utf-8')
-      return { path: mdPath, alreadyInstalled: false }
-    }
-  }
+  )
 }
+
+const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
+  scope,
+  baseDir,
+  configPath,
+})
+
+const itemFor = (
+  category: Category,
+  name: string,
+  itemPath: string,
+  title: string,
+  rawContent: string,
+  sourceDir: string | null
+): EngineItem => ({ path: itemPath, category, name, title, rawContent, sourceDir })
 
 export const registerReinstallTool = (server: McpServer, store: ContentStore): void => {
   server.registerTool(
@@ -203,7 +113,7 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
             isError: true,
           }
         }
-        const globalDir = resolveGlobalDir(agent)
+        const globalDir = getGlobalBaseDir(agent)
         const uninstalled = uninstallContent(
           agent,
           item.category,
@@ -214,17 +124,17 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
           'global'
         )
         const rawContent = readFileSync(item.fullPath, 'utf-8')
-        const result = installContent(
+        const result = engineInstall(
           agent,
-          item.category,
-          item.name,
-          item.path,
-          item.title,
-          rawContent,
-          globalDir,
-          null,
-          'global',
-          dirname(item.fullPath)
+          itemFor(
+            item.category,
+            item.name,
+            item.path,
+            item.title,
+            rawContent,
+            dirname(item.fullPath)
+          ),
+          contextFor('global', globalDir, null)
         )
         return {
           content: [
@@ -294,17 +204,17 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
       )
 
       const rawContent = readFileSync(item.fullPath, 'utf-8')
-      const result = installContent(
+      const result = engineInstall(
         agent,
-        item.category,
-        item.name,
-        item.path,
-        item.title,
-        rawContent,
-        targetDir,
-        configPath,
-        'project',
-        dirname(item.fullPath)
+        itemFor(
+          item.category,
+          item.name,
+          item.path,
+          item.title,
+          rawContent,
+          dirname(item.fullPath)
+        ),
+        contextFor('project', targetDir, configPath)
       )
 
       return {
@@ -386,6 +296,14 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
       }
 
       const rawContent = readFileSync(item.fullPath, 'utf-8')
+      const engineItem = itemFor(
+        item.category,
+        item.name,
+        item.path,
+        item.title,
+        rawContent,
+        dirname(item.fullPath)
+      )
 
       if (effectiveScope === 'global') {
         if (agent === 'copilot') {
@@ -394,19 +312,8 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
             isError: true,
           }
         }
-        const globalDir = resolveGlobalDir(agent)
-        const result = installContent(
-          agent,
-          item.category,
-          item.name,
-          item.path,
-          item.title,
-          rawContent,
-          globalDir,
-          null,
-          'global',
-          dirname(item.fullPath)
-        )
+        const globalDir = getGlobalBaseDir(agent)
+        const result = engineInstall(agent, engineItem, contextFor('global', globalDir, null))
         if (result.alreadyInstalled) {
           return {
             content: [
@@ -468,18 +375,7 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
       const existing = findExistingConfig(targetDir)
       const configPath = existing && existing.agent === agent ? existing.path : null
 
-      const result = installContent(
-        agent,
-        item.category,
-        item.name,
-        item.path,
-        item.title,
-        rawContent,
-        targetDir,
-        configPath,
-        'project',
-        dirname(item.fullPath)
-      )
+      const result = engineInstall(agent, engineItem, contextFor('project', targetDir, configPath))
 
       if (result.alreadyInstalled) {
         return {
