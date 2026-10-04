@@ -142,4 +142,19 @@ describe('engine uninstallAll', () => {
     expect(uninstallAll('claude-code', context)).toBe(3)
     expect(list('claude-code', context)).toEqual([])
   })
+
+  test('removes shared-section items', () => {
+    const baseDir = makeBaseDir()
+    const context = contextFor('project', baseDir)
+    const entry = getLayoutEntry('codex', 'rules', 'project')
+    // The shared section file lives in the project root; the project is detected
+    // by AGENTS.md, which the install creates.
+    mkdirSync(dirname(resolveContentFile(entry, baseDir, 'sample')), { recursive: true })
+
+    install('codex', itemFor('rules', 'one'), context)
+    install('codex', itemFor('rules', 'two'), context)
+
+    expect(uninstallAll('codex', context)).toBe(2)
+    expect(list('codex', context)).toEqual([])
+  })
 })

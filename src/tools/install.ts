@@ -11,7 +11,7 @@ import {
   install as engineInstall,
   uninstall as engineUninstall,
 } from './agents/engine.js'
-import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
 import type { Scope } from './agents/types.js'
 
 const contextFor = (scope: Scope, baseDir: string, configPath: string | null): EngineContext => ({
@@ -95,13 +95,19 @@ export const registerReinstallTool = (server: McpServer, store: ContentStore): v
         dirname(item.fullPath)
       )
 
-      if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
+      if (!getSupportedCategories(agent, effectiveScope).includes(item.category)) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Category "${item.category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
+            },
+          ],
+          isError: true,
         }
+      }
+
+      if (effectiveScope === 'global') {
         const globalDir = getGlobalBaseDir(agent)
         const context = contextFor('global', globalDir, null)
         const uninstalled = engineUninstall(agent, engineItem, context)
@@ -256,13 +262,19 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         dirname(item.fullPath)
       )
 
-      if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
+      if (!getSupportedCategories(agent, effectiveScope).includes(item.category)) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Category "${item.category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
+            },
+          ],
+          isError: true,
         }
+      }
+
+      if (effectiveScope === 'global') {
         const globalDir = getGlobalBaseDir(agent)
         const result = engineInstall(agent, engineItem, contextFor('global', globalDir, null))
         if (result.alreadyInstalled) {

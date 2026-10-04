@@ -289,7 +289,32 @@ describe('registerInstallTool - global scope', () => {
       scope: 'global',
     })) as ToolResult
     expect(result.isError).toBe(true)
-    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+    expect(result.content[0].text).toContain('not supported for global scope with agent "copilot"')
+  })
+
+  test('should return error for an unsupported global category (cline skills)', async () => {
+    const store = {
+      getByPath: vi.fn(() => ({
+        path: 'skills/test-skill',
+        category: 'skills',
+        name: 'test-skill',
+        title: 'Test Skill',
+        fullPath: '/store/skills/test-skill/README.md',
+        content: '# Test',
+      })),
+      readContent: vi.fn(() => '# Test'),
+    } as unknown as ContentStore // Safe: test mock type limitation
+    const { server, getHandler } = createMockServer()
+
+    registerInstallTool(server, store)
+    const handler = getHandler()
+    const result = (await handler({
+      path: 'skills/test-skill',
+      agent: 'cline',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('not supported for global scope with agent "cline"')
   })
 })
 
@@ -328,6 +353,6 @@ describe('registerReinstallTool - global scope', () => {
       scope: 'global',
     })) as ToolResult
     expect(result.isError).toBe(true)
-    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+    expect(result.content[0].text).toContain('not supported for global scope with agent "copilot"')
   })
 })

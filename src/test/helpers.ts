@@ -112,11 +112,12 @@ export const request = async (
 
 export const withServer = async <T>(
   contentDir: string,
-  fn: (req: (method: string, params?: Record<string, unknown>) => Promise<unknown>) => Promise<T>
+  fn: (req: (method: string, params?: Record<string, unknown>) => Promise<unknown>) => Promise<T>,
+  env: NodeJS.ProcessEnv = {}
 ): Promise<T> => {
   const proc = spawn(process.execPath, [distIndex, '--no-watch'], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env, AIK_CONTENT_DIR: contentDir, LOG_LEVEL: 'silent' },
+    env: { ...process.env, AIK_CONTENT_DIR: contentDir, LOG_LEVEL: 'silent', ...env },
   })
 
   try {
