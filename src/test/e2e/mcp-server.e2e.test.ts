@@ -361,6 +361,82 @@ test('aik_reinstall returns error for missing content', async () => {
   })
 })
 
+test('aik_install/uninstall reaches global scope for codex', async () => {
+  await createFile(
+    tempDir,
+    'rules/global-rule',
+    '---\ntitle: Global Rule\n---\n# Global Rule\ncontent'
+  )
+  const codexHome = join(tempDir, 'codex-global')
+  await mkdir(codexHome, { recursive: true })
+
+  await withServer(
+    tempDir,
+    async req => {
+      const installResult = (await req('tools/call', {
+        name: 'install',
+        arguments: { path: 'rules/global-rule', agent: 'codex', scope: 'global' },
+      })) as { content: Array<{ text: string }> }
+      const installed = JSON.parse(installResult.content[0].text)
+      expect(installed.agent).toBe('codex')
+      expect(installed.scope).toBe('global')
+
+      const agentsFile = join(codexHome, 'AGENTS.md')
+      expect(readFileSync(agentsFile, 'utf-8')).toContain('<source>rules/global-rule</source>')
+
+      const listResult = (await req('tools/call', {
+        name: 'list_installed',
+        arguments: { agent: 'codex', scope: 'global' },
+      })) as { content: Array<{ text: string }> }
+      const listed = JSON.parse(listResult.content[0].text)
+      expect(listed.items).toContainEqual(expect.objectContaining({ path: 'rules/global-rule' }))
+
+      const uninstallResult = (await req('tools/call', {
+        name: 'uninstall',
+        arguments: { path: 'rules/global-rule', agent: 'codex', scope: 'global' },
+      })) as { content: Array<{ text: string }> }
+      expect(JSON.parse(uninstallResult.content[0].text).uninstalled).toBe('rules/global-rule')
+      expect(readFileSync(agentsFile, 'utf-8')).not.toContain('<source>rules/global-rule</source>')
+    },
+    { CODEX_HOME: codexHome }
+  )
+})
+
+test('aik_install/uninstall keeps a shared-section agent file in sync', async () => {
+  await createFile(
+    tempDir,
+    'rules/section-rule',
+    '---\ntitle: Section Rule\n---\n# Section Rule\ncontent'
+  )
+
+  await withServer(tempDir, async req => {
+    const installResult = (await req('tools/call', {
+      name: 'install',
+      arguments: { path: 'rules/section-rule', projectDir: tempDir, agent: 'codex' },
+    })) as { content: Array<{ text: string }> }
+    expect(JSON.parse(installResult.content[0].text).agent).toBe('codex')
+
+    const agentsFile = join(tempDir, 'AGENTS.md')
+    const content = readFileSync(agentsFile, 'utf-8')
+    expect(content).toContain('<source>rules/section-rule</source>')
+    expect(content).toContain('Section Rule')
+
+    const listResult = (await req('tools/call', {
+      name: 'list_installed',
+      arguments: { projectDir: tempDir, agent: 'codex' },
+    })) as { content: Array<{ text: string }> }
+    const listed = JSON.parse(listResult.content[0].text)
+    expect(listed.items).toContainEqual(expect.objectContaining({ path: 'rules/section-rule' }))
+
+    const uninstallResult = (await req('tools/call', {
+      name: 'uninstall',
+      arguments: { path: 'rules/section-rule', projectDir: tempDir, agent: 'codex' },
+    })) as { content: Array<{ text: string }> }
+    expect(JSON.parse(uninstallResult.content[0].text).uninstalled).toBe('rules/section-rule')
+    expect(readFileSync(agentsFile, 'utf-8')).not.toContain('<source>rules/section-rule</source>')
+  })
+})
+
 test('--validate passes for valid content', async () => {
   await createFile(
     tempDir,

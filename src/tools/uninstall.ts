@@ -10,7 +10,7 @@ import {
   uninstall as engineUninstall,
   uninstallAll as engineUninstallAll,
 } from './agents/engine.js'
-import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import { type Agent, getGlobalBaseDir, getSupportedCategories } from './agents/factory.js'
 import type { Scope } from './agents/types.js'
 
 const validCategories: Category[] = ['rules', 'skills', 'workflows', 'agents']
@@ -66,22 +66,29 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       logger.trace({ path, projectDir, agent, scope }, 'uninstall called')
       const effectiveScope = scope ?? 'project'
 
+      const [rawCategory, ...rest] = path.split('/')
+      const name = rest.join('/')
+      const category = validCategories.find(c => c === rawCategory)
+      if (!category) {
+        return {
+          content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
+          isError: true,
+        }
+      }
+
+      if (!getSupportedCategories(agent, effectiveScope).includes(category)) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Category "${category}" is not supported for ${effectiveScope} scope with agent "${agent}"`,
+            },
+          ],
+          isError: true,
+        }
+      }
+
       if (effectiveScope === 'global') {
-        if (agent === 'copilot') {
-          return {
-            content: [{ type: 'text', text: 'Global scope is not supported for copilot' }],
-            isError: true,
-          }
-        }
-        const [rawCategory, ...rest] = path.split('/')
-        const name = rest.join('/')
-        const category = validCategories.find(c => c === rawCategory)
-        if (!category) {
-          return {
-            content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
-            isError: true,
-          }
-        }
         const globalDir = getGlobalBaseDir(agent)
         const removed = engineUninstall(
           agent,
@@ -115,17 +122,7 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
         }
       }
 
-      const [rawCategory, ...rest] = path.split('/')
-      const name = rest.join('/')
       const configPath = existing.agent === agent ? existing.path : null
-
-      const category = validCategories.find(c => c === rawCategory)
-      if (!category) {
-        return {
-          content: [{ type: 'text', text: `Invalid category: ${rawCategory}` }],
-          isError: true,
-        }
-      }
 
       const removed = engineUninstall(
         agent,

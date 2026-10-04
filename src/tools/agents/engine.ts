@@ -133,15 +133,6 @@ export const removeSections = (
       continue
     }
 
-    if (/^<!-- from /.test(line) && isTarget(line)) {
-      count++
-      i++
-      while (i < lines.length && !lines[i].startsWith('## ') && !/^<!-- from /.test(lines[i])) {
-        i++
-      }
-      continue
-    }
-
     kept.push(line)
     i++
   }
@@ -361,9 +352,6 @@ export const uninstallAll = (agent: Agent, context: EngineContext): number => {
   let count = 0
 
   for (const item of list(agent, context)) {
-    // The shared-section skip is preserved until the behaviour-fix step.
-    if (getLayoutEntry(agent, item.category, context.scope).format === 'section') continue
-
     const name = item.path.slice(item.category.length + 1)
     const removed = uninstall(
       agent,

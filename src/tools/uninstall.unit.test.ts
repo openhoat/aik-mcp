@@ -101,15 +101,6 @@ describe('removeSections', () => {
     expect(count).toBe(0)
     expect(result).toBe(content)
   })
-
-  test('should handle <!-- from --> markers as targets', () => {
-    const content = '# Config\n\n<!-- from rules/foo.md -->\nsome content\n\n## Other\nkeep'
-    const isMarker = (text: string) => text.startsWith('<!-- from ')
-    const { result, count } = removeSections(content, isMarker)
-    expect(count).toBe(1)
-    expect(result).not.toContain('foo.md')
-    expect(result).toContain('## Other')
-  })
 })
 
 const createMockServer = () => {
@@ -383,7 +374,22 @@ describe('registerUninstallTool - global scope', () => {
       scope: 'global',
     })) as ToolResult
     expect(result.isError).toBe(true)
-    expect(result.content[0].text).toContain('Global scope is not supported for copilot')
+    expect(result.content[0].text).toContain('not supported for global scope with agent "copilot"')
+  })
+
+  test('should return error for an unsupported global category (cline skills)', async () => {
+    const { server, getInstallHandler } = createMockServer()
+    const store = {} as ContentStore // Safe: test mock type limitation
+
+    registerUninstallTool(server, store)
+    const handler = getInstallHandler()
+    const result = (await handler({
+      path: 'skills/my-skill',
+      agent: 'cline',
+      scope: 'global',
+    })) as ToolResult
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain('not supported for global scope with agent "cline"')
   })
 
   test('should uninstall_all globally with opencode agent', async () => {
