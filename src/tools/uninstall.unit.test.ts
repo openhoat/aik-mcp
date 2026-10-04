@@ -471,7 +471,9 @@ describe('registerUninstallTool', () => {
     mockStatSync.mockImplementation((path: string) => ({
       isDirectory: () => path.includes('.opencode/skills'),
     }))
-    mockExistsSync.mockImplementation((path: string) => path.includes('SKILL.md'))
+    mockExistsSync.mockImplementation(
+      (path: string) => path.includes('SKILL.md') || path.includes('my-skill')
+    )
     mockReaddirSync.mockImplementation((path: string) => {
       if (path.includes('.opencode/skills'))
         return [{ name: 'my-skill', isDirectory: () => true, isFile: () => false }]
