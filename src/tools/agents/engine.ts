@@ -85,7 +85,7 @@ const opencodeConfigPath = (context: EngineContext): string =>
 const updateOpencodeInstructions = (configPath: string, entry: string): boolean => {
   let config: OpenCodeConfig
   if (existsSync(configPath)) {
-    config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig
+    config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig // Safe: user-edited config
   } else {
     config = {}
   }
@@ -102,7 +102,7 @@ const updateOpencodeInstructions = (configPath: string, entry: string): boolean 
 
 const removeFromOpencodeInstructions = (configPath: string, entry: string): boolean => {
   if (!existsSync(configPath)) return false
-  const config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig
+  const config = parseJsonc(readFileSync(configPath, 'utf-8')) as OpenCodeConfig // Safe: user-edited config
   const instructions = (config.instructions ?? []).filter(e => e !== entry)
 
   if (instructions.length === (config.instructions ?? []).length) return false
@@ -299,6 +299,7 @@ const listFromSections = (mdPath: string, category: Category): InstalledItem[] =
   for (const match of content.matchAll(sectionRegex)) {
     const sourcePath = match[2]
     const [rawCategory] = sourcePath.split('/')
+    // Safe: a section source path starts with a known category name.
     const itemCategory = (CATEGORIES as string[]).includes(rawCategory)
       ? (rawCategory as Category)
       : category
@@ -308,26 +309,31 @@ const listFromSections = (mdPath: string, category: Category): InstalledItem[] =
 }
 
 export const list = (agent: Agent, context: EngineContext): InstalledItem[] => {
-  const results: InstalledItem[] = []
+  // Several categories can share one file (e.g. codex maps rules and workflows to
+  // AGENTS.md); scanning per category would report the same item twice. Dedupe by path.
+  const byPath = new Map<string, InstalledItem>()
 
   for (const category of getSupportedCategories(agent, context.scope)) {
     const entry = getLayoutEntry(agent, category, context.scope)
     const targetFile = resolveContentFile(entry, context.baseDir, 'placeholder')
+    let found: InstalledItem[] = []
 
     switch (entry.format) {
       case 'file':
-        results.push(...listFromFileDir(dirname(targetFile), category))
+        found = listFromFileDir(dirname(targetFile), category)
         break
       case 'directory-skill':
-        results.push(...listFromSkillDir(dirname(dirname(targetFile)), category))
+        found = listFromSkillDir(dirname(dirname(targetFile)), category)
         break
       case 'section':
-        results.push(...listFromSections(context.configPath ?? targetFile, category))
+        found = listFromSections(context.configPath ?? targetFile, category)
         break
     }
+
+    for (const item of found) byPath.set(item.path, item)
   }
 
-  return results
+  return [...byPath.values()]
 }
 
 export const readVersion = (
