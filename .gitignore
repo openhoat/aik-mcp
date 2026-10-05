@@ -2,6 +2,7 @@
 .clinerules/
 .idea/
 .opencode/
+.scratch/
 .vscode/
 
 build/
