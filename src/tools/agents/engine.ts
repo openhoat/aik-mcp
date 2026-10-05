@@ -147,13 +147,11 @@ const installFile = (
   targetFile: string
 ): { path: string; alreadyInstalled: boolean } => {
   mkdirSync(dirname(targetFile), { recursive: true })
-  // Instructions files (opencode rules/workflows) are plain markdown: drop the
-  // aik frontmatter. Agents keep it — opencode reads it as agent metadata.
-  const fileContent =
-    entry.configUpdate === 'opencode-instructions'
-      ? parseFrontmatter(item.rawContent).body
-      : item.rawContent
-  writeFileSync(targetFile, fileContent, 'utf-8')
+  // Keep the aik frontmatter in the installed file: readVersion reads the
+  // `version` field from it to decide whether an update is available. Stripping
+  // it made every installed rule/workflow fall back to the default version and
+  // be reported as perpetually updatable (check_updates never converged).
+  writeFileSync(targetFile, item.rawContent, 'utf-8')
 
   if (entry.configUpdate !== 'opencode-instructions') {
     return { path: targetFile, alreadyInstalled: false }
