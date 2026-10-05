@@ -55,7 +55,6 @@ const contextFor = (scope: Scope, baseDir: string) => ({
 const expectedVersion = (agent: Agent, category: Category, scope: Scope): string | null => {
   const entry = getLayoutEntry(agent, category, scope)
   if (entry.format === 'section') return null
-  if (entry.configUpdate === 'opencode-instructions') return '1.0.0'
   return '2.3.4'
 }
 
