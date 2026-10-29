@@ -19,6 +19,7 @@ const config = (dir: string) => ({
   contentDir: dir,
   http: false,
   port: 0,
+  apiKey: '',
   watch: false,
   validate: false,
   json: false,

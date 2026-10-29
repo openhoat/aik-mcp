@@ -41,6 +41,9 @@ vi.mock('node:http', () => ({
 
 const { startHttpTransport } = await import('./http.js')
 
+const TEST_API_KEY = 'test-api-key'
+const AUTH_HEADERS = { authorization: `Bearer ${TEST_API_KEY}` }
+
 const createMockRes = (): ServerResponse => {
   return {
     writeHead: vi.fn(),
@@ -54,7 +57,12 @@ const createMockReq = (
   method: string,
   headers?: Record<string, string>
 ): IncomingMessage => {
-  return { method, url, headers: headers ?? {}, on: vi.fn() } as unknown as IncomingMessage // Safe: test mock type limitation
+  return {
+    method,
+    url,
+    headers: { ...AUTH_HEADERS, ...headers },
+    on: vi.fn(),
+  } as unknown as IncomingMessage // Safe: test mock type limitation
 }
 
 const createMockReqWithBody = (
@@ -63,7 +71,7 @@ const createMockReqWithBody = (
   headers?: Record<string, string>
 ): IncomingMessage => {
   const ee = new EventEmitter()
-  Object.assign(ee, { method: 'POST', url, headers: headers ?? {} })
+  Object.assign(ee, { method: 'POST', url, headers: { ...AUTH_HEADERS, ...headers } })
   queueMicrotask(() => {
     ee.emit('data', Buffer.from(body))
     ee.emit('end')
@@ -86,31 +94,75 @@ describe('startHttpTransport', () => {
 
   describe('server setup', () => {
     test('should create HTTP server and listen on given port', async () => {
-      await startHttpTransport(server, 3456)
+      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
 
       expect(mockListen).toHaveBeenCalledWith(3456)
     })
 
     test('should pass request handler to createServer', async () => {
-      await startHttpTransport(server, 3456)
+      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
 
       expect(capturedHandler).toEqual(expect.any(Function))
+    })
+
+    test('should refuse to start without an api key', async () => {
+      await expect(startHttpTransport(server, { port: 3456, apiKey: '' })).rejects.toThrow(
+        /MCP_API_KEY/
+      )
+      expect(mockListen).not.toHaveBeenCalled()
+    })
+
+    test('should refuse to start with the placeholder api key', async () => {
+      await expect(startHttpTransport(server, { port: 3456, apiKey: 'change-me' })).rejects.toThrow(
+        /MCP_API_KEY/
+      )
+      expect(mockListen).not.toHaveBeenCalled()
     })
   })
 
   describe('request handler', () => {
     beforeEach(async () => {
-      await startHttpTransport(server, 3456)
+      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
     })
 
     test('GET /health returns 200 with status', async () => {
-      const req = createMockReq('/health', 'GET')
+      const req = createMockReq('/health', 'GET', { authorization: '' })
       const res = createMockRes()
 
       await capturedHandler!(req, res)
 
       expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'application/json' })
       expect(res.end).toHaveBeenCalledWith(JSON.stringify({ status: 'ok', server: 'aik' }))
+    })
+
+    test('rejects a missing authorization header with 401', async () => {
+      const req = createMockReq('/mcp', 'POST', { authorization: '' })
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      expect(res.writeHead).toHaveBeenCalledWith(401, { 'WWW-Authenticate': 'Bearer realm="aik"' })
+      expect(res.end).toHaveBeenCalledWith('Unauthorized')
+      expect(MockTransport).not.toHaveBeenCalled()
+    })
+
+    test('rejects a wrong token with 401', async () => {
+      const req = createMockReq('/mcp', 'POST', { authorization: 'Bearer wrong' })
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      expect(res.writeHead).toHaveBeenCalledWith(401, { 'WWW-Authenticate': 'Bearer realm="aik"' })
+      expect(mockTransportHandleRequest).not.toHaveBeenCalled()
+    })
+
+    test('hides unknown routes behind authentication', async () => {
+      const req = createMockReq('/some-other-path', 'GET', { authorization: '' })
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      expect(res.writeHead).toHaveBeenCalledWith(401, { 'WWW-Authenticate': 'Bearer realm="aik"' })
     })
 
     test('non-MCP route returns 404', async () => {

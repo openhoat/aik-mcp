@@ -6,12 +6,17 @@ describe('config', () => {
 
   beforeEach(() => {
     envBackup.AIK_CONTENT_DIR = process.env.AIK_CONTENT_DIR
+    envBackup.MCP_API_KEY = process.env.MCP_API_KEY
     delete process.env.AIK_CONTENT_DIR
+    delete process.env.MCP_API_KEY
   })
 
   afterEach(() => {
     if (envBackup.AIK_CONTENT_DIR) {
       process.env.AIK_CONTENT_DIR = envBackup.AIK_CONTENT_DIR
+    }
+    if (envBackup.MCP_API_KEY) {
+      process.env.MCP_API_KEY = envBackup.MCP_API_KEY
     }
   })
 
@@ -42,6 +47,15 @@ describe('config', () => {
   test('should read AIK_CONTENT_DIR from env', () => {
     process.env.AIK_CONTENT_DIR = '/custom/path'
     expect(loadConfig([]).contentDir).toBe('/custom/path')
+  })
+
+  test('should read MCP_API_KEY from env', () => {
+    process.env.MCP_API_KEY = 's3cret'
+    expect(loadConfig(['--http']).apiKey).toBe('s3cret')
+  })
+
+  test('should default apiKey to an empty string', () => {
+    expect(loadConfig([]).apiKey).toBe('')
   })
 
   test('should handle combined flags', () => {

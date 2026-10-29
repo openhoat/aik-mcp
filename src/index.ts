@@ -82,7 +82,12 @@ registerResources(server, store)
 
 if (config.http) {
   logger.info({ port: config.port }, 'starting HTTP transport')
-  await startHttpTransport(server, config.port)
+  try {
+    await startHttpTransport(server, { port: config.port, apiKey: config.apiKey })
+  } catch (err) {
+    logger.error({ err }, 'HTTP transport refused to start')
+    process.exit(1)
+  }
 } else {
   logger.info('starting stdio transport')
   await startStdioTransport(server)
