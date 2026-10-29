@@ -10,6 +10,12 @@ type TransportMap = Map<string, StreamableHTTPServerTransport>
 export interface HttpTransportOptions {
   port: number
   apiKey: string
+  /**
+   * Builds a fresh MCP server for one session. A `McpServer` binds to a single
+   * transport, so sharing one instance across sessions makes every reconnect
+   * fail with "Already connected to a transport".
+   */
+  createMcpServer: () => McpServer
 }
 
 interface ParsedBody {
@@ -80,7 +86,7 @@ const handleDelete = async (
 }
 
 const handleMcpRequest = async (
-  server: McpServer,
+  createMcpServer: () => McpServer,
   transports: TransportMap,
   req: IncomingMessage,
   res: ServerResponse
@@ -107,15 +113,12 @@ const handleMcpRequest = async (
   }
 
   const created = createTransport(transports)
-  await server.connect(created)
+  await createMcpServer().connect(created)
   await created.handleRequest(req, res, parsed)
 }
 
-export const startHttpTransport = async (
-  server: McpServer,
-  options: HttpTransportOptions
-): Promise<void> => {
-  const { port, apiKey } = options
+export const startHttpTransport = async (options: HttpTransportOptions): Promise<void> => {
+  const { port, apiKey, createMcpServer } = options
 
   // Fail closed: this server reads and writes the knowledge directory, it must
   // never answer unauthenticated when reachable over the network.
@@ -145,7 +148,7 @@ export const startHttpTransport = async (
         return
       }
 
-      await handleMcpRequest(server, transports, req, res)
+      await handleMcpRequest(createMcpServer, transports, req, res)
     } catch (err) {
       logger.error({ err }, 'HTTP request handler error')
       if (!res.headersSent) {

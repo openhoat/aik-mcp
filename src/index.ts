@@ -56,39 +56,50 @@ if (config.validate) {
   process.exit(result.invalid > 0 ? 1 : 0)
 }
 
-const server = new McpServer(
-  {
-    name: 'aik',
-    version: '1.0.0',
-    description:
-      'MCP server for AI knowledge repository — query rules, skills, workflows, and agents',
-  },
-  ...(instructions ? [{ instructions }] : [])
-)
+// One MCP server per transport: a McpServer binds to a single transport, and
+// the HTTP transport opens one transport per session (every client, every
+// reconnect).
+const createMcpServer = (): McpServer => {
+  const server = new McpServer(
+    {
+      name: 'aik',
+      version: '1.0.0',
+      description:
+        'MCP server for AI knowledge repository — query rules, skills, workflows, and agents',
+    },
+    ...(instructions ? [{ instructions }] : [])
+  )
 
-registerListTool(server, store)
-registerGetTool(server, store)
-registerGetAssetTool(server, store)
-registerInstallTool(server, store)
-registerReinstallTool(server, store)
-registerListInstalledTool(server, store)
-registerSearchTool(server, store)
-registerUninstallTool(server, store)
-registerWriteTool(server, store)
-registerDeleteTool(server, store)
-registerCheckUpdatesTool(server, store)
-registerUpdateTool(server, store)
-registerResources(server, store)
+  registerListTool(server, store)
+  registerGetTool(server, store)
+  registerGetAssetTool(server, store)
+  registerInstallTool(server, store)
+  registerReinstallTool(server, store)
+  registerListInstalledTool(server, store)
+  registerSearchTool(server, store)
+  registerUninstallTool(server, store)
+  registerWriteTool(server, store)
+  registerDeleteTool(server, store)
+  registerCheckUpdatesTool(server, store)
+  registerUpdateTool(server, store)
+  registerResources(server, store)
+
+  return server
+}
 
 if (config.http) {
   logger.info({ port: config.port }, 'starting HTTP transport')
   try {
-    await startHttpTransport(server, { port: config.port, apiKey: config.apiKey })
+    await startHttpTransport({
+      port: config.port,
+      apiKey: config.apiKey,
+      createMcpServer,
+    })
   } catch (err) {
     logger.error({ err }, 'HTTP transport refused to start')
     process.exit(1)
   }
 } else {
   logger.info('starting stdio transport')
-  await startStdioTransport(server)
+  await startStdioTransport(createMcpServer())
 }
