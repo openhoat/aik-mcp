@@ -1,4 +1,56 @@
+# [0.8.0](https://github.com/openhoat/aik-mcp/compare/v0.7.1...v0.8.0) (2026-10-29)
+
+### Bug Fixes
+
+* **agents:** correct bulk uninstall and unsupported combinations ([c1ad813](https://github.com/openhoat/aik-mcp/commit/c1ad813f8e01df4ca874727321069e436d6b4710))
+* **agents:** dedupe shared-section listings after review ([e9b7547](https://github.com/openhoat/aik-mcp/commit/e9b75475a82923eb992e72fc9050b15206542da1))
+* **agents:** keep frontmatter so installed versions are tracked ([53aefea](https://github.com/openhoat/aik-mcp/commit/53aefeae6a1312293f7d757e3cfd82d44e482c02))
+* clear pre-existing sonar issues across the codebase ([196d17e](https://github.com/openhoat/aik-mcp/commit/196d17eadc2b3a0270fcb50fe9e135488c0c7e07))
+* **project-stack:** strip line comments without a backtracking regex ([d5bffdf](https://github.com/openhoat/aik-mcp/commit/d5bffdf8f8acd6aa415d835678119433b227caa7))
+
+### Chores
+
+* add support of opencode v2 ([809ec01](https://github.com/openhoat/aik-mcp/commit/809ec012e41aaeb9e395ad631cd8bd5bf043570b))
+* **config:** add prettier for markdown and tighten npm files ([435e82a](https://github.com/openhoat/aik-mcp/commit/435e82a3b740e020a0894ad6d1df90881d0f7aa4))
+* **config:** document environment variables ([d2cd599](https://github.com/openhoat/aik-mcp/commit/d2cd5994d914dfeb8b1a940ece4f7ab3733cc254))
+* **deps:** upgrade node toolchain to 24 ([0bdef39](https://github.com/openhoat/aik-mcp/commit/0bdef39f91c6a1e464126285932193f824ea7e2c))
+* factorize npm scripts and quality composites ([2fd72fb](https://github.com/openhoat/aik-mcp/commit/2fd72fb88b68fed827d9e81548e88ae38e1acee0))
+* ignore the .scratch working directory ([1f5cd27](https://github.com/openhoat/aik-mcp/commit/1f5cd275b8a422c7c837a2014ec6162cc115d2f3))
+* **sonar:** add sonarqube configuration and strict profile script ([d5a15a4](https://github.com/openhoat/aik-mcp/commit/d5a15a4f49230abe5e52da4dd418fb23a2f10ee6))
+
+### Continuous Integration
+
+* create github release from changelog ([3c29334](https://github.com/openhoat/aik-mcp/commit/3c2933446e8c11c2a3b0944024889f25b0d4df3a))
+* enforce quality gates and cache CI builds ([421b22e](https://github.com/openhoat/aik-mcp/commit/421b22e64fddb1a0390a4cc4dd52f389be5bbb5d))
+* publish docker image to ghcr.io ([2825d6a](https://github.com/openhoat/aik-mcp/commit/2825d6a6b16a9ca382d094fb16a9da15ea0d0678))
+
+### Documentation
+
+* **kanban:** drop completed quality gate items ([0e3f5be](https://github.com/openhoat/aik-mcp/commit/0e3f5bed28281ef351828d824fccf194c929c7d5))
+* **kanban:** move P1 quality gate items to in progress ([979ca1a](https://github.com/openhoat/aik-mcp/commit/979ca1a6eab1bdf9e6cbeb3d4e7e4346a16043fd))
+* **kanban:** remove completed tasks from backlog ([cdda8d1](https://github.com/openhoat/aik-mcp/commit/cdda8d10d2759f70102c28341af1bdd7a69f2077))
+
+### Features
+
+* **http:** require a bearer api key on the http transport ([46e55d8](https://github.com/openhoat/aik-mcp/commit/46e55d8cd0fa103b9f2162363134ebd3d0f9e821))
+
+### Refactoring
+
+* **agents:** add install engine and declarative layout ([0834cf0](https://github.com/openhoat/aik-mcp/commit/0834cf0f4e7c75a1f64dc9ec137b211567fe8614))
+* **agents:** own detection in the agent registry ([a851f6d](https://github.com/openhoat/aik-mcp/commit/a851f6d48fade0416f916589f39f2818ebcb0ca6))
+* **agents:** shrink the tool surface to factory, detection and engine ([182b1cf](https://github.com/openhoat/aik-mcp/commit/182b1cfea6235312863a4daf29cd987ccf3da684))
+* **install:** route install through the engine ([00cd4f0](https://github.com/openhoat/aik-mcp/commit/00cd4f0a07ae3e3f368c71cf1b6f3aef69cc1b28))
+* **tools:** clear sonar findings on the agent engine ([b661701](https://github.com/openhoat/aik-mcp/commit/b661701571da14e05c5a2135b8a5627057678638))
+* **uninstall:** route uninstall and list through the engine ([094508c](https://github.com/openhoat/aik-mcp/commit/094508c2bbd5b78b2eb6897556a4ce9120ae3821))
+* **update:** read and apply updates through the engine ([fcc1ab8](https://github.com/openhoat/aik-mcp/commit/fcc1ab8704ea7890bc589ba1c2e94d7e237fae08))
+
+### Tests
+
+* split unit and e2e test projects ([1f7ab07](https://github.com/openhoat/aik-mcp/commit/1f7ab0708ee4ad8241cf5343d6b5abf7503c6835))
+
 ## [0.7.1](https://github.com/openhoat/aik-mcp/compare/v0.7.0...v0.7.1) (2026-09-28)
+
+* 0.7.1 ([undefined](https://github.com/openhoat/aik-mcp/commit/08026dee53e997a9880aac7da0bf2bcc5f4b60c0))
 
 ### Bug Fixes
 
