@@ -82,6 +82,7 @@ const createMockReqWithBody = (
 describe('startHttpTransport', () => {
   let server: import('@modelcontextprotocol/sdk/server/mcp.js').McpServer
   let connect: Mock<() => Promise<void>>
+  let createMcpServer: Mock<() => import('@modelcontextprotocol/sdk/server/mcp.js').McpServer>
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -90,39 +91,40 @@ describe('startHttpTransport', () => {
     capturedSessionIdGenerator = undefined
     connect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
     server = { connect } as unknown as import('@modelcontextprotocol/sdk/server/mcp.js').McpServer
+    createMcpServer = vi.fn(() => server)
   })
 
   describe('server setup', () => {
     test('should create HTTP server and listen on given port', async () => {
-      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
+      await startHttpTransport({ port: 3456, apiKey: TEST_API_KEY, createMcpServer })
 
       expect(mockListen).toHaveBeenCalledWith(3456)
     })
 
     test('should pass request handler to createServer', async () => {
-      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
+      await startHttpTransport({ port: 3456, apiKey: TEST_API_KEY, createMcpServer })
 
       expect(capturedHandler).toEqual(expect.any(Function))
     })
 
     test('should refuse to start without an api key', async () => {
-      await expect(startHttpTransport(server, { port: 3456, apiKey: '' })).rejects.toThrow(
+      await expect(startHttpTransport({ port: 3456, apiKey: '', createMcpServer })).rejects.toThrow(
         /MCP_API_KEY/
       )
       expect(mockListen).not.toHaveBeenCalled()
     })
 
     test('should refuse to start with the placeholder api key', async () => {
-      await expect(startHttpTransport(server, { port: 3456, apiKey: 'change-me' })).rejects.toThrow(
-        /MCP_API_KEY/
-      )
+      await expect(
+        startHttpTransport({ port: 3456, apiKey: 'change-me', createMcpServer })
+      ).rejects.toThrow(/MCP_API_KEY/)
       expect(mockListen).not.toHaveBeenCalled()
     })
   })
 
   describe('request handler', () => {
     beforeEach(async () => {
-      await startHttpTransport(server, { port: 3456, apiKey: TEST_API_KEY })
+      await startHttpTransport({ port: 3456, apiKey: TEST_API_KEY, createMcpServer })
     })
 
     test('GET /health returns 200 with status', async () => {
@@ -194,6 +196,22 @@ describe('startHttpTransport', () => {
       expect(MockTransport).toHaveBeenCalledTimes(1)
       expect(connect).toHaveBeenCalledTimes(1)
       expect(mockTransportHandleRequest).toHaveBeenCalledTimes(1)
+    })
+
+    test('builds a fresh MCP server for every session', async () => {
+      await capturedHandler!(
+        createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' })),
+        createMockRes()
+      )
+      await capturedHandler!(
+        createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' })),
+        createMockRes()
+      )
+
+      // A shared McpServer would fail the second session with
+      // "Already connected to a transport".
+      expect(createMcpServer).toHaveBeenCalledTimes(2)
+      expect(connect).toHaveBeenCalledTimes(2)
     })
 
     test('DELETE without session header returns 400', async () => {
