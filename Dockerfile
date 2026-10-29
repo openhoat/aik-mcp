@@ -10,7 +10,9 @@ RUN apk add --no-cache curl
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+# --ignore-scripts: the `prepare` lifecycle script runs `husky`, a dev-only
+# dependency absent from this stage (and there is no git repository here).
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=build /app/build ./build
 EXPOSE 3456
 USER node
