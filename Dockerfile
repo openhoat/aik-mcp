@@ -16,4 +16,4 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=build /app/build ./build
 EXPOSE 3456
 USER node
-CMD ["aik-mcp", "--http"]
+CMD ["node", "build/index.js", "--http"]
