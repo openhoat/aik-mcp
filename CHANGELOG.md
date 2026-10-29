@@ -1,4 +1,4 @@
-# [0.8.0](https://github.com/openhoat/aik-mcp/compare/v0.7.1...v0.8.0) (2026-10-29)
+## [0.8.1](https://github.com/openhoat/aik-mcp/compare/v0.7.1...v0.8.1) (2026-10-29)
 
 ### Bug Fixes
 
@@ -6,6 +6,9 @@
 * **agents:** dedupe shared-section listings after review ([e9b7547](https://github.com/openhoat/aik-mcp/commit/e9b75475a82923eb992e72fc9050b15206542da1))
 * **agents:** keep frontmatter so installed versions are tracked ([53aefea](https://github.com/openhoat/aik-mcp/commit/53aefeae6a1312293f7d757e3cfd82d44e482c02))
 * clear pre-existing sonar issues across the codebase ([196d17e](https://github.com/openhoat/aik-mcp/commit/196d17eadc2b3a0270fcb50fe9e135488c0c7e07))
+* **docker:** run the built entrypoint instead of the npm bin shim ([38aab7a](https://github.com/openhoat/aik-mcp/commit/38aab7ab08900d6766bf10682db1f46e96d50487))
+* **docker:** skip lifecycle scripts in the production install ([1adbd18](https://github.com/openhoat/aik-mcp/commit/1adbd18ba14aaf9f7ad63c5fdb79ee089698c24e))
+* **http:** create one mcp server per session ([4c84ed9](https://github.com/openhoat/aik-mcp/commit/4c84ed922f59f34def42df44634e1af36e2333b8))
 * **project-stack:** strip line comments without a backtracking regex ([d5bffdf](https://github.com/openhoat/aik-mcp/commit/d5bffdf8f8acd6aa415d835678119433b227caa7))
 
 ### Chores
@@ -16,6 +19,7 @@
 * **deps:** upgrade node toolchain to 24 ([0bdef39](https://github.com/openhoat/aik-mcp/commit/0bdef39f91c6a1e464126285932193f824ea7e2c))
 * factorize npm scripts and quality composites ([2fd72fb](https://github.com/openhoat/aik-mcp/commit/2fd72fb88b68fed827d9e81548e88ae38e1acee0))
 * ignore the .scratch working directory ([1f5cd27](https://github.com/openhoat/aik-mcp/commit/1f5cd275b8a422c7c837a2014ec6162cc115d2f3))
+* **release:** 0.8.0 ([a211113](https://github.com/openhoat/aik-mcp/commit/a211113836fc5d6ab01a74aeee868b5275204f09))
 * **sonar:** add sonarqube configuration and strict profile script ([d5a15a4](https://github.com/openhoat/aik-mcp/commit/d5a15a4f49230abe5e52da4dd418fb23a2f10ee6))
 
 ### Continuous Integration
@@ -32,7 +36,7 @@
 
 ### Features
 
-* **http:** require a bearer api key on the http transport ([46e55d8](https://github.com/openhoat/aik-mcp/commit/46e55d8cd0fa103b9f2162363134ebd3d0f9e821))
+* **http:** require a bearer api key on the http transport ([2ad63d4](https://github.com/openhoat/aik-mcp/commit/2ad63d46fdb6a8a1e45a03af96d7f1368e7b2e86))
 
 ### Refactoring
 
