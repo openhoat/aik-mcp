@@ -173,6 +173,34 @@ aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, 
 
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS, etc.) to use the same knowledge base across projects and agents.
 
+### Remote HTTP client
+
+Run the server once, reachable over the network, and point every client at it:
+
+```bash
+MCP_API_KEY="$(openssl rand -hex 32)" AIK_CONTENT_DIR=/srv/aik-content npx aik-mcp --http --port 3456
+```
+
+The HTTP transport is **fail closed**: it refuses to start without `MCP_API_KEY`
+(empty or the `change-me` placeholder is rejected), `/health` is the only public
+route and every other request needs `Authorization: Bearer <key>`.
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "aik": {
+        "type": "remote",
+        "url": "https://aik-mcp.example.com/mcp",
+        "headers": { "Authorization": "Bearer {env:MCP_API_KEY}" },
+        "oauth": false,
+      },
+    },
+  },
+}
+```
+
 ## Content structure
 
 Content items are organized by category as **bundles** — a directory with a
@@ -246,6 +274,7 @@ When a skill is installed, its assets are copied alongside `SKILL.md`.
 | Variable          | Default | Description                                                    |
 | ----------------- | ------- | -------------------------------------------------------------- |
 | `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
+| `MCP_API_KEY`     | —       | Bearer key, mandatory with `--http`, refused when unset        |
 | `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |
 
 ## Development

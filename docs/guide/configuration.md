@@ -82,6 +82,33 @@ aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, 
 
 > **Tip:** Set `AIK_CONTENT_DIR` to a shared path (Dropbox, git repo, team NAS) to use the same knowledge base across projects and agents.
 
+## HTTP transport
+
+The HTTP transport is **fail closed**: `--http` without a real `MCP_API_KEY`
+(empty or `change-me`) makes the server exit. `/health` stays public, every
+other route requires `Authorization: Bearer <key>`.
+
+```bash
+MCP_API_KEY="$(openssl rand -hex 32)" AIK_CONTENT_DIR=/srv/aik-content aik-mcp --http --port 3456
+```
+
+Remote client (opencode):
+
+```jsonc
+{
+  "mcp": {
+    "servers": {
+      "aik": {
+        "type": "remote",
+        "url": "https://aik-mcp.example.com/mcp",
+        "headers": { "Authorization": "Bearer {env:MCP_API_KEY}" },
+        "oauth": false,
+      },
+    },
+  },
+}
+```
+
 ## CLI options
 
 | Flag         | Default | Description                             |
@@ -95,4 +122,5 @@ aik-mcp provides knowledge management. Use `aik_list`, `aik_get`, `aik_search`, 
 | Variable          | Default | Description                                                    |
 | ----------------- | ------- | -------------------------------------------------------------- |
 | `AIK_CONTENT_DIR` | `.`     | Path to the content directory                                  |
+| `MCP_API_KEY`     | —       | Bearer key, mandatory with `--http`, refused when unset        |
 | `LOG_LEVEL`       | `info`  | Log level: `trace`, `debug`, `info`, `warn`, `error`, `silent` |

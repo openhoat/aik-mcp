@@ -3,8 +3,14 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { logger } from '../logger.js'
+import { isAuthorized, isUsableApiKey } from './auth.js'
 
 type TransportMap = Map<string, StreamableHTTPServerTransport>
+
+export interface HttpTransportOptions {
+  port: number
+  apiKey: string
+}
 
 interface ParsedBody {
   method?: string
@@ -105,13 +111,32 @@ const handleMcpRequest = async (
   await created.handleRequest(req, res, parsed)
 }
 
-export const startHttpTransport = async (server: McpServer, port: number): Promise<void> => {
+export const startHttpTransport = async (
+  server: McpServer,
+  options: HttpTransportOptions
+): Promise<void> => {
+  const { port, apiKey } = options
+
+  // Fail closed: this server reads and writes the knowledge directory, it must
+  // never answer unauthenticated when reachable over the network.
+  if (!isUsableApiKey(apiKey)) {
+    throw new Error(
+      'MCP_API_KEY is required and must be set to a real secret (not empty, not "change-me"). Generate one with: openssl rand -hex 32'
+    )
+  }
+
   const transports: TransportMap = new Map()
 
   const httpServer = createServer(async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/health') {
         sendJson(res, 200, { status: 'ok', server: 'aik' })
+        return
+      }
+
+      if (!isAuthorized(req.headers.authorization, apiKey)) {
+        res.writeHead(401, { 'WWW-Authenticate': 'Bearer realm="aik"' })
+        res.end('Unauthorized')
         return
       }
 
