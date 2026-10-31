@@ -11,6 +11,8 @@ export type Category = 'rules' | 'skills' | 'workflows' | 'agents'
 
 const CATEGORIES: Category[] = ['rules', 'skills', 'workflows', 'agents']
 const ENTRY_FILE = 'README.md'
+const WATCH_DEBOUNCE_MS = 300
+const WATCH_READY_TIMEOUT_MS = 3000
 
 export interface ContentItem {
   path: string
@@ -58,6 +60,7 @@ export class ContentStore {
   private items: ContentItem[] = []
   private readonly config: AikConfig
   private watcher: ReturnType<typeof watch> | null = null
+  private scanTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(config: AikConfig) {
     this.config = config
@@ -69,7 +72,7 @@ export class ContentStore {
     logger.info({ itemCount: this.items.length }, 'scan complete')
     if (this.config.watch) {
       logger.info('file watching enabled')
-      this.startWatch()
+      await this.startWatch()
     }
   }
 
@@ -132,17 +135,39 @@ export class ContentStore {
     this.items = this.items.filter(i => i.fullPath !== entryFile)
   }
 
-  private startWatch(): void {
-    const patterns = CATEGORIES.map(c => join(this.config.contentDir, c, '*', '**'))
-    this.watcher = watch(patterns, {
+  private async startWatch(): Promise<void> {
+    // chokidar dropped glob support in 4.0: a pattern such as
+    // `<dir>/<category>/*/**` is matched literally and never fires. Watch the
+    // content root and let the recursive watch cover every category, including
+    // the ones created after startup.
+    this.watcher = watch(this.config.contentDir, {
       ignoreInitial: true,
       persistent: true,
     })
 
-    this.watcher.on('all', async () => {
-      logger.trace({}, 'content directory changed, rescanning')
-      await this.scan()
+    this.watcher.on('all', () => this.scheduleScan())
+
+    // chokidar attaches its directory watchers asynchronously: waiting for
+    // `ready` closes the window where an external change (a git pull) would be
+    // missed. The timeout keeps a missing content directory from blocking init.
+    await new Promise<void>(resolve => {
+      const timer = setTimeout(resolve, WATCH_READY_TIMEOUT_MS)
+      this.watcher?.once('ready', () => {
+        clearTimeout(timer)
+        resolve()
+      })
     })
+  }
+
+  // A git checkout, an editor save or an asset batch emits a burst of events;
+  // collapse them into a single rescan.
+  private scheduleScan(): void {
+    if (this.scanTimer) clearTimeout(this.scanTimer)
+    this.scanTimer = setTimeout(() => {
+      this.scanTimer = null
+      logger.trace({}, 'content directory changed, rescanning')
+      void this.scan().catch(err => logger.warn({ err }, 'rescan failed'))
+    }, WATCH_DEBOUNCE_MS)
   }
 
   getAll(): ContentItem[] {
@@ -238,6 +263,10 @@ export class ContentStore {
   }
 
   destroy(): void {
+    if (this.scanTimer) {
+      clearTimeout(this.scanTimer)
+      this.scanTimer = null
+    }
     if (this.watcher) {
       void this.watcher.close()
       this.watcher = null

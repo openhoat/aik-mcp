@@ -4,14 +4,24 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test } from 'vitest'
 
-const mockChokidarOn = vi.fn()
-const mockChokidarClose = vi.fn()
+const mocks = vi.hoisted(() => {
+  const on = vi.fn()
+  const close = vi.fn()
+  // chokidar emits `ready` once its directory watchers are attached; the store
+  // awaits it, so the mock resolves immediately.
+  const once = vi.fn((event: string, handler: () => void) => {
+    if (event === 'ready') handler()
+  })
+  const watch = vi.fn(() => ({ on, once, close }))
+  return { on, close, once, watch }
+})
+
+const mockChokidarOn = mocks.on
+const mockChokidarClose = mocks.close
+const mockChokidarWatch = mocks.watch
 
 vi.mock('chokidar', () => ({
-  watch: vi.fn(() => ({
-    on: mockChokidarOn,
-    close: mockChokidarClose,
-  })),
+  watch: mocks.watch,
 }))
 
 import { ContentStore } from './content-store.js'
@@ -396,16 +406,34 @@ Original content`
       await store.init()
 
       const allHandler = mockChokidarOn.mock.calls.find(c => c[0] === 'all')?.[1] as
-        | (() => Promise<void>)
+        | (() => void)
         | undefined
       expect(allHandler).toBeDefined()
 
       await createBundle(dir, 'rules/test', '---\ntitle: Test\n---\nBody')
-      await allHandler!()
+      allHandler!()
+      // the rescan is debounced: let the scheduled scan run
+      await new Promise(resolve => setTimeout(resolve, 400))
 
       const all = store.getAll()
       expect(all).toHaveLength(1)
       expect(all[0].title).toBe('Test')
+
+      await rm(dir, { recursive: true, force: true })
+    })
+
+    test('watches the content root instead of glob patterns', async () => {
+      const dir = createTempDir()
+
+      store = new ContentStore({ ...config(dir), watch: true })
+      await store.init()
+
+      // chokidar 4+ dropped glob support: a pattern would be matched literally
+      // and would never fire, silently disabling external change detection
+      expect(mockChokidarWatch).toHaveBeenCalledWith(dir, {
+        ignoreInitial: true,
+        persistent: true,
+      })
 
       await rm(dir, { recursive: true, force: true })
     })

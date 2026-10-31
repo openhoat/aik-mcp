@@ -546,3 +546,37 @@ test('handles concurrent requests', async () => {
     }
   })
 })
+
+test('serves a file changed outside the server while the watcher is on', async () => {
+  await createFile(
+    tempDir,
+    'rules/watched-rule',
+    '---\ntitle: Watched Rule\ntags: [test]\n---\ninitial body'
+  )
+
+  // Default args keep the watcher enabled, unlike the rest of the suite.
+  await withServer(
+    tempDir,
+    async req => {
+      const read = async (): Promise<string> => {
+        const result = (await req('tools/call', {
+          name: 'get',
+          arguments: { path: 'rules/watched-rule' },
+        })) as ToolResult
+        return result.content[0].text
+      }
+
+      expect(await read()).toContain('initial body')
+
+      // A git pull writes the file behind the server's back: the store must
+      // pick it up without a restart.
+      const entry = join(tempDir, 'rules/watched-rule/README.md')
+      const body = '---\ntitle: Watched Rule\ntags: [test]\n---\nexternally edited'
+      await writeFile(entry, body, 'utf-8')
+
+      await expect.poll(read, { timeout: 15000, interval: 250 }).toContain('externally edited')
+    },
+    {},
+    []
+  )
+})
