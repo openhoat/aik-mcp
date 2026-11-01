@@ -29,6 +29,7 @@ import { startHttpTransport } from './transports/http.js'
 import { createPlanRoute } from './transports/plan-route.js'
 import { startStdioTransport } from './transports/stdio.js'
 import { formatResult, validateContent } from './validate.js'
+import { packageVersion } from './version.js'
 
 const config = loadConfig(process.argv.slice(2))
 
@@ -79,7 +80,7 @@ const createMcpServer = (mode: 'stdio' | 'http'): McpServer => {
   const server = new McpServer(
     {
       name: 'aik',
-      version: '1.0.0',
+      version: packageVersion(),
       description:
         'MCP server for AI knowledge repository — query rules, skills, workflows, and agents',
     },

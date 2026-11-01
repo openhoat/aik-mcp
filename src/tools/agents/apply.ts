@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
 import type { InstallPlan, PlanAction, PlanFile } from './plan.js'
-import { buildSection, findSection, sectionPresent } from './section.js'
+import { buildSection, removeSection, sectionPresent } from './section.js'
 
 // Applier for installation plans.
 //
@@ -124,18 +124,27 @@ const readText = (path: string): string => {
 
 const resolveConfigFile = (candidates: string[], baseDir: string): string => {
   const found = candidates.find(candidate => existsSync(resolveTarget(baseDir, candidate)))
-  return resolveTarget(baseDir, found ?? (candidates[0] as string))
+  const chosen = found ?? candidates.at(0)
+  if (!chosen) throw new Error('a config operation carries no candidate file')
+  return resolveTarget(baseDir, chosen)
 }
 
 interface JsonConfig {
   [key: string]: unknown
 }
 
+const isJsonObject = (value: unknown): value is JsonConfig =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(entry => typeof entry === 'string')
+
 const readConfig = (path: string): JsonConfig => {
   const text = readText(path)
   if (!text.trim()) return {}
-  // Safe: comment-json parses JSON with comments into a plain object.
-  return parseJsonc(text) as JsonConfig
+  const parsed: unknown = parseJsonc(text)
+  if (!isJsonObject(parsed)) throw new Error(`${path} does not hold a JSON object`)
+  return parsed
 }
 
 // The value an instruction entry must hold: relative to the project root for the
@@ -203,14 +212,14 @@ const applyAction = (
     case 'section_remove': {
       const file = resolveTarget(baseDir, action.file)
       const content = readText(file)
-      const range = findSection(content, action.marker)
-      if (!range) {
-        if (!content.includes(action.marker)) {
-          return { message: `section_remove ${file} (absent, nothing to do)`, applied: false }
-        }
+      if (!content.includes(action.marker)) {
+        return { message: `section_remove ${file} (absent, nothing to do)`, applied: false }
       }
-      if (!options.dryRun && content) {
-        writeFileSync(file, removeMarkerBlock(content, action.marker), 'utf-8')
+      // The shared rules carry the legacy fallback for a marker that is not the
+      // opening line of its heading: one implementation, so a bounds fix lands
+      // here and in the direct engine at the same time.
+      if (!options.dryRun) {
+        writeFileSync(file, removeSection(content, action.marker).result, 'utf-8')
       }
       return { message: `section_remove ${file}`, applied: true }
     }
@@ -237,7 +246,8 @@ const applyAction = (
     case 'config_entry_remove': {
       const file = resolveConfigFile(action.candidates, baseDir)
       const config = readConfig(file)
-      const current = Array.isArray(config[action.key]) ? (config[action.key] as string[]) : []
+      const raw = config[action.key]
+      const current = isStringArray(raw) ? raw : []
       const value = configEntryValue(plan, action.path, baseDir)
       const adding = action.op === 'config_entry_add'
       const present = current.includes(value)
@@ -261,24 +271,6 @@ const applyAction = (
       throw new Error(`unknown plan operation "${unknown.op}": upgrade aik-apply`)
     }
   }
-}
-
-// Removal through the shared section rules, with the engine's legacy fallback for
-// a marker that is not the opening line of its heading.
-const removeMarkerBlock = (content: string, marker: string): string => {
-  const range = findSection(content, marker)
-  if (range) {
-    const lines = content.split('\n')
-    return [...lines.slice(0, range.start), ...lines.slice(range.end)].join('\n')
-  }
-  const lines = content.split('\n')
-  const start = lines.findIndex(
-    (line, index) => line.startsWith('## ') && lines.slice(index).join('\n').includes(marker)
-  )
-  if (start < 0) return content
-  let end = start + 1
-  while (end < lines.length && !(lines[end] as string).startsWith('## ')) end++
-  return [...lines.slice(0, start), ...lines.slice(end)].join('\n')
 }
 
 /** Apply a plan. Throws on a corrupt payload or an unknown operation. */
