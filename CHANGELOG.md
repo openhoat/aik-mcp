@@ -1,4 +1,12 @@
+## [0.10.1](https://github.com/openhoat/aik-mcp/compare/v0.10.0...v0.10.1) (2026-11-01)
+
+### Bug Fixes
+
+* report the package version, and drop the duplicated section fallback ([cef2f2a](https://github.com/openhoat/aik-mcp/commit/cef2f2a0a7cedeefe90e72307c2c56998bae31bb))
+
 # [0.10.0](https://github.com/openhoat/aik-mcp/compare/v0.9.1...v0.10.0) (2026-11-01)
+
+* 0.10.0 ([undefined](https://github.com/openhoat/aik-mcp/commit/af8caddaf1de2ce2d37e11f07a4eefb0a3d427b5))
 
 ### Features
 
