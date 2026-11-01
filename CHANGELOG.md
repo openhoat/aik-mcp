@@ -1,8 +1,18 @@
+# [0.9.0](https://github.com/openhoat/aik-mcp/compare/v0.8.2...v0.9.0) (2026-11-01)
+
+### Features
+
+* **install:** plan installations instead of writing them over http ([7ef7f04](https://github.com/openhoat/aik-mcp/commit/7ef7f04fe0043f8e878ede21fc7e4aa1a3551d2b))
+
 ## [0.8.2](https://github.com/openhoat/aik-mcp/compare/v0.8.1...v0.8.2) (2026-10-31)
 
 ### Bug Fixes
 
 * **watcher:** watch the content root instead of glob patterns ([7946c61](https://github.com/openhoat/aik-mcp/commit/7946c6172745753c8ef593cfeda8862b8b057641))
+
+### Chores
+
+* **release:** 0.8.2 ([1c71950](https://github.com/openhoat/aik-mcp/commit/1c7195064cfeb8cb7a0da3ffddd9c9c564ee0fb0))
 
 ### Tests
 
