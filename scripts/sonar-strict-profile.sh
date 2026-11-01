@@ -4,14 +4,14 @@
 # associate it with the aik-mcp project, along with a stricter quality gate.
 #
 # Prerequisites:
-#   - SONAR_HOST_URL (e.g. https://sonar.op3n.cloud)
+#   - SONAR_HOST_URL (e.g. https://sonar.example.com)
 #   - SONAR_TOKEN    (a SonarQube token with admin permissions)
 #
 # Idempotent: safe to run multiple times.
 
 set -euo pipefail
 
-SONAR_HOST_URL="${SONAR_HOST_URL:?Set SONAR_HOST_URL (e.g. https://sonar.op3n.cloud)}"
+SONAR_HOST_URL="${SONAR_HOST_URL:?Set SONAR_HOST_URL (e.g. https://sonar.example.com)}"
 SONAR_TOKEN="${SONAR_TOKEN:?Set SONAR_TOKEN}"
 
 # SonarQube user token auth: username = token, password = anything (empty ok)
