@@ -67,6 +67,7 @@
     "version": "npm run build:changelog && git add -A"
   },
   "bin": {
+    "aik-apply": "bin/aik-apply.mjs",
     "aik-mcp": "build/index.js"
   },
   "engines": {
@@ -74,6 +75,7 @@
     "npm": ">=11.0.0"
   },
   "files": [
+    "bin",
     "build",
     "!build/**/*.test.js",
     "!build/**/*.test.d.ts",
@@ -127,6 +129,7 @@
       "files": [
         "src/**/*.ts",
         "scripts/**/*.mjs",
+        "bin/**/*.mjs",
         "*.{cjs,mjs,json}",
         "*.ts",
         "biome.json"

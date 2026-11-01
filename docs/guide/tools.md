@@ -97,6 +97,19 @@ curl -fsS -H "Authorization: Bearer $MCP_API_KEY" \
 `project`) and `configPath` (default: the agent's usual config file). It is
 authenticated like `/mcp`.
 
+The package ships an applier for that payload, so a script does not have to
+reimplement the contract:
+
+```bash
+aik-apply plan.json --base /path/to/project
+aik-apply plan.json --dry-run   # resolve the base and verify, write nothing
+```
+
+`aik-apply` reads a plan from a file or stdin, checks every sha256 before
+writing, and exits non-zero on a corrupt payload or an unknown operation. Applying
+a plan by hand, in an agent session, stays valid: both paths go through the same
+payload.
+
 ### Why the split
 
 An MCP server executes its tools where it runs. With the server on another

@@ -34,12 +34,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       // The composition root wires the modules and exits the process; it is
       // exercised by the e2e suite against the built binary, not in-process.
-      exclude: [
-        'src/**/*.test.ts',
-        'src/test/helpers.ts',
-        'src/test/plan-applier.ts',
-        'src/index.ts',
-      ],
+      exclude: ['src/**/*.test.ts', 'src/test/helpers.ts', 'src/index.ts'],
       reportsDirectory: 'dist/coverage',
       thresholds: {
         lines: 75,

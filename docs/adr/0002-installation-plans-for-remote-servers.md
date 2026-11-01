@@ -61,11 +61,14 @@ We rejected two alternatives:
 - The installation family is honest in both modes: it never claims a write it did
   not perform.
 - Applying a plan is the client's job, so the quality of the bundled instructions
-  is now load-bearing. Two guardrails: a sha256 per file, and `GET /plan` for
-  scripted application.
+  is now load-bearing. Three guardrails: a sha256 per file, `GET /plan` for
+  scripted application, and `aik-apply` shipped in the package — a client half
+  that reads a plan like a third party would and knows no agent table. Shipped
+  rather than left to each client, because a hand-rolled applier drifts from the
+  contract the moment an operation is added.
 - Agent specifics stay in the planner tables; the contract vocabulary
   (`write_file`, `section_upsert`, …) names no agent. A parity test applies each
-  plan through a third-party applier and compares the result with the direct
+  plan through the shipped applier and compares the result with the direct
   engine, over the whole matrix (agent × scope × category × format), so an
   accidental assumption fails the matrix instead of a single case.
 - `install_skill` skips an existing skill directory, mirroring the direct engine:

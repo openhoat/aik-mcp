@@ -191,14 +191,19 @@ return a **plan** — the exact files, section edits and config entries to apply
 and the client agent applies it locally with its own file tools. The bundled
 instructions (`aik_knowledge_content`, served with every session) describe the
 apply procedure; `GET /plan/<item>?agent=&scope=` returns the same JSON to a
-shell script, for payloads too large to pass through a model:
+shell script, for payloads too large to pass through a model, and the package
+ships `aik-apply` to apply one:
 
 ```bash
 curl -fsS -H "Authorization: Bearer $MCP_API_KEY" \
-  "https://aik-mcp.example.com/plan/skills/generate-changelog?agent=codex&scope=project"
+  "https://aik-mcp.example.com/plan/skills/generate-changelog?agent=codex&scope=project" \
+  -o plan.json
+aik-apply plan.json --base /path/to/project
 ```
 
-See [Tool reference](docs/guide/tools.md) for the mode-by-mode table.
+See [Remote servers](docs/guide/remote-servers.md) for the whole picture (sessions,
+authentication, plan application, content sync) and [Tool reference](docs/guide/tools.md)
+for the mode-by-mode table.
 
 ```jsonc
 {

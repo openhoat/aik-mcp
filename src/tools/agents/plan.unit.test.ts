@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os'
 import { join, relative, sep } from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { applyPlan } from '../../test/plan-applier.js'
+import { applyPlan } from './apply.js'
 import { type EngineContext, type EngineItem, install, uninstall } from './engine.js'
 import { type Agent, getAllAgents, getSupportedCategories } from './factory.js'
 import { planInstall, planUninstall } from './plan.js'
@@ -130,7 +130,7 @@ describe('plan parity with the direct engine', () => {
       const planBase = tempDir('plan')
 
       install(agent, item, directContext(scope, directBase))
-      applyPlan(planInstall(agent, item, { scope }), planBase)
+      applyPlan(planInstall(agent, item, { scope }), { base: planBase })
 
       expect(normalizeTree(readTree(planBase), planBase)).toEqual(
         normalizeTree(readTree(directBase), directBase)
@@ -145,10 +145,10 @@ describe('plan parity with the direct engine', () => {
       const planBase = tempDir('plan')
 
       install(agent, item, directContext(scope, directBase))
-      applyPlan(planInstall(agent, item, { scope }), planBase)
+      applyPlan(planInstall(agent, item, { scope }), { base: planBase })
 
       uninstall(agent, item, directContext(scope, directBase))
-      applyPlan(planUninstall(agent, item, { scope }), planBase)
+      applyPlan(planUninstall(agent, item, { scope }), { base: planBase })
 
       expect(normalizeTree(readTree(planBase), planBase)).toEqual(
         normalizeTree(readTree(directBase), directBase)
@@ -188,8 +188,8 @@ describe('plan payload', () => {
     const first = planInstall('opencode', item, { scope: 'global' })
     const base = tempDir('idem')
 
-    applyPlan(first, base)
-    applyPlan(planInstall('opencode', item, { scope: 'global' }), base)
+    applyPlan(first, { base: base })
+    applyPlan(planInstall('opencode', item, { scope: 'global' }), { base: base })
 
     const config = readFileSync(join(base, 'opencode.json'), 'utf-8')
     expect(config.match(/instructions/g)?.length).toBe(1)

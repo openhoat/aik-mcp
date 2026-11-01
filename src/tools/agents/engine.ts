@@ -24,8 +24,24 @@ import {
   type OpenCodeConfig,
   opencodeInstructionsEntry,
 } from './opencode-config.js'
+import { buildSection, isMarkerLine, openingLine, removeSection, sectionMarker } from './section.js'
 import type { Category, LayoutEntry, Scope } from './types.js'
 import { CATEGORIES } from './types.js'
+
+// Section delimitation lives in one module, shared with the plan applier that
+// ships in the package. Re-exported here: the engine's public surface stays the
+// same for the tools and the tests that read it from this file.
+export {
+  buildSection,
+  findSection,
+  isMarkerLine,
+  openingLine,
+  removeSection,
+  removeSections,
+  type SectionRange,
+  sectionMarker,
+  sectionPresent,
+} from './section.js'
 
 const ENTRY_FILE = 'README.md'
 
@@ -112,100 +128,6 @@ const removeFromOpencodeInstructions = (configPath: string, entry: string): bool
   return true
 }
 
-export const removeSections = (
-  content: string,
-  isTarget: (text: string) => boolean
-): { result: string; count: number } => {
-  const lines = content.split('\n')
-  const kept: string[] = []
-  let count = 0
-  let i = 0
-
-  while (i < lines.length) {
-    const line = lines[i]
-
-    if (line.startsWith('## ') && isTarget(lines.slice(i).join('\n'))) {
-      count++
-      i++
-      while (i < lines.length && !lines[i].startsWith('## ')) {
-        i++
-      }
-      continue
-    }
-
-    kept.push(line)
-    i++
-  }
-
-  return { result: kept.join('\n'), count }
-}
-
-// The marker line that identifies an item inside a shared file.
-export const sectionMarker = (itemPath: string): string => `<source>${itemPath}</source>`
-
-const isMarkerLine = (line: string | null): boolean => {
-  return line !== null && /^<source>[^\s]+<\/source>$/.test(line)
-}
-
-// First non-blank line after a heading, i.e. what the section opens with.
-const openingLine = (lines: string[], heading: number): string | null => {
-  for (let i = heading + 1; i < lines.length; i++) {
-    if (lines[i].trim() !== '') return lines[i].trim()
-  }
-  return null
-}
-
-export interface SectionRange {
-  start: number
-  end: number
-}
-
-/**
- * Locate the section carrying `marker`, as a line range (end exclusive).
- *
- * A section is a `##` heading whose first non-blank line is the marker. Its end
- * is the next heading that opens on a marker: the body of a section is content,
- * and content is allowed to carry its own `##` headings, so a bare heading is
- * not a boundary. Bounding on headings alone used to cut a removal at the first
- * `## Objective` inside the body, leaving the rest of the text orphaned in the
- * shared file (and the marker gone, so nothing could find it again).
- */
-export const findSection = (content: string, marker: string): SectionRange | null => {
-  const lines = content.split('\n')
-  const start = lines.findIndex(
-    (line, index) => line.startsWith('## ') && openingLine(lines, index) === marker
-  )
-  if (start < 0) return null
-
-  let end = lines.length
-  for (let i = start + 1; i < lines.length; i++) {
-    if (lines[i].startsWith('## ') && isMarkerLine(openingLine(lines, i))) {
-      end = i
-      break
-    }
-  }
-
-  return { start, end }
-}
-
-export const removeSection = (
-  content: string,
-  marker: string
-): { result: string; count: number } => {
-  const range = findSection(content, marker)
-  if (!range) {
-    // Legacy fallback: a marker that is not the opening line of its heading means
-    // the file was not written by this engine. Do what the previous version did
-    // rather than refuse, but never worse.
-    if (!content.includes(marker)) return { result: content, count: 0 }
-    return removeSections(content, text => text.includes(marker))
-  }
-
-  const lines = content.split('\n')
-  const kept = [...lines.slice(0, range.start), ...lines.slice(range.end)]
-  return { result: kept.join('\n'), count: 1 }
-}
-
 const installFile = (
   entry: LayoutEntry,
   item: EngineItem,
@@ -255,7 +177,7 @@ const installSection = (
   const sourceTag = sectionMarker(item.path)
 
   const { body } = parseFrontmatter(item.rawContent)
-  const section = `\n## ${item.title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
+  const section = buildSection(`## ${item.title}`, sourceTag, body)
 
   // Presence is decided on the marker alone, never on the section bounds: a file
   // hand-edited around an aik section must not receive the item twice.
