@@ -1,4 +1,12 @@
+## [0.10.2](https://github.com/openhoat/aik-mcp/compare/v0.10.1...v0.10.2) (2026-11-01)
+
+### Chores
+
+* **deps:** sweep npm updates and clear critical advisories ([4971be4](https://github.com/openhoat/aik-mcp/commit/4971be4c768e61efc5c898293262665c05f3c928))
+
 ## [0.10.1](https://github.com/openhoat/aik-mcp/compare/v0.10.0...v0.10.1) (2026-11-01)
+
+* 0.10.1 ([undefined](https://github.com/openhoat/aik-mcp/commit/52d0c6192d97dd965f8b6397751e527ef6c65a71))
 
 ### Bug Fixes
 
