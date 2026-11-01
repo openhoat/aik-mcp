@@ -1,8 +1,18 @@
+# [0.10.0](https://github.com/openhoat/aik-mcp/compare/v0.9.1...v0.10.0) (2026-11-01)
+
+### Features
+
+* **install:** ship the plan applier as aik-apply ([493e490](https://github.com/openhoat/aik-mcp/commit/493e490611ba29779a7adb37443473ae9b416274))
+
 ## [0.9.1](https://github.com/openhoat/aik-mcp/compare/v0.9.0...v0.9.1) (2026-11-01)
 
 ### Bug Fixes
 
 * **install:** bound a shared-file section by its markers, not by any heading ([4d29742](https://github.com/openhoat/aik-mcp/commit/4d29742a564e252c6031ebdcfe2783f5d542556d))
+
+### Chores
+
+* **release:** 0.9.1 ([6754705](https://github.com/openhoat/aik-mcp/commit/675470556af90e642efae05c9cc0160f4a714594))
 
 # [0.9.0](https://github.com/openhoat/aik-mcp/compare/v0.8.2...v0.9.0) (2026-11-01)
 
