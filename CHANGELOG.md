@@ -1,4 +1,14 @@
+## [0.9.1](https://github.com/openhoat/aik-mcp/compare/v0.9.0...v0.9.1) (2026-11-01)
+
+### Bug Fixes
+
+* **install:** bound a shared-file section by its markers, not by any heading ([4d29742](https://github.com/openhoat/aik-mcp/commit/4d29742a564e252c6031ebdcfe2783f5d542556d))
+
 # [0.9.0](https://github.com/openhoat/aik-mcp/compare/v0.8.2...v0.9.0) (2026-11-01)
+
+### Chores
+
+* **release:** 0.9.0 ([46a5403](https://github.com/openhoat/aik-mcp/commit/46a5403185719c0a904a008c742b83feceb796fe))
 
 ### Features
 
