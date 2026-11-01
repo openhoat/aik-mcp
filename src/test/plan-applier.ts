@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync 
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { parse as parseJsonc, stringify as stringifyJsonc } from 'comment-json'
-import { removeSections } from '../tools/agents/engine.js'
+import { removeSection } from '../tools/agents/engine.js'
 import type { InstallPlan, PlanAction } from '../tools/agents/plan.js'
 
 // Test-only materializer: applies a plan the way a client agent is told to, so
@@ -99,9 +99,7 @@ const applyAction = (plan: InstallPlan, action: PlanAction, baseDir: string): vo
     case 'section_remove': {
       const target = join(baseDir, action.file)
       if (!existsSync(target)) return
-      const { result } = removeSections(readFileSync(target, 'utf-8'), text =>
-        text.includes(action.marker)
-      )
+      const { result } = removeSection(readFileSync(target, 'utf-8'), action.marker)
       writeFileSync(target, result, 'utf-8')
       return
     }

@@ -6,7 +6,7 @@ description:
   machine, whatever the agent), the local inventory procedure, and the content
   conventions."
 tags: [aik, meta, shareable-content, workflow]
-version: "4.0.0"
+version: "4.1.0"
 compatibility: [opencode, claude-code, cline]
 ---
 
@@ -120,12 +120,20 @@ Three formats, and the plan is expressed in terms of them:
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `write_file`          | Write `content` to the file at `path`, replacing it if it exists.                                                                                                                                                                             |
 | `install_skill`       | Create `dir`. If `dir/SKILL.md` already exists, the skill is installed: do nothing. Otherwise write `skillMd` inside it, then each asset at its `relPath` (`base64` → decode to bytes, `utf8` → write the text), creating parent directories. |
-| `section_upsert`      | In the markdown file `file`: if a `##` section contains the line `marker`, do nothing. Otherwise append `\n{heading}\n\n{marker}\n\n{content}\n`.                                                                                             |
-| `section_remove`      | In `file`, remove the whole `##` section whose body contains `marker`, and keep the rest of the file untouched.                                                                                                                               |
+| `section_upsert`      | In the markdown file `file`: if a `##` heading already opens on `marker` (first non-blank line after it), do nothing. Otherwise append `\n{heading}\n\n{marker}\n\n{content}\n`.                                                              |
+| `section_remove`      | In `file`, remove the `##` heading that opens on `marker` and everything up to the next heading that opens on a `<source>` marker, or to the end of the file. Keep the rest untouched.                                                        |
 | `delete_file`         | Delete `path`. A missing file means the work is already done.                                                                                                                                                                                 |
 | `delete_dir`          | Delete the directory at `path` and its content. A missing directory means the work is already done.                                                                                                                                           |
 | `config_entry_add`    | In the JSON configuration file among `candidates` (the first that exists; create the first if none does), make the string array at `key` contain the entry value. Leave the rest of the file intact.                                          |
 | `config_entry_remove` | Same file, same `key`: remove the entry value if present.                                                                                                                                                                                     |
+
+**Section bounds.** A section starts at a `##` heading whose first non-blank
+line is the marker. Its end is the next heading that opens on a marker (any
+`<source>…</source>` line), or the end of the file. The body of a section is
+content, and content carries its own `##` headings (`## Objective`, `## Rules`):
+those are not boundaries. Bounding on any heading is how a removal used to cut a
+section in half, leaving the rest orphaned in the shared file and the marker
+gone. When a file has no marker at all, there is nothing to remove.
 
 **Config entry value.** `path` is the instruction file of the item, relative to
 the base. The value to store is:

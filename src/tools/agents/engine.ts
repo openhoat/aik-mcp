@@ -140,6 +140,72 @@ export const removeSections = (
   return { result: kept.join('\n'), count }
 }
 
+// The marker line that identifies an item inside a shared file.
+export const sectionMarker = (itemPath: string): string => `<source>${itemPath}</source>`
+
+const isMarkerLine = (line: string | null): boolean => {
+  return line !== null && /^<source>[^\s]+<\/source>$/.test(line)
+}
+
+// First non-blank line after a heading, i.e. what the section opens with.
+const openingLine = (lines: string[], heading: number): string | null => {
+  for (let i = heading + 1; i < lines.length; i++) {
+    if (lines[i].trim() !== '') return lines[i].trim()
+  }
+  return null
+}
+
+export interface SectionRange {
+  start: number
+  end: number
+}
+
+/**
+ * Locate the section carrying `marker`, as a line range (end exclusive).
+ *
+ * A section is a `##` heading whose first non-blank line is the marker. Its end
+ * is the next heading that opens on a marker: the body of a section is content,
+ * and content is allowed to carry its own `##` headings, so a bare heading is
+ * not a boundary. Bounding on headings alone used to cut a removal at the first
+ * `## Objective` inside the body, leaving the rest of the text orphaned in the
+ * shared file (and the marker gone, so nothing could find it again).
+ */
+export const findSection = (content: string, marker: string): SectionRange | null => {
+  const lines = content.split('\n')
+  const start = lines.findIndex(
+    (line, index) => line.startsWith('## ') && openingLine(lines, index) === marker
+  )
+  if (start < 0) return null
+
+  let end = lines.length
+  for (let i = start + 1; i < lines.length; i++) {
+    if (lines[i].startsWith('## ') && isMarkerLine(openingLine(lines, i))) {
+      end = i
+      break
+    }
+  }
+
+  return { start, end }
+}
+
+export const removeSection = (
+  content: string,
+  marker: string
+): { result: string; count: number } => {
+  const range = findSection(content, marker)
+  if (!range) {
+    // Legacy fallback: a marker that is not the opening line of its heading means
+    // the file was not written by this engine. Do what the previous version did
+    // rather than refuse, but never worse.
+    if (!content.includes(marker)) return { result: content, count: 0 }
+    return removeSections(content, text => text.includes(marker))
+  }
+
+  const lines = content.split('\n')
+  const kept = [...lines.slice(0, range.start), ...lines.slice(range.end)]
+  return { result: kept.join('\n'), count: 1 }
+}
+
 const installFile = (
   entry: LayoutEntry,
   item: EngineItem,
@@ -186,11 +252,13 @@ const installSection = (
   targetFile: string
 ): { path: string; alreadyInstalled: boolean } => {
   const mdPath = context.configPath ?? targetFile
-  const sourceTag = `<source>${item.path}</source>`
+  const sourceTag = sectionMarker(item.path)
 
   const { body } = parseFrontmatter(item.rawContent)
   const section = `\n## ${item.title}\n\n${sourceTag}\n\n${body.trimEnd()}\n`
 
+  // Presence is decided on the marker alone, never on the section bounds: a file
+  // hand-edited around an aik section must not receive the item twice.
   if (existsSync(mdPath) && readFileSync(mdPath, 'utf-8').includes(sourceTag)) {
     return { path: mdPath, alreadyInstalled: true }
   }
@@ -261,10 +329,7 @@ const uninstallSection = (
   if (!existsSync(mdPath)) return false
 
   const content = readFileSync(mdPath, 'utf-8')
-  const sourceTag = `<source>${item.path}</source>`
-  if (!content.includes(sourceTag)) return false
-
-  const { result, count } = removeSections(content, text => text.includes(sourceTag))
+  const { result, count } = removeSection(content, sectionMarker(item.path))
   if (count === 0) return false
   writeFileSync(mdPath, result, 'utf-8')
   return true
@@ -323,19 +388,30 @@ const listFromSkillDir = (baseDir: string, category: Category): InstalledItem[] 
 
 const listFromSections = (mdPath: string, category: Category): InstalledItem[] => {
   if (!existsSync(mdPath)) return []
-  const content = readFileSync(mdPath, 'utf-8')
+  const lines = readFileSync(mdPath, 'utf-8').split('\n')
   const results: InstalledItem[] = []
-  const sectionRegex = /^## (.+)$\n(?:.|\n)*?^<source>([\w-]+\/[\w./-]+)<\/source>/gm
 
-  for (const match of content.matchAll(sectionRegex)) {
-    const sourcePath = match[2]
+  // A listed item is a heading that opens on a marker. Scanning headings and
+  // markers independently (a lazy regex from any heading to the next marker)
+  // mis-pairs them as soon as a body carries its own `##` headings.
+  lines.forEach((line, index) => {
+    if (!line.startsWith('## ')) return
+    const opening = openingLine(lines, index)
+    if (!isMarkerLine(opening)) return
+
+    const sourcePath = (opening as string).slice('<source>'.length, -'</source>'.length)
     const [rawCategory] = sourcePath.split('/')
     // Safe: a section source path starts with a known category name.
     const itemCategory = (CATEGORIES as string[]).includes(rawCategory)
       ? (rawCategory as Category)
       : category
-    results.push({ path: sourcePath, title: match[1].trim(), category: itemCategory })
-  }
+    results.push({
+      path: sourcePath,
+      title: line.slice('## '.length).trim(),
+      category: itemCategory,
+    })
+  })
+
   return results
 }
 
