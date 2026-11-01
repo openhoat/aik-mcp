@@ -4,6 +4,7 @@ import type { AgentConfig, AgentSpec, Category, Layout, LayoutEntry } from './ty
 
 export const CODEX_AGENT: AgentSpec = {
   globalBaseDir: () => process.env.CODEX_HOME || join(homedir(), '.codex'),
+  globalBaseHint: '$CODEX_HOME or ~/.codex',
   detectionPatterns: [
     { path: 'AGENTS.md', kind: 'file' },
     { path: '.codex/config.toml', kind: 'file', report: 'AGENTS.md' },

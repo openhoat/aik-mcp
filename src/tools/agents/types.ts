@@ -39,6 +39,13 @@ export interface DetectionPattern {
 // not repeated here.
 export interface AgentSpec {
   globalBaseDir: () => string
+  /**
+   * Machine-independent expression of the global base directory, used by the
+   * planner: a plan is computed on a server that may not be the client machine,
+   * so it carries a hint (`~/.claude`, `$CODEX_HOME or ~/.codex`, ...) the
+   * applying agent resolves locally instead of a resolved server path.
+   */
+  globalBaseHint?: string
   detectionPatterns: DetectionPattern[]
   detectionPriority: number // Lower priority = detected first
 }

@@ -7,6 +7,7 @@ import {
   uninstallAll as engineUninstallAll,
 } from './agents/engine.js'
 import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import { planUninstall } from './agents/plan.js'
 import {
   contextFor,
   errorResult,
@@ -133,5 +134,65 @@ export const registerUninstallTool = (server: McpServer, _store: ContentStore): 
       },
     },
     runUninstallAll
+  )
+}
+
+// Plan variant, registered instead of uninstall/uninstall_all when the server
+// does not run on the machine holding the installation (HTTP transport): it
+// returns the deletions and config removals the client agent performs itself.
+export const registerUninstallPlanTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
+    'uninstall',
+    {
+      description:
+        'Compute an uninstallation plan for a content item. The plan lists the files, skill directories, section removals and config entries to delete on YOUR machine: apply them verbatim. Nothing is written on the server (it does not run on your machine).',
+      inputSchema: {
+        path: z.string().describe('Path of the content to uninstall (e.g. "rules/typescript")'),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
+          .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe('Installation scope (project or global).'),
+        configPath: z
+          .string()
+          .optional()
+          .describe(
+            'Agent config file holding a section or config entry, relative to the base directory (or absolute / "~" form). Defaults to the agent default location.'
+          ),
+      },
+    },
+    async ({
+      path,
+      agent,
+      scope,
+      configPath,
+    }: {
+      path: string
+      agent: Agent
+      scope?: Scope
+      configPath?: string
+    }) => {
+      logger.trace({ path, agent, scope, configPath }, 'uninstall (plan) called')
+      const effectiveScope = scope ?? 'project'
+
+      const [rawCategory, ...rest] = path.split('/')
+      const name = rest.join('/')
+      const category = validCategories.find(c => c === rawCategory)
+      if (!category) return errorResult(`Invalid category: ${rawCategory}`)
+      if (!name) return errorResult(`Invalid item path: ${path}`)
+
+      const unsupported = unsupportedCategory(agent, effectiveScope, category)
+      if (unsupported) return unsupported
+
+      const existing = store.getByPath(path)
+      return jsonResult(
+        planUninstall(agent, itemFor(category, name, path, { title: existing?.title ?? '' }), {
+          scope: effectiveScope,
+          configPath: configPath ?? null,
+        })
+      )
+    }
   )
 }

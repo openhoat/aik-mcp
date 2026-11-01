@@ -4,6 +4,7 @@ import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const COPILOT_AGENT: AgentSpec = {
   globalBaseDir: () => join(homedir(), '.github'),
+  globalBaseHint: '~/.github (not supported: copilot has no global layout)',
   detectionPatterns: [{ path: '.github/copilot-instructions.md', kind: 'file' }],
   detectionPriority: 12,
 }

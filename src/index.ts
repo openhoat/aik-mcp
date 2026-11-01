@@ -9,14 +9,24 @@ import { registerResources } from './resources/index.js'
 import { registerDeleteTool } from './tools/delete.js'
 import { registerGetTool } from './tools/get.js'
 import { registerGetAssetTool } from './tools/get-asset.js'
-import { registerInstallTool, registerReinstallTool } from './tools/install.js'
+import {
+  registerInstallPlanTool,
+  registerInstallTool,
+  registerReinstallTool,
+} from './tools/install.js'
+import { registerLayoutTool } from './tools/layout.js'
 import { registerListTool } from './tools/list.js'
 import { registerListInstalledTool } from './tools/list-installed.js'
 import { registerSearchTool } from './tools/search.js'
-import { registerUninstallTool } from './tools/uninstall.js'
-import { registerCheckUpdatesTool, registerUpdateTool } from './tools/update.js'
+import { registerUninstallPlanTool, registerUninstallTool } from './tools/uninstall.js'
+import {
+  registerCheckUpdatesPlanTool,
+  registerCheckUpdatesTool,
+  registerUpdateTool,
+} from './tools/update.js'
 import { registerWriteTool } from './tools/write.js'
 import { startHttpTransport } from './transports/http.js'
+import { createPlanRoute } from './transports/plan-route.js'
 import { startStdioTransport } from './transports/stdio.js'
 import { formatResult, validateContent } from './validate.js'
 
@@ -59,7 +69,13 @@ if (config.validate) {
 // One MCP server per transport: a McpServer binds to a single transport, and
 // the HTTP transport opens one transport per session (every client, every
 // reconnect).
-const createMcpServer = (): McpServer => {
+//
+// The install family is mode-dependent, and that is the whole point: over stdio
+// the server runs on the machine the content is installed on, so it performs the
+// writes itself; over HTTP it runs elsewhere and can only plan them, so it
+// returns operations the client agent applies locally. Everything else (the
+// knowledge base tools) is identical in both modes.
+const createMcpServer = (mode: 'stdio' | 'http'): McpServer => {
   const server = new McpServer(
     {
       name: 'aik',
@@ -73,15 +89,24 @@ const createMcpServer = (): McpServer => {
   registerListTool(server, store)
   registerGetTool(server, store)
   registerGetAssetTool(server, store)
-  registerInstallTool(server, store)
-  registerReinstallTool(server, store)
-  registerListInstalledTool(server, store)
   registerSearchTool(server, store)
-  registerUninstallTool(server, store)
   registerWriteTool(server, store)
   registerDeleteTool(server, store)
-  registerCheckUpdatesTool(server, store)
-  registerUpdateTool(server, store)
+  registerLayoutTool(server, store)
+
+  if (mode === 'http') {
+    registerInstallPlanTool(server, store)
+    registerUninstallPlanTool(server, store)
+    registerCheckUpdatesPlanTool(server, store)
+  } else {
+    registerInstallTool(server, store)
+    registerReinstallTool(server, store)
+    registerListInstalledTool(server, store)
+    registerUninstallTool(server, store)
+    registerCheckUpdatesTool(server, store)
+    registerUpdateTool(server, store)
+  }
+
   registerResources(server, store)
 
   return server
@@ -93,7 +118,8 @@ if (config.http) {
     await startHttpTransport({
       port: config.port,
       apiKey: config.apiKey,
-      createMcpServer,
+      createMcpServer: () => createMcpServer('http'),
+      routes: [createPlanRoute(store)],
     })
   } catch (err) {
     logger.error({ err }, 'HTTP transport refused to start')
@@ -101,5 +127,5 @@ if (config.http) {
   }
 } else {
   logger.info('starting stdio transport')
-  await startStdioTransport(createMcpServer())
+  await startStdioTransport(createMcpServer('stdio'))
 }

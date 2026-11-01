@@ -16,6 +16,18 @@ export interface HttpTransportOptions {
    * fail with "Already connected to a transport".
    */
   createMcpServer: () => McpServer
+  /**
+   * Extra authenticated GET routes, matched before the MCP endpoint. Used to
+   * serve installation plans to shell clients without a JSON-RPC round trip.
+   */
+  routes?: HttpRoute[]
+}
+
+// One plain HTTP endpoint, injected by the composition root so the transport
+// stays free of any knowledge of what it serves.
+export interface HttpRoute {
+  match: (url: URL) => boolean
+  handle: (url: URL, res: ServerResponse) => Promise<void> | void
 }
 
 interface ParsedBody {
@@ -118,7 +130,7 @@ const handleMcpRequest = async (
 }
 
 export const startHttpTransport = async (options: HttpTransportOptions): Promise<void> => {
-  const { port, apiKey, createMcpServer } = options
+  const { port, apiKey, createMcpServer, routes = [] } = options
 
   // Fail closed: this server reads and writes the knowledge directory, it must
   // never answer unauthenticated when reachable over the network.
@@ -143,7 +155,17 @@ export const startHttpTransport = async (options: HttpTransportOptions): Promise
         return
       }
 
-      if (!req.url?.startsWith('/mcp')) {
+      const url = new URL(req.url ?? '/', 'http://localhost')
+
+      if (req.method === 'GET') {
+        const route = routes.find(candidate => candidate.match(url))
+        if (route) {
+          await route.handle(url, res)
+          return
+        }
+      }
+
+      if (!url.pathname.startsWith('/mcp')) {
         sendError(res, 404, 'Not Found')
         return
       }

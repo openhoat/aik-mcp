@@ -56,3 +56,10 @@ export const resolveContentFile = (entry: LayoutEntry, baseDir: string, name: st
 export const getGlobalBaseDir = (agent: Agent): string => {
   return AGENT_CONFIGS[agent].agent.globalBaseDir()
 }
+
+// Machine-independent form of the global base directory for plans: the client
+// agent resolves the hint on its own machine. Falls back to a generic hint when
+// an agent has no dedicated one.
+export const getGlobalBaseHint = (agent: Agent): string => {
+  return AGENT_CONFIGS[agent].agent.globalBaseHint ?? `the global configuration of ${agent}`
+}

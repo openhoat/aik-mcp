@@ -138,6 +138,16 @@ export interface GateResult {
 }
 
 /**
+ * Facts a remote client agent reports about its own project, when the server
+ * cannot inspect that project (HTTP transport). Present = authoritative,
+ * absent = unknown.
+ */
+export interface DetectedProjectInfo {
+  stacks: string[]
+  mcpServers: string[] | null
+}
+
+/**
  * Evaluate whether a content item may be installed in a project.
  *
  * Gating is evidence-based to avoid false positives:
@@ -194,10 +204,14 @@ const evaluateRequires = (
 export const evaluateGate = (
   metadata: GatingMetadata,
   projectDir: string,
-  options: { force?: boolean } = {}
+  options: { force?: boolean; detected?: DetectedProjectInfo } = {}
 ): GateResult => {
-  const projectStacks = detectStacks(projectDir)
-  const mcpServers = detectMcpServers(projectDir)
+  // A client-reported detection replaces the filesystem probe: the server may
+  // be running on another machine, so walking its own disk would evaluate the
+  // wrong project (and could block an install for a stack the client does not
+  // even have).
+  const projectStacks = options.detected ? options.detected.stacks : detectStacks(projectDir)
+  const mcpServers = options.detected ? options.detected.mcpServers : detectMcpServers(projectDir)
 
   const stacks = evaluateStacks(metadata.appliesTo ?? [], projectStacks)
   const requires = evaluateRequires(metadata.requires ?? [], mcpServers)

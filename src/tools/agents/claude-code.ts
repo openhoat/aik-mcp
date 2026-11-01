@@ -4,6 +4,7 @@ import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const CLAUDE_CODE_AGENT: AgentSpec = {
   globalBaseDir: () => join(homedir(), '.claude'),
+  globalBaseHint: '~/.claude',
   detectionPatterns: [
     { path: 'CLAUDE.md', kind: 'file' },
     { path: '.claude', kind: 'directory' },

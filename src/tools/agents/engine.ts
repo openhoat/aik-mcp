@@ -61,7 +61,7 @@ const isDirectory = (path: string): boolean => {
   }
 }
 
-const buildSkillContent = (rawContent: string, name: string): string => {
+export const buildSkillContent = (rawContent: string, name: string): string => {
   const { raw, body } = parseFrontmatter(rawContent)
   const skillFrontmatter = { ...raw }
   skillFrontmatter.name = name
@@ -195,6 +195,9 @@ const installSection = (
     return { path: mdPath, alreadyInstalled: true }
   }
 
+  // Shared-section files live in a directory that may not exist yet (a fresh
+  // project with no .github/ or AGENTS.md); create it before appending.
+  mkdirSync(dirname(mdPath), { recursive: true })
   appendFileSync(mdPath, section, 'utf-8')
   return { path: mdPath, alreadyInstalled: false }
 }

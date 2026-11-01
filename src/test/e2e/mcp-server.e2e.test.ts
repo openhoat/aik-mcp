@@ -580,3 +580,26 @@ test('serves a file changed outside the server while the watcher is on', async (
     []
   )
 })
+
+test('stdio mode keeps the direct lifecycle tools and exposes layout', async () => {
+  await createFile(
+    tempDir,
+    'rules/test-rule',
+    '---\ntitle: Test Rule\ntags: [test]\n---\n# Test Rule'
+  )
+
+  await withServer(tempDir, async req => {
+    const result = (await req('tools/list')) as { tools: Array<{ name: string }> }
+    const tools = result.tools.map(tool => tool.name)
+
+    // Over stdio the server runs on the machine the content goes to, so the
+    // install family performs the writes itself instead of planning them.
+    expect(tools).toContain('install')
+    expect(tools).toContain('reinstall')
+    expect(tools).toContain('update')
+    expect(tools).toContain('list_installed')
+    expect(tools).toContain('uninstall_all')
+    expect(tools).toContain('layout')
+    expect(tools).toHaveLength(14)
+  })
+})

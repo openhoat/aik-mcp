@@ -224,3 +224,60 @@ export const registerUpdateTool = (server: McpServer, store: ContentStore): void
     }
   )
 }
+
+// Plan variant of check_updates, registered when the server cannot read the
+// client machine (HTTP transport): the client agent sends the inventory it
+// built locally (installed paths and versions), the server answers against the
+// knowledge base. Deterministic on both sides, no filesystem access anywhere.
+export const registerCheckUpdatesPlanTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
+    'check_updates',
+    {
+      description:
+        'Compare a locally installed inventory (item paths and versions you read on your machine) with the knowledge base and return the items that have a newer version. Build the inventory by listing the install directories of your agent layout and reading the version field of each installed item, then send it here.',
+      inputSchema: {
+        items: z
+          .array(
+            z.object({
+              path: z.string().describe('Installed item path (e.g. "rules/typescript")'),
+              version: z
+                .string()
+                .describe('Installed version read from the item frontmatter (e.g. "1.2.0")'),
+            })
+          )
+          .describe('Local inventory of installed aik items'),
+      },
+    },
+    async ({ items }: { items: Array<{ path: string; version: string }> }) => {
+      logger.trace({ count: items.length }, 'check_updates (inventory) called')
+      const updates: Array<{ path: string; installedVersion: string; storeVersion: string }> = []
+      const upToDate: string[] = []
+      const unknown: string[] = []
+
+      for (const entry of items) {
+        const storeItem = store.getByPath(entry.path)
+        if (!storeItem) {
+          unknown.push(entry.path)
+          continue
+        }
+        if (isNewer(storeItem.version, entry.version)) {
+          updates.push({
+            path: entry.path,
+            installedVersion: entry.version,
+            storeVersion: storeItem.version,
+          })
+        } else {
+          upToDate.push(entry.path)
+        }
+      }
+
+      return jsonResult({
+        checked: items.length,
+        updateCount: updates.length,
+        updates,
+        upToDate,
+        unknown,
+      })
+    }
+  )
+}

@@ -11,6 +11,7 @@ import {
   uninstall as engineUninstall,
 } from './agents/engine.js'
 import { type Agent, getGlobalBaseDir } from './agents/factory.js'
+import { planInstall } from './agents/plan.js'
 import {
   contextFor,
   errorResult,
@@ -45,6 +46,27 @@ const blockedResult = (path: string, gate: ReturnType<typeof evaluateGate>) =>
       null,
       2
     )
+  )
+
+const projectInfoSchema = z
+  .object({
+    stacks: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'Technology stacks detected in the client project (e.g. ["typescript", "nodejs"]).'
+      ),
+    mcpServers: z
+      .array(z.string())
+      .nullable()
+      .optional()
+      .describe(
+        'MCP servers configured in the client project, or null when the configuration is unknown.'
+      ),
+  })
+  .optional()
+  .describe(
+    'Facts about the client project. A remote server cannot inspect it, so gating (applies-to/requires) is evaluated on what the client reports and only warns when nothing is reported.'
   )
 
 export const registerReinstallTool = (server: McpServer, store: ContentStore): void => {
@@ -235,6 +257,94 @@ export const registerInstallTool = (server: McpServer, store: ContentStore): voi
         config: result.path,
         warnings: gate.warnings,
       })
+    }
+  )
+}
+
+interface ProjectInfoInput {
+  stacks?: string[]
+  mcpServers?: string[] | null
+}
+
+// Plan variant, registered instead of the direct install tool when the server
+// does not run on the machine the content is meant for (HTTP transport). It
+// never touches the filesystem: it returns the operations the client agent
+// applies with its own tools.
+export const registerInstallPlanTool = (server: McpServer, store: ContentStore): void => {
+  server.registerTool(
+    'install',
+    {
+      description:
+        'Compute an installation plan for a content item (rule, skill, workflow, or agent). The plan lists the exact files, skill assets, section edits and config entries to apply on YOUR machine: apply them verbatim, verify each sha256, then keep the item loaded in future sessions. Nothing is written on the server (it does not run on your machine). Supports opencode, Claude Code, Cline, Codex, and GitHub Copilot.',
+      inputSchema: {
+        path: z.string().describe('Path of the content to install (e.g. "rules/typescript")'),
+        agent: z
+          .enum(['opencode', 'claude-code', 'cline', 'codex', 'copilot'])
+          .describe('Target AI agent (opencode, claude-code, cline, codex, or copilot).'),
+        scope: z
+          .enum(['project', 'global'])
+          .default('project')
+          .describe(
+            'Installation scope (project or global). Global writes to the agent user configuration.'
+          ),
+        projectInfo: projectInfoSchema,
+        configPath: z
+          .string()
+          .optional()
+          .describe(
+            'Agent config file to edit, relative to the base directory (or absolute / "~" form). Defaults to the agent default location.'
+          ),
+        force: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe(
+            'Install even when gating fails (applies-to/requires). Use only with a documented reason.'
+          ),
+      },
+    },
+    async ({
+      path,
+      agent,
+      scope,
+      projectInfo,
+      configPath,
+      force,
+    }: {
+      path: string
+      agent: Agent
+      scope?: Scope
+      projectInfo?: ProjectInfoInput
+      configPath?: string
+      force?: boolean
+    }) => {
+      logger.trace({ path, agent, scope, configPath }, 'install (plan) called')
+      const effectiveScope = scope ?? 'project'
+
+      const item = store.getByPath(path)
+      if (!item) return errorResult(`Content not found: ${path}`)
+
+      const unsupported = unsupportedCategory(agent, effectiveScope, item.category)
+      if (unsupported) return unsupported
+
+      const detected = {
+        stacks: projectInfo?.stacks ?? [],
+        mcpServers: projectInfo?.mcpServers ?? null,
+      }
+      const gate = evaluateGate({ appliesTo: item.appliesTo, requires: item.requires }, '.', {
+        force: force ?? false,
+        detected,
+      })
+      if (gate.blocked) return blockedResult(path, gate)
+
+      return jsonResult(
+        planInstall(agent, engineItemFor(store, item), {
+          scope: effectiveScope,
+          version: item.version,
+          configPath: configPath ?? null,
+          warnings: gate.warnings,
+        })
+      )
     }
   )
 }

@@ -309,6 +309,58 @@ describe('startHttpTransport', () => {
       expect(mockTransportHandleRequest).toHaveBeenCalledTimes(2)
     })
 
+    test('serves an injected route after authentication', async () => {
+      const handle = vi.fn<(url: URL) => Promise<void>>(async () => undefined)
+      await startHttpTransport({
+        port: 3456,
+        apiKey: TEST_API_KEY,
+        createMcpServer,
+        routes: [{ match: url => url.pathname.startsWith('/plan/'), handle }],
+      })
+
+      const res = createMockRes()
+      await capturedHandler!(createMockReq('/plan/rules/demo?agent=codex', 'GET'), res)
+
+      expect(handle).toHaveBeenCalledTimes(1)
+      expect(handle.mock.calls[0][0]).toBeInstanceOf(URL)
+      expect(mockTransportHandleRequest).not.toHaveBeenCalled()
+    })
+
+    test('does not serve an injected route without authentication', async () => {
+      const handle = vi.fn<(url: URL) => Promise<void>>(async () => undefined)
+      await startHttpTransport({
+        port: 3456,
+        apiKey: TEST_API_KEY,
+        createMcpServer,
+        routes: [{ match: () => true, handle }],
+      })
+
+      const res = createMockRes()
+      await capturedHandler!(createMockReq('/plan/rules/demo', 'GET', { authorization: '' }), res)
+
+      expect(handle).not.toHaveBeenCalled()
+      expect(res.writeHead).toHaveBeenCalledWith(401, { 'WWW-Authenticate': 'Bearer realm="aik"' })
+    })
+
+    test('keeps the MCP endpoint when a route does not match', async () => {
+      const handle = vi.fn<(url: URL) => Promise<void>>(async () => undefined)
+      await startHttpTransport({
+        port: 3456,
+        apiKey: TEST_API_KEY,
+        createMcpServer,
+        routes: [{ match: url => url.pathname.startsWith('/plan/'), handle }],
+      })
+
+      const res = createMockRes()
+      await capturedHandler!(
+        createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' })),
+        res
+      )
+
+      expect(handle).not.toHaveBeenCalled()
+      expect(MockTransport).toHaveBeenCalledTimes(1)
+    })
+
     test('error handler without headers sent returns 500', async () => {
       const req = createMockReqWithBody('/mcp', '{invalid}')
       const res = createMockRes()

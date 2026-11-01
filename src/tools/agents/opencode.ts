@@ -4,6 +4,7 @@ import type { AgentConfig, AgentSpec, Category, LayoutEntry } from './types.js'
 
 export const OPENCODE_AGENT: AgentSpec = {
   globalBaseDir: () => join(homedir(), '.config', 'opencode'),
+  globalBaseHint: '~/.config/opencode',
   detectionPatterns: [
     { path: '.opencode/opencode.jsonc', kind: 'file' },
     { path: '.opencode/opencode.json', kind: 'file' },

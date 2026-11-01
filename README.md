@@ -185,6 +185,21 @@ The HTTP transport is **fail closed**: it refuses to start without `MCP_API_KEY`
 (empty or the `change-me` placeholder is rejected), `/health` is the only public
 route and every other request needs `Authorization: Bearer <key>`.
 
+A remote server does not run on the client machine, so it cannot write the
+client's agent configuration. In HTTP mode the installation tools therefore
+return a **plan** — the exact files, section edits and config entries to apply —
+and the client agent applies it locally with its own file tools. The bundled
+instructions (`aik_knowledge_content`, served with every session) describe the
+apply procedure; `GET /plan/<item>?agent=&scope=` returns the same JSON to a
+shell script, for payloads too large to pass through a model:
+
+```bash
+curl -fsS -H "Authorization: Bearer $MCP_API_KEY" \
+  "https://aik-mcp.example.com/plan/skills/generate-changelog?agent=codex&scope=project"
+```
+
+See [Tool reference](docs/guide/tools.md) for the mode-by-mode table.
+
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
@@ -241,18 +256,32 @@ When a skill is installed, its assets are copied alongside `SKILL.md`.
 
 ## MCP tools
 
-| Tool                 | Description                                                |
-| -------------------- | ---------------------------------------------------------- |
-| `aik_list`           | List content items, optionally filtered by category or tag |
-| `aik_get`            | Retrieve a specific item by path (e.g. `rules/typescript`) |
-| `aik_search`         | Full-text fuzzy search across all content                  |
-| `aik_write`          | Create or update a content item from the agent             |
-| `aik_delete`         | Delete a content item                                      |
-| `aik_install`        | Install an item into the project's agent config            |
-| `aik_reinstall`      | Reinstall the latest version of an installed item          |
-| `aik_uninstall`      | Remove an installed item from the project                  |
-| `aik_uninstall_all`  | Remove all aik-installed items from the project            |
-| `aik_list_installed` | List items currently installed in the project              |
+Knowledge base tools, identical in both transports:
+
+| Tool            | Description                                                 |
+| --------------- | ----------------------------------------------------------- |
+| `aik_list`      | List content items, optionally filtered by category or tag  |
+| `aik_get`       | Retrieve a specific item by path (e.g. `rules/typescript`)  |
+| `aik_get_asset` | Read a supporting asset bundled with an item                |
+| `aik_search`    | Full-text fuzzy search across all content                   |
+| `aik_write`     | Create or update a content item from the agent              |
+| `aik_delete`    | Delete a content item                                       |
+| `aik_layout`    | Where each agent installs each category (base, dir, format) |
+
+Installation tools. Over stdio the server runs on the machine the content is
+installed on, so it writes the files itself. Over HTTP it runs elsewhere: the
+same tools return a plan the client agent applies, and the ones that can only
+work locally disappear.
+
+| Tool                 | stdio (local)                | HTTP (remote)                             |
+| -------------------- | ---------------------------- | ----------------------------------------- |
+| `aik_install`        | installs the item            | returns the installation plan             |
+| `aik_uninstall`      | removes the item             | returns the uninstallation plan           |
+| `aik_check_updates`  | reads the installed versions | compares an inventory you send            |
+| `aik_reinstall`      | uninstall then install       | — (apply an uninstall plan, then install) |
+| `aik_update`         | updates an installed item    | —                                         |
+| `aik_list_installed` | lists installed items        | — (build the inventory from `aik_layout`) |
+| `aik_uninstall_all`  | removes every installed item | —                                         |
 
 ## Resources
 
