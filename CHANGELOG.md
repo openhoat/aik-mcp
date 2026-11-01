@@ -1,4 +1,15 @@
+## [0.10.3](https://github.com/openhoat/aik-mcp/compare/v0.10.2...v0.10.3) (2026-11-01)
+
+### Chores
+
+* **deps-dev:** bump mermaid from 10.8.0 to 11.17.2 ([73cd6db](https://github.com/openhoat/aik-mcp/commit/73cd6dbbb87a236e06ae2581060480f78c80a1c3))
+* **deps:** bump the minor-patch group across 1 directory with 15 updates ([4368b25](https://github.com/openhoat/aik-mcp/commit/4368b25d2b24c2d34666335a37bec277ee34f79b))
+* **deps:** keep biome off markdown and yaml ([a4e74a1](https://github.com/openhoat/aik-mcp/commit/a4e74a1736e904652b6a58a7d573bbe4e8a705da))
+* **scripts:** use a placeholder host in the sonar example ([ba2e6e4](https://github.com/openhoat/aik-mcp/commit/ba2e6e4a44dd6f258651bae2fd1592921f655433))
+
 ## [0.10.2](https://github.com/openhoat/aik-mcp/compare/v0.10.1...v0.10.2) (2026-11-01)
+
+* 0.10.2 ([undefined](https://github.com/openhoat/aik-mcp/commit/fb15170a8878fbcd5b36be560c1b66755aa15173))
 
 ### Chores
 
