@@ -103,6 +103,17 @@ const handleMcpRequest = async (
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> => {
+  // This server never pushes messages to the client, so it declines the optional
+  // server-to-client stream. Answering 200 here is what breaks clients: a client
+  // that reconnects (proxy, sleep, network change) asks for a second stream while
+  // the SDK still holds the first one, and the SDK refuses the duplicate with 409
+  // Conflict. The protocol defines 405 as "this endpoint offers no stream", and
+  // clients that follow it stop asking instead of failing.
+  if (req.method === 'GET') {
+    sendError(res, 405, 'Method Not Allowed: no server-initiated stream on this endpoint')
+    return
+  }
+
   const sessionId = getSessionId(req)
   const transport = sessionId ? transports.get(sessionId) : undefined
 
