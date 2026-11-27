@@ -214,6 +214,41 @@ describe('startHttpTransport', () => {
       expect(connect).toHaveBeenCalledTimes(2)
     })
 
+    test('GET /mcp declines the server stream with 405', async () => {
+      const req = createMockReq('/mcp', 'GET', { 'mcp-session-id': 'test-session-id' })
+      const res = createMockRes()
+
+      await capturedHandler!(req, res)
+
+      expect(res.writeHead).toHaveBeenCalledWith(405)
+      expect(mockTransportHandleRequest).not.toHaveBeenCalled()
+    })
+
+    test('a declined GET leaves the session usable for later POSTs', async () => {
+      await capturedHandler!(
+        createMockReqWithBody('/mcp', JSON.stringify({ method: 'initialize' })),
+        createMockRes()
+      )
+      capturedOnsessioninitialized!('test-session-id')
+
+      const getRes = createMockRes()
+      await capturedHandler!(
+        createMockReq('/mcp', 'GET', { 'mcp-session-id': 'test-session-id' }),
+        getRes
+      )
+
+      const postRes = createMockRes()
+      await capturedHandler!(
+        createMockReqWithBody('/mcp', JSON.stringify({ method: 'tools/list' }), {
+          'mcp-session-id': 'test-session-id',
+        }),
+        postRes
+      )
+
+      expect(getRes.writeHead).toHaveBeenCalledWith(405)
+      expect(mockTransportHandleRequest).toHaveBeenCalledTimes(2)
+    })
+
     test('DELETE without session header returns 400', async () => {
       const req = createMockReq('/mcp', 'DELETE')
       const res = createMockRes()
