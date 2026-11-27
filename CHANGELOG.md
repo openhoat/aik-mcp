@@ -1,4 +1,15 @@
+## [0.10.5](https://github.com/openhoat/aik-mcp/compare/v0.10.4...v0.10.5) (2026-11-27)
+
+### Chores
+
+* **deps-dev:** bump the minor-patch group across 1 directory with 11 updates ([8c2ec4d](https://github.com/openhoat/aik-mcp/commit/8c2ec4d1b4e14085e1a38035d9b74f86535d9d79))
+* **deps:** bump @hono/node-server from 2.1.5 to 2.1.11 ([2d77c82](https://github.com/openhoat/aik-mcp/commit/2d77c824f2b04103614e8dd43521a2167519f94a))
+* **deps:** bump chokidar from 5.0.0 to 6.0.0 ([e05e79b](https://github.com/openhoat/aik-mcp/commit/e05e79bd04534b2ea2061d3865e668548f46a433))
+* **deps:** raise the node-forge override to 1.4.4 ([d4acb6d](https://github.com/openhoat/aik-mcp/commit/d4acb6dea08c07ad9ca90e97ce9dc8fab4cbbb76))
+
 ## [0.10.4](https://github.com/openhoat/aik-mcp/compare/v0.10.3...v0.10.4) (2026-11-27)
+
+* 0.10.4 ([undefined](https://github.com/openhoat/aik-mcp/commit/70cc283920d407c03d8ce55f8b2282374a3997d5))
 
 ### Bug Fixes
 
@@ -290,7 +301,7 @@
 ### Chores
 
 * **deps-dev:** bump the minor-patch group with 8 updates ([e3c02a9](https://github.com/openhoat/aik-mcp/commit/e3c02a9033eea6e947454b8623c130b73b42ec27))
-* **deps:** bump the actions group with 6 updates ([08733ac](https://github.com/openhoat/aik-mcp/commit/08733ac4b1ac81a258a1554c976d95a6aa476329)), closes [softprops/action-gh-release](https://github.com/softprops/action-/issues/release)
+* **deps:** bump the actions group with 6 updates ([08733ac](https://github.com/openhoat/aik-mcp/commit/08733ac4b1ac81a258a1554c976d95a6aa476329))
 * **release:** v0.2.2 ([a0f43e8](https://github.com/openhoat/aik-mcp/commit/a0f43e8617c1e6dc8ecf69aa9b46390bbe3b2cb4))
 
 ### Refactoring
