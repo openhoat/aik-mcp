@@ -1,4 +1,16 @@
+## [0.10.4](https://github.com/openhoat/aik-mcp/compare/v0.10.3...v0.10.4) (2026-11-27)
+
+### Bug Fixes
+
+* answer get /mcp with 405 instead of a stream ([602b2dd](https://github.com/openhoat/aik-mcp/commit/602b2dddd886f95d40804a2d7d5489805c63109a))
+
+### Chores
+
+* **deps:** pin the transitive fixes the resolver cannot take alone ([0be0b7c](https://github.com/openhoat/aik-mcp/commit/0be0b7cc70e64b5a4c6ad9d2610c294706cfa687))
+
 ## [0.10.3](https://github.com/openhoat/aik-mcp/compare/v0.10.2...v0.10.3) (2026-11-01)
+
+* 0.10.3 ([undefined](https://github.com/openhoat/aik-mcp/commit/3657bb765bd31587caa7b877c8f23a602575b0e3))
 
 ### Chores
 
@@ -304,7 +316,7 @@
 
 * make agent parameter required on agent-specific tools ([17f8c9b](https://github.com/openhoat/aik-mcp/commit/17f8c9b02fc65734f80c327dde75522cb48a170b))
 
-# [0.2.0](https://github.com/openhoat/aik-mcp/compare/v0.1.3...v0.2.0) (2026-07-05)
+# [0.2.0](https://github.com/openhoat/aik-mcp/compare/v0.1.2...v0.2.0) (2026-07-05)
 
 * feat!: migrate to native agent formats for content installation ([undefined](https://github.com/openhoat/aik-mcp/commit/bab364daf21d6ec84b819d798976e405fb91a897))
 
@@ -316,17 +328,27 @@
 
 ### Chores
 
+* add custom changelog script and update aik content ([1c44ab4](https://github.com/openhoat/aik-mcp/commit/1c44ab4c3db0429c75547666313e47373e152111))
 * add missing file patterns to wireit qa:biome tracking ([7e04785](https://github.com/openhoat/aik-mcp/commit/7e047852efa2422cc0e1475f987e48d7e44fcaac))
+* add npm lifecycle hooks for release workflow ([eb5e341](https://github.com/openhoat/aik-mcp/commit/eb5e34123cc735a3cacdce1c5d14a9b13cf38fd5))
 * ignore vitepress cache ([4c6eb7d](https://github.com/openhoat/aik-mcp/commit/4c6eb7ddd65ae8e5d806bbfe71ecd06b5a9f1f68))
+* integrate wireit and add cross-platform clean scripts ([514ebc3](https://github.com/openhoat/aik-mcp/commit/514ebc34be5101e869bf6fe9198b92aec865d1d9))
 * move aik validate to done in kanban ([0e654e3](https://github.com/openhoat/aik-mcp/commit/0e654e3f9ec552ffdad18082b9928a2b1beb75a4))
+* optimize package.json scripts, wireit config, and node flags ([9631895](https://github.com/openhoat/aik-mcp/commit/96318952be3689d318c492ff93b55f9358e3ce26))
+* release v0.1.3 ([3586adc](https://github.com/openhoat/aik-mcp/commit/3586adcac495a2e159f15f7122d73b21fcc545b8))
 * **release:** v0.2.0 ([4bdc396](https://github.com/openhoat/aik-mcp/commit/4bdc3960940722036bb3f6066531d9d3bedaacb2))
 * silence pino logger during tests ([dc7b291](https://github.com/openhoat/aik-mcp/commit/dc7b291e965beef32841746c3a379ca7e7beddce))
+* update kanban after phase 2 completion ([c8a44a2](https://github.com/openhoat/aik-mcp/commit/c8a44a23e9b1c9930416eda15cba2a1b69386245))
+* update kanban after phase 2 completion ([2760a1b](https://github.com/openhoat/aik-mcp/commit/2760a1bc79f5b943bac3c1fe4e549626170c428b))
+* update kanban after resources/index.ts completion ([adcec38](https://github.com/openhoat/aik-mcp/commit/adcec38ef9e13df86156d12e6b4135d632bbd9ed))
 * update kanban after task completion ([5d964da](https://github.com/openhoat/aik-mcp/commit/5d964da6cff6b0a34febb041610d4b67cca7d0d9))
+* update kanban and changelog ([5ac4a68](https://github.com/openhoat/aik-mcp/commit/5ac4a6859c8b341cd1493229ed51a830734c8ca6))
 * update kanban and changelog after architecture-and-tests merge ([c86647f](https://github.com/openhoat/aik-mcp/commit/c86647f6594761a67a5d9bb1f43be4cbfe7120f5))
 * update kanban and changelog after migrate-vitest merge ([b7215ec](https://github.com/openhoat/aik-mcp/commit/b7215ecc17ebbc5eb22c608ef408062a1933fd41))
 
 ### Continuous Integration
 
+* add github actions workflow and unify husky hooks on validate ([58f39df](https://github.com/openhoat/aik-mcp/commit/58f39df17fa2283e2bc770eace8aa6570b3559bc))
 * decompose pipeline into separate steps and use build:test ([756a508](https://github.com/openhoat/aik-mcp/commit/756a508404f6a4df6c5f76f8850ddd5537271343))
 * upload coverage report to codecov ([90c3686](https://github.com/openhoat/aik-mcp/commit/90c368628ca412270f3e2116635ebf24aff82150))
 
@@ -335,52 +357,25 @@
 * add vitepress documentation site with github pages deployment ([2cc893f](https://github.com/openhoat/aik-mcp/commit/2cc893fa46579e70038aa30420c31550425859d4))
 * lighten logo colors for better visibility ([ede5708](https://github.com/openhoat/aik-mcp/commit/ede57087126387fe92009f95b73d7921b4f60282))
 * redesign logo as square with better contrast ([660ec62](https://github.com/openhoat/aik-mcp/commit/660ec6236c0c2638d83716d0544c4fd64d467a0e))
+* reduce readme badges ([8fc6880](https://github.com/openhoat/aik-mcp/commit/8fc68809fc426a39b774ce5e000ffadca93df7f7))
 * translate kanban backlog to english ([bb08ec1](https://github.com/openhoat/aik-mcp/commit/bb08ec1401b112967f1a07de51614dde7509e91f))
 
 ### Features
 
 * add aik validate cli with --validate and --json flags ([c599b04](https://github.com/openhoat/aik-mcp/commit/c599b04ab0f768af2e29d44d668c83ff0b6fc287))
 * add architecture docs, http handler tests, and validate e2e tests ([ebb82cd](https://github.com/openhoat/aik-mcp/commit/ebb82cd424d6e35e8f6ac53c03a2ac22c978242d))
+* add codecov coverage badge to readme ([ebef99a](https://github.com/openhoat/aik-mcp/commit/ebef99ac4dfd9e509709eeab626ab6c5875cb77b))
 * add strict frontmatter validation on aik_write and fix codecov upload ([990eecb](https://github.com/openhoat/aik-mcp/commit/990eecb5818a63a4395d1d293331f04a3c1d3e15))
 * enrich built-in server instructions with full content flows ([a8e9515](https://github.com/openhoat/aik-mcp/commit/a8e95157eaa0cac173a067c479a695402dde248c))
 
 ### Refactoring
 
+* extract jest command to single npm script ([7b42e6b](https://github.com/openhoat/aik-mcp/commit/7b42e6bc02c8a15a90d742df1853cf6286fbcf10))
 * migrate from jest to vitest ([190f161](https://github.com/openhoat/aik-mcp/commit/190f16131c94e28d445b647fe29616f2462a3661))
 
 ### Styling
 
 * fix biome formatting in changelog script ([e7a3ace](https://github.com/openhoat/aik-mcp/commit/e7a3ace56e0c3071adbf28f4e50462fc5d73cc2e))
-
-## [0.1.3](https://github.com/openhoat/aik-mcp/compare/v0.1.2...v0.1.3) (2026-07-04)
-
-### Chores
-
-* add custom changelog script and update aik content ([1c44ab4](https://github.com/openhoat/aik-mcp/commit/1c44ab4c3db0429c75547666313e47373e152111))
-* add npm lifecycle hooks for release workflow ([eb5e341](https://github.com/openhoat/aik-mcp/commit/eb5e34123cc735a3cacdce1c5d14a9b13cf38fd5))
-* integrate wireit and add cross-platform clean scripts ([514ebc3](https://github.com/openhoat/aik-mcp/commit/514ebc34be5101e869bf6fe9198b92aec865d1d9))
-* optimize package.json scripts, wireit config, and node flags ([9631895](https://github.com/openhoat/aik-mcp/commit/96318952be3689d318c492ff93b55f9358e3ce26))
-* release v0.1.3 ([3586adc](https://github.com/openhoat/aik-mcp/commit/3586adcac495a2e159f15f7122d73b21fcc545b8))
-* update kanban after phase 2 completion ([c8a44a2](https://github.com/openhoat/aik-mcp/commit/c8a44a23e9b1c9930416eda15cba2a1b69386245))
-* update kanban after phase 2 completion ([2760a1b](https://github.com/openhoat/aik-mcp/commit/2760a1bc79f5b943bac3c1fe4e549626170c428b))
-* update kanban after resources/index.ts completion ([adcec38](https://github.com/openhoat/aik-mcp/commit/adcec38ef9e13df86156d12e6b4135d632bbd9ed))
-* update kanban and changelog ([5ac4a68](https://github.com/openhoat/aik-mcp/commit/5ac4a6859c8b341cd1493229ed51a830734c8ca6))
-
-### Continuous Integration
-
-* add github actions workflow and unify husky hooks on validate ([58f39df](https://github.com/openhoat/aik-mcp/commit/58f39df17fa2283e2bc770eace8aa6570b3559bc))
-
-### Documentation
-
-* reduce readme badges ([8fc6880](https://github.com/openhoat/aik-mcp/commit/8fc68809fc426a39b774ce5e000ffadca93df7f7))
-
-### Features
-
-* add codecov coverage badge to readme ([ebef99a](https://github.com/openhoat/aik-mcp/commit/ebef99ac4dfd9e509709eeab626ab6c5875cb77b))
-
-### Refactoring
-
-* extract jest command to single npm script ([7b42e6b](https://github.com/openhoat/aik-mcp/commit/7b42e6bc02c8a15a90d742df1853cf6286fbcf10))
 
 ### Tests
 
