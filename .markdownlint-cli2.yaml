@@ -32,6 +32,7 @@ ignores:
   - ".npm"
   - ".git"
   - ".opencode"
+  - ".wireit"
   - "build"
   - "dist"
   - "CHANGELOG.md"
